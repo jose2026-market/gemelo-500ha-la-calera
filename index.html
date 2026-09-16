@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GEMELO 500 ha · La Calera</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root { --green:#064A31; --ink:#1C2B26; --gold:#E38A00; }
+    * { box-sizing: border-box; }
+    html, body { margin:0; height:100%; font-family: system-ui, Segoe UI, sans-serif; }
+    #map { height:100%; width:100%; }
+    .bar {
+      position:absolute; z-index:1000; left:12px; right:12px; top:12px;
+      background:#fff; color:var(--ink); padding:10px 12px; border-radius:10px;
+      border:1px solid #d8ddd9;
+    }
+    .bar b { color:var(--green); }
+    .bar p { margin:4px 0 0; font-size:13px; color:#5C564F; }
+    .leaflet-popup-content { margin:10px 12px; font-size:14px; }
+    .leaflet-popup-content b { color:var(--green); }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <b>GEMELO-BELGRANO · 500 ha</b>
+    <p>La Calera (demostrativo, no es un padrón). Tocá un potrero.</p>
+  </div>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map("map", { zoomControl: true });
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      { attribution: "Esri · demostrativo FCV UCCuyo", maxZoom: 18 }
+    ).addTo(map);
+
+    const potreros = [
+      { n:1, kg:998, ev:8.3, z:999, dist:236, agua:"A2 Casco", color:"#1B7A4A",
+        ring:[[-32.920000,-66.895000],[-32.920000,-66.886082],[-32.911017,-66.886082],[-32.911017,-66.895000]] },
+      { n:2, kg:974, ev:8.1, z:1021, dist:400, agua:"A4 Centro", color:"#2E9A5C",
+        ring:[[-32.920000,-66.886082],[-32.920000,-66.877164],[-32.911017,-66.877164],[-32.911017,-66.886082]] },
+      { n:3, kg:972, ev:8.1, z:1023, dist:600, agua:"A5 Este", color:"#C4A035",
+        ring:[[-32.920000,-66.877164],[-32.920000,-66.868246],[-32.911017,-66.868246],[-32.911017,-66.877164]] },
+      { n:4, kg:971, ev:8.1, z:1023, dist:400, agua:"A3 Oeste", color:"#3D6B4F",
+        ring:[[-32.911017,-66.895000],[-32.911017,-66.886082],[-32.902034,-66.886082],[-32.902034,-66.895000]] },
+      { n:5, kg:1001, ev:8.3, z:995, dist:193, agua:"A1 Represa", color:"#0E7C8B",
+        ring:[[-32.911017,-66.886082],[-32.911017,-66.877164],[-32.902034,-66.877164],[-32.902034,-66.886082]] },
+      { n:6, kg:1084, ev:9.0, z:917, dist:400, agua:"A5 Este", color:"#6B8F3A",
+        ring:[[-32.911017,-66.877164],[-32.911017,-66.868246],[-32.902034,-66.868246],[-32.902034,-66.877164]] }
+    ];
+    const aguadas = [
+      { id:"A1", name:"A1 Represa", lat:-32.908142, lon:-66.882372, color:"#1E6BB8" },
+      { id:"A2", name:"A2 Casco", lat:-32.916586, lon:-66.888365, color:"#0AA3A3" },
+      { id:"A3", name:"A3 Oeste", lat:-32.910119, lon:-66.890719, color:"#2E8B57" },
+      { id:"A4", name:"A4 Centro", lat:-32.911915, lon:-66.881623, color:"#6B3FA0" },
+      { id:"A5", name:"A5 Este", lat:-32.910119, lon:-66.872527, color:"#D35400" }
+    ];
+
+    const group = L.featureGroup();
+    potreros.forEach((p) => {
+      const layer = L.polygon(p.ring, {
+        color: "#ffffff", weight: 2, fillColor: p.color, fillOpacity: 0.45
+      }).bindPopup(
+        "<b>Potrero P" + p.n + "</b><br>83 ha · <b>" + p.kg + " kg carne/año</b><br>" +
+        p.ev + " EV · cota " + p.z + " m<br>Agua: " + p.agua + " a " + p.dist + " m"
+      );
+      layer.addTo(group);
+    });
+    aguadas.forEach((a) => {
+      L.circleMarker([a.lat, a.lon], {
+        radius: 9, color: "#fff", weight: 2, fillColor: a.color, fillOpacity: 1
+      }).bindPopup("<b>" + a.name + "</b>").addTo(group);
+    });
+    group.addTo(map);
+    map.fitBounds(group.getBounds().pad(0.12));
+  </script>
+</body>
+</html>
