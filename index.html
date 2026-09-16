@@ -19,6 +19,12 @@
       display: inline-block; margin: 6px 6px 0 0; padding: 3px 8px;
       background: #064A31; color: #fff; border-radius: 99px; font-size: 11px;
     }
+    .fondos { display: flex; gap: 6px; margin-top: 8px; }
+    .fondos button {
+      flex: 1; border: 1px solid #c5cdc8; background: #f4f6f5; color: #1C2B26;
+      border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 600;
+    }
+    .fondos button.on { background: #064A31; color: #fff; border-color: #064A31; }
     .lab { background: none; border: 0; }
     .lab span {
       display: block; text-align: center; min-width: 72px;
@@ -34,29 +40,86 @@
     }
     .leaflet-popup-content { margin: 10px 12px; font-size: 14px; }
     .leaflet-popup-content b { color: #064A31; }
+    .leaflet-bottom.leaflet-right { margin-bottom: 8px; }
   </style>
 </head>
 <body>
   <div class="bar">
     <b>Campo gemelo · 500 ha · La Calera</b>
-    <p>Demostrativo (no es un padrón). El satélite se ve a través de los potreros. Tocá una etiqueta.</p>
+    <p>Demostrativo (no es un padrón). Foto Esri de marzo 2022. El zoom se corta para no estirarla.</p>
     <span class="chip">6.000 kg carne/año</span>
     <span class="chip">50 EV</span>
     <span class="chip">Mejorado 1</span>
+    <div class="fondos" role="tablist" aria-label="Fondo del mapa">
+      <button type="button" class="on" data-fondo="sat" aria-pressed="true">Satélite</button>
+      <button type="button" data-fondo="nombres" aria-pressed="false">Nombres</button>
+      <button type="button" data-fondo="relieve" aria-pressed="false">Relieve</button>
+    </div>
   </div>
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const map = L.map("map", { zoomControl: true, attributionControl: true });
-    L.tileLayer(
+    const MAX_Z = 17;
+    const map = L.map("map", {
+      zoomControl: true,
+      attributionControl: true,
+      minZoom: 13,
+      maxZoom: MAX_Z
+    });
+    map.zoomControl.setPosition("bottomright");
+    map.createPane("fondo");
+    map.getPane("fondo").style.zIndex = 200;
+    map.createPane("rotulos");
+    map.getPane("rotulos").style.zIndex = 250;
+
+    const sat = L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       {
-        attribution: "Imagen Esri · FCV UCCuyo (demostrativo)",
-        maxZoom: 19,
-        maxNativeZoom: 18,
-        detectRetina: true
+        pane: "fondo",
+        attribution: "Imagen Esri WorldView-2 · mar 2022 · FCV UCCuyo",
+        maxZoom: MAX_Z,
+        maxNativeZoom: 17
       }
-    ).addTo(map);
+    );
+    const rotulos = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}",
+      {
+        pane: "rotulos",
+        maxZoom: MAX_Z,
+        maxNativeZoom: 13,
+        opacity: 0.92
+      }
+    );
+    const relieve = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+      {
+        pane: "fondo",
+        attribution: "Relieve Esri · FCV UCCuyo (demostrativo)",
+        maxZoom: MAX_Z,
+        maxNativeZoom: 16
+      }
+    );
+
+    function setFondo(id) {
+      if (map.hasLayer(sat)) map.removeLayer(sat);
+      if (map.hasLayer(relieve)) map.removeLayer(relieve);
+      if (map.hasLayer(rotulos)) map.removeLayer(rotulos);
+      if (id === "relieve") relieve.addTo(map);
+      else {
+        sat.addTo(map);
+        if (id === "nombres") rotulos.addTo(map);
+      }
+      document.querySelectorAll(".fondos button").forEach((b) => {
+        const on = b.dataset.fondo === id;
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }
+    setFondo("sat");
+    document.querySelector(".fondos").addEventListener("click", (ev) => {
+      const b = ev.target.closest("button[data-fondo]");
+      if (b) setFondo(b.dataset.fondo);
+    });
 
     const potreros = [
       { n:1, kg:998, ev:8.3, z:999, dist:236, agua:"A2 Casco", color:"#1B7A4A",
@@ -129,7 +192,7 @@
       }).bindPopup("<b>" + a.name + "</b><br>Aguada del gemelo M1. No se recorta bebida.").addTo(group);
     });
 
-    map.fitBounds(group.getBounds(), { padding: [48, 48], maxZoom: 15 });
+    map.fitBounds(group.getBounds(), { padding: [120, 36], maxZoom: 15 });
   </script>
 </body>
 </html>
