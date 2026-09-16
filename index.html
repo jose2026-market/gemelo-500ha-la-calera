@@ -6,33 +6,56 @@
   <title>GEMELO 500 ha · La Calera</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    :root { --green:#064A31; --ink:#1C2B26; --gold:#E38A00; }
-    * { box-sizing: border-box; }
-    html, body { margin:0; height:100%; font-family: system-ui, Segoe UI, sans-serif; }
-    #map { height:100%; width:100%; }
+    html, body { margin: 0; height: 100%; font-family: system-ui, Segoe UI, sans-serif; }
+    #map { height: 100%; width: 100%; }
     .bar {
-      position:absolute; z-index:1000; left:12px; right:12px; top:12px;
-      background:#fff; color:var(--ink); padding:10px 12px; border-radius:10px;
-      border:1px solid #d8ddd9;
+      position: absolute; z-index: 1000; left: 10px; right: 10px; top: 10px;
+      background: rgba(255,255,255,.94); color: #1C2B26;
+      padding: 10px 12px; border-radius: 10px; border: 1px solid #d5dbd6;
     }
-    .bar b { color:var(--green); }
-    .bar p { margin:4px 0 0; font-size:13px; color:#5C564F; }
-    .leaflet-popup-content { margin:10px 12px; font-size:14px; }
-    .leaflet-popup-content b { color:var(--green); }
+    .bar b { color: #064A31; font-size: 15px; }
+    .bar p { margin: 3px 0 0; font-size: 12px; color: #5C564F; line-height: 1.35; }
+    .chip {
+      display: inline-block; margin: 6px 6px 0 0; padding: 3px 8px;
+      background: #064A31; color: #fff; border-radius: 99px; font-size: 11px;
+    }
+    .lab { background: none; border: 0; }
+    .lab span {
+      display: block; text-align: center; min-width: 72px;
+      background: #064A31; color: #fff; border: 1px solid #fff;
+      border-radius: 8px; padding: 5px 7px; font-size: 12px; font-weight: 700;
+      line-height: 1.2;
+    }
+    .lab em { display: block; font-style: normal; font-weight: 500; font-size: 11px; opacity: .92; }
+    .drop { background: none; border: 0; }
+    .drop i {
+      display: block; width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid #fff;
+    }
+    .leaflet-popup-content { margin: 10px 12px; font-size: 14px; }
+    .leaflet-popup-content b { color: #064A31; }
   </style>
 </head>
 <body>
   <div class="bar">
-    <b>GEMELO-BELGRANO · 500 ha</b>
-    <p>La Calera (demostrativo, no es un padrón). Tocá un potrero.</p>
+    <b>Campo gemelo · 500 ha · La Calera</b>
+    <p>Demostrativo (no es un padrón). El satélite se ve a través de los potreros. Tocá una etiqueta.</p>
+    <span class="chip">6.000 kg carne/año</span>
+    <span class="chip">50 EV</span>
+    <span class="chip">Mejorado 1</span>
   </div>
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const map = L.map("map", { zoomControl: true });
+    const map = L.map("map", { zoomControl: true, attributionControl: true });
     L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      { attribution: "Esri · demostrativo FCV UCCuyo", maxZoom: 18 }
+      {
+        attribution: "Imagen Esri · FCV UCCuyo (demostrativo)",
+        maxZoom: 19,
+        maxNativeZoom: 18,
+        detectRetina: true
+      }
     ).addTo(map);
 
     const potreros = [
@@ -57,23 +80,56 @@
       { id:"A5", name:"A5 Este", lat:-32.910119, lon:-66.872527, color:"#D35400" }
     ];
 
-    const group = L.featureGroup();
+    function centro(ring) {
+      const lat = ring.reduce((s, p) => s + p[0], 0) / ring.length;
+      const lon = ring.reduce((s, p) => s + p[1], 0) / ring.length;
+      return [lat, lon];
+    }
+
+    const group = L.featureGroup().addTo(map);
+
     potreros.forEach((p) => {
-      const layer = L.polygon(p.ring, {
-        color: "#ffffff", weight: 2, fillColor: p.color, fillOpacity: 0.45
+      L.polygon(p.ring, {
+        color: "#fff", weight: 3, fillColor: p.color, fillOpacity: 0.16
+      }).addTo(group);
+      L.polygon(p.ring, {
+        color: p.color, weight: 1.6, dashArray: "10 6", fill: false
+      }).addTo(group);
+
+      const c = centro(p.ring);
+      const agua = aguadas.find((a) => p.agua.indexOf(a.id) === 0);
+      if (agua) {
+        L.polyline([c, [agua.lat, agua.lon]], {
+          color: agua.color, weight: 2, dashArray: "5 7", opacity: 0.95
+        }).addTo(group);
+      }
+
+      L.marker(c, {
+        icon: L.divIcon({
+          className: "lab",
+          html: "<span>P" + p.n + "<em>" + p.kg + " kg/año</em></span>",
+          iconSize: [78, 40],
+          iconAnchor: [39, 20]
+        })
       }).bindPopup(
-        "<b>Potrero P" + p.n + "</b><br>83 ha · <b>" + p.kg + " kg carne/año</b><br>" +
-        p.ev + " EV · cota " + p.z + " m<br>Agua: " + p.agua + " a " + p.dist + " m"
-      );
-      layer.addTo(group);
+        "<b>Potrero P" + p.n + " · 83 ha</b><br>" +
+        "<b>" + p.kg + " kg carne/año</b> · " + p.ev + " EV<br>" +
+        "Cota " + p.z + " m<br>Agua: " + p.agua + " a <b>" + p.dist + " m</b>"
+      ).addTo(group);
     });
+
     aguadas.forEach((a) => {
-      L.circleMarker([a.lat, a.lon], {
-        radius: 9, color: "#fff", weight: 2, fillColor: a.color, fillOpacity: 1
-      }).bindPopup("<b>" + a.name + "</b>").addTo(group);
+      L.marker([a.lat, a.lon], {
+        icon: L.divIcon({
+          className: "drop",
+          html: "<i style='background:" + a.color + "'></i>",
+          iconSize: [14, 14],
+          iconAnchor: [7, 7]
+        })
+      }).bindPopup("<b>" + a.name + "</b><br>Aguada del gemelo M1. No se recorta bebida.").addTo(group);
     });
-    group.addTo(map);
-    map.fitBounds(group.getBounds().pad(0.12));
+
+    map.fitBounds(group.getBounds(), { padding: [48, 48], maxZoom: 15 });
   </script>
 </body>
 </html>
