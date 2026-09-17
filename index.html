@@ -7,26 +7,34 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body { margin: 0; height: 100%; font-family: system-ui, Segoe UI, sans-serif; }
-    #map { height: 100%; width: 100%; }
+    .app { display: flex; height: 100%; }
     .bar {
-      position: absolute; z-index: 1000; left: 10px; right: 10px; top: 10px;
-      background: rgba(255,255,255,.96); color: #1C2B26;
-      padding: 10px 12px; border-radius: 10px; border: 1px solid #d5dbd6;
-      max-height: 58vh; overflow: auto;
+      width: 380px; flex-shrink: 0; height: 100%; overflow: auto;
+      background: #fff; color: #1C2B26; padding: 14px 14px 24px;
+      box-sizing: border-box; border-right: 1px solid #d5dbd6;
+    }
+    .mapa-wrap { flex: 1; position: relative; min-width: 0; }
+    #map { height: 100%; width: 100%; }
+    @media (max-width: 820px) {
+      .app { flex-direction: column; }
+      .bar { width: 100%; height: auto; max-height: 48vh; border-right: 0; border-bottom: 1px solid #d5dbd6; }
     }
     .bar b.title { color: #064A31; font-size: 15px; display: block; }
     .bar .lead { margin: 3px 0 0; font-size: 12px; color: #5C564F; line-height: 1.35; }
-    .fondos, .modulos, .escenas, .pills, .acciones { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .fondos { display: flex; gap: 6px; margin-top: 8px; flex-wrap: nowrap; }
+    .fondos button { flex: 1; min-width: 0; }
     button, select, input, textarea {
       font-family: inherit; font-size: 12px;
     }
-    .fondos button, .modulos button, .escenas button, .pills button, .acciones button {
-      border-radius: 8px; font-weight: 600; padding: 8px 6px;
-      border: 1px solid #c5cdc8; background: #f4f6f5; color: #1C2B26;
+    .modulos, .escenas, .pills, .acciones { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .fondos button, .nombres-fila button, .modulos button, .escenas button, .pills button, .acciones button, .caja-nombre button {
+      border-radius: 6px; font-weight: 600; padding: 4px 5px;
+      border: 1px solid #c5cdc8; background: #f4f6f5; color: #1C2B26; font-size: 11px;
     }
-    .fondos button, .modulos button, .escenas button { flex: 1; min-width: 88px; }
+    .modulos button, .escenas button { flex: 1; min-width: 0; }
+    .pills button { min-width: 36px; padding: 4px 6px; }
     .modulos button { background: #E7F3EC; color: #064A31; border-color: #9FCBB0; }
-    .fondos button.on, .modulos button.on, .escenas button.on, .pills button.on {
+    .fondos button.on, .nombres-fila button.on, .modulos button.on, .escenas button.on, .pills button.on {
       background: #064A31; color: #fff; border-color: #064A31;
     }
     .panel { margin-top: 8px; border-top: 1px solid #e2e8e4; padding-top: 8px; }
@@ -55,10 +63,28 @@
       padding: 5px 7px; font-size: 11px; font-weight: 700; line-height: 1.2;
     }
     .lab em { display: block; font-style: normal; font-weight: 500; font-size: 10px; opacity: .94; }
-    .drop { background: none; border: 0; }
+    .pueblo { background: none; border: 0; }
+    .pueblo span {
+      display: block; background: rgba(255,255,255,.92); color: #1C2B26;
+      border: 1px solid #c5cdc8; border-radius: 6px; padding: 2px 7px;
+      font-size: 11px; font-weight: 700; white-space: nowrap;
+    }
     .drop i { display: block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; }
     .leaflet-popup-content { margin: 10px 12px; font-size: 14px; }
     .leaflet-popup-content b { color: #064A31; }
+    .nombres-fila { margin-top: 8px; }
+    .nombres-fila button { width: 100%; }
+    .caja-nombre { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8e4; }
+    .caja-nombre[hidden] { display: none; }
+    .caja-nombre button { width: 100%; margin-top: 8px; background: #064A31; color: #fff; border-color: #064A31; }
+    .cartel-nombre {
+      position: absolute; z-index: 900; top: 12px; left: 12px; right: 54px;
+      text-align: center; pointer-events: none;
+      font-weight: 700; font-size: 18px; color: #fff;
+      text-shadow: 0 1px 3px #000, 0 0 12px #000;
+    }
+    .paso { font-size: 11px; color: #5C564F; margin: 8px 0 0; line-height: 1.4; }
+    .paso b { color: #064A31; }
     .leyenda {
       position: absolute; z-index: 1000; left: 10px; bottom: 12px;
       background: rgba(255,255,255,.92); border-radius: 8px; padding: 6px 8px;
@@ -68,13 +94,22 @@
   </style>
 </head>
 <body>
-  <div class="bar">
+<div class="app">
+  <aside class="bar">
     <b class="title">Campo gemelo · 500 ha · decisión ganadera</b>
-    <p class="lead">Demostrativo (no es un padrón). Mapa para decidir pastoreo, nutrición y reproducción. Tocá una solapa o un potrero.</p>
+    <p class="lead">Actual = INTA y carta de suelos. Mejorado y Óptimo = lo que el productor carga; si no es posible, semáforo rojo.</p>
+    <p class="paso">Para probar: envíe este enlace<br><b>https://jose2026-market.github.io/gemelo-500ha-la-calera/</b></p>
     <div class="fondos" role="tablist" aria-label="Fondo del mapa">
       <button type="button" class="on" data-fondo="sat">Satélite</button>
-      <button type="button" data-fondo="nombres">Nombres</button>
       <button type="button" data-fondo="relieve">Relieve</button>
+    </div>
+    <div class="nombres-fila">
+      <button type="button" id="btnNombres" aria-expanded="false">Nombres</button>
+    </div>
+    <div id="cajaNombre" class="caja-nombre" hidden>
+      <label for="fNombreCampo">Nombre del campo</label>
+      <input id="fNombreCampo" type="text" placeholder="Ej. Establecimiento La Calera" autocomplete="off" />
+      <button type="button" id="btnCargarNombre">Cargar nombre</button>
     </div>
     <div class="modulos" role="tablist" aria-label="Módulo de decisión">
       <button type="button" class="on" data-mod="pastoreo">Pastoreo</button>
@@ -90,6 +125,7 @@
         <button type="button" data-esc="m1">Mejorado 1</button>
         <button type="button" data-esc="optimo">Óptimo</button>
       </div>
+      <p class="aviso" id="topeEscena"></p>
       <div class="grid2">
         <div>
           <label>Tipo de campo</label>
@@ -114,9 +150,13 @@
       </div>
       <p class="ok" id="msg" hidden></p>
     </div>
+  </aside>
+  <div class="mapa-wrap">
+    <div class="cartel-nombre" id="cartelNombre">Campo gemelo · 500 ha · La Calera</div>
+    <div class="leyenda" id="leyenda"></div>
+    <div id="map"></div>
   </div>
-  <div class="leyenda" id="leyenda"></div>
-  <div id="map"></div>
+</div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="superficie.js"></script>
   <script>
@@ -163,6 +203,7 @@
     }
     function saveStore(s) { localStorage.setItem(KEY, JSON.stringify(s)); }
     const store = loadStore();
+    if (!store.nombreCampo) store.nombreCampo = "Campo gemelo · 500 ha · La Calera";
     potreros.forEach((p) => { if (!store[p.n]) store[p.n] = { tipo: "ganadero" }; });
 
     function factor(p) {
@@ -186,36 +227,130 @@
       if (tipo === "monte") return { actual: 58, m1: 78, optimo: 85 }[esc];
       return d[esc];
     }
-    function estimar(p, tipo, esc) {
+    const SITIO = {
+      1: { paisaje:"Loma-pedimento", suelo:"Ortentes (Peña Zubiate 1998)", aptitud:"VI–VII ganadera", bajo:false },
+      2: { paisaje:"Loma alta", suelo:"Ortentes someros, baja reserva de agua", aptitud:"VI–VII ganadera", bajo:false },
+      3: { paisaje:"Loma este", suelo:"Ortentes; agua a 600 m", aptitud:"VI, no agrícola", bajo:false },
+      4: { paisaje:"Loma oeste", suelo:"Ortentes, erosión hídrica", aptitud:"VI–VII ganadera", bajo:false },
+      5: { paisaje:"Media loma / represa", suelo:"Ortentes, mejor acceso al agua", aptitud:"VI ganadera", bajo:false },
+      6: { paisaje:"Bajo (917 m)", suelo:"Ortentes más profundos, mejor humedad", aptitud:"VI; M2 solo si OTBN lo permite", bajo:true }
+    };
+    function techoEscena(p, tipo, esc) {
       const f = factor(p);
-      const haEV = receptividad(tipo, esc);
-      const ev = +(p.ha / haEV).toFixed(1);
-      const fo0 = { actual: 280, m1: 520, optimo: 780 }[esc] * f;
+      const sit = SITIO[p.n];
+      const loma = !sit.bajo;
+      if (esc === "actual") {
+        const haEV = tipo === "monte" ? 14 : tipo === "agricola" ? 20 : 12.6;
+        const destete = tipo === "monte" ? 58 : 62;
+        const kgHa = tipo === "monte" ? 4.2 : tipo === "agricola" ? 0 : 5.9;
+        return {
+          haEV, destete, prenhez: destete + 8, kgHa, fo: Math.round(280 * f), cc: 2.7,
+          evMax: +(p.ha / haEV * f).toFixed(1),
+          kgMax: Math.round(kgHa * p.ha * f),
+          texto: "Situación actual del lote según INTA Región III y carta de suelos (Ortentes/Ortides, aptitud " + sit.aptitud + "). No se edita: es el diagnóstico.",
+          bloqueado: true
+        };
+      }
+      if (esc === "m1") {
+        const haEV = tipo === "monte" ? 12 : 10;
+        const destete = tipo === "monte" ? 78 : 85;
+        const kgHa = tipo === "monte" ? 8 : 12;
+        return {
+          haEV, destete, prenhez: destete + 6, kgHa, fo: Math.round(520 * f), cc: 3.1,
+          evMax: +(p.ha / haEV * f).toFixed(1),
+          kgMax: Math.round(kgHa * p.ha * f),
+          texto: "Mejorado 1: el productor carga lo que decide mejorar. Tope real: " + haEV + " ha/EV, destete " + destete + " %, " + kgHa + " kg/ha (INTA). Agua a " + p.dist + " m · " + sit.paisaje + ".",
+          bloqueado: false
+        };
+      }
+      const optimoM2 = tipo === "ganadero" && sit.bajo;
+      const haEV = tipo === "monte" ? 10 : optimoM2 ? 5.9 : 10;
+      const destete = tipo === "monte" ? 85 : optimoM2 ? 90 : 85;
+      const kgHa = tipo === "monte" ? 12 : optimoM2 ? 23.5 : 12;
+      return {
+        haEV, destete, prenhez: destete + 5, kgHa, fo: Math.round((optimoM2 ? 780 : 560) * f), cc: 3.4,
+        evMax: +(p.ha / haEV * f).toFixed(1),
+        kgMax: Math.round(kgHa * p.ha * f),
+        texto: optimoM2
+          ? "Óptimo posible en este bajo (carta INTA): M2, ~30 % buffel si OTBN lo permite. " + kgHa + " kg/ha · destete " + destete + " %."
+          : "Óptimo posible en esta loma/monte: techo = Mejorado 1. La carta de suelos no sostiene buffel ni agrícola de renta.",
+        bloqueado: false
+      };
+    }
+    function validarCarga(p, tipo, d, esc) {
+      const t = techoEscena(p, tipo, esc);
+      const sit = SITIO[p.n];
+      const motivos = [];
+      if (Number(d.ev) > t.evMax * 1.02) {
+        motivos.push("Carga " + d.ev + " EV > tope " + t.evMax + " EV (receptividad " + t.haEV + " ha/EV, carta INTA).");
+      }
+      if (d.haEV && Number(d.haEV) < t.haEV * 0.97) {
+        motivos.push("Receptividad cargada (" + d.haEV + " ha/EV) es más intensa que la posible (" + t.haEV + ").");
+      }
+      if (Number(d.destete) > t.destete) {
+        motivos.push("Destete " + d.destete + " % > " + t.destete + " % posible con suelo, nutrición y agua de este lote.");
+      }
+      if (Number(d.prenhez) > t.prenhez) {
+        motivos.push("Preñez cargada por encima del techo reproductivo de este territorio (" + t.prenhez + " %).");
+      }
+      if (Number(d.kg) > t.kgMax * 1.05) {
+        motivos.push("Kilos de carne por encima de la aptitud de la carta de suelos (" + t.kgMax + " kg/año en este potrero).");
+      }
+      if (Number(d.fo) > t.fo * 1.15) {
+        motivos.push("Forraje en oferta mayor al posible en Ortentes de " + sit.paisaje + ".");
+      }
+      if (esc !== "actual" && Number(d.ev) > 3 && p.dist > 550) {
+        motivos.push("Nutrición: agua a " + p.dist + " m. Esa carga no se sostiene sin acercar bebida (no se recorta agua).");
+      }
+      if (esc === "optimo" && Number(d.destete) >= 88 && p.dist > 400) {
+        motivos.push("Reproducción: destete ~90 % pide parición cerca del agua. Este lote está a " + p.dist + " m.");
+      }
+      if (tipo === "agricola" && !sit.bajo) {
+        motivos.push("Carta INTA: loma no apta para campo limpio agrícola. Ley 26.331: no desmontar.");
+      }
+      if (tipo === "monte" && Number(d.kg) / p.ha > 13) {
+        motivos.push("Monte: el óptimo es MBGI. No hay escenario de desmonte ni megatérmicas al 30 %.");
+      }
+      if (esc === "optimo" && tipo === "ganadero" && !sit.bajo && Number(d.kg) / p.ha > 13) {
+        motivos.push("En loma el óptimo no llega a 23 kg/ha. Eso pide bajo + permiso OTBN.");
+      }
+      return { posible: motivos.length === 0, motivos, techo: t };
+    }
+    function estimar(p, tipo, esc) {
+      const t = techoEscena(p, tipo, esc);
       const base = BASE_LOTE[p.n];
       const pastorea = base.estado === "pastoreando";
-      const diasRestan = pastorea ? Math.max(4, Math.round((fo0 / 18) * (esc === "actual" ? 0.45 : esc === "m1" ? 0.8 : 1))) : 0;
-      const diasDescanso = pastorea ? 0 : { actual: 12, m1: 40, optimo: 55 }[esc];
-      const cc = pastorea
-        ? +( { actual: 2.4, m1: 2.9, optimo: 3.3 }[esc] + (p.z < 960 ? 0.2 : 0) - (p.dist > 500 ? 0.3 : 0) ).toFixed(1)
-        : 3.2;
-      const destete = desteteBase(tipo, esc);
-      const prenhez = destete + 8;
-      const kgHa = { ganadero: { actual: 5.9, m1: 12, optimo: 12 }, monte: { actual: 4.2, m1: 8, optimo: 12 }, agricola: { actual: 0, m1: 0, optimo: 0 } }[tipo][esc];
       return {
         tipo, lote: base.lote, estado: base.estado, categoria: base.categoria,
-        ev, haEV, fo: Math.round(fo0), diasRestan, diasDescanso, cc,
-        destete, prenhez, kg: Math.round(kgHa * p.ha * f),
+        ev: t.evMax, haEV: t.haEV, fo: t.fo,
+        diasRestan: pastorea ? Math.max(4, Math.round(t.fo / 22)) : 0,
+        diasDescanso: pastorea ? 0 : (esc === "actual" ? 12 : esc === "m1" ? 40 : 55),
+        cc: pastorea ? t.cc : 3.2,
+        destete: t.destete, prenhez: t.prenhez, kg: t.kgMax,
         suplemento: esc === "actual" ? "Sal a veces" : "Sal + proteína en parición",
         servicio: esc === "actual" ? "Servicio corrido" : "Servicio estacionado nov–ene"
       };
     }
     function dato(p) {
       const tipo = store[p.n].tipo || "ganadero";
+      const base = estimar(p, tipo, escSel);
+      if (escSel === "actual") return base;
       const slot = (store[p.n][modSel] || {})[escSel];
-      return Object.assign(estimar(p, tipo, escSel), slot || {});
+      return Object.assign({}, base, slot || {});
     }
     function decision(p) {
       const d = dato(p);
+      const tipo = store[p.n].tipo || "ganadero";
+      const val = validarCarga(p, tipo, d, escSel);
+      if (!val.posible) {
+        return {
+          color: SEM.rojo,
+          sem: "rojo",
+          titulo: "P" + p.n + " · no posible",
+          sub: val.motivos[0],
+          accion: "No es posible con la carta de suelos, el agua y el territorio de este lote. " + val.motivos.join(" ")
+        };
+      }
       if (modSel === "pastoreo") {
         if (d.estado === "descanso") {
           const ok = d.diasDescanso >= 30;
@@ -288,7 +423,7 @@
 
     let modSel = "pastoreo", escSel = "actual", pSel = 1;
     const MAX_Z = 17;
-    const map = L.map("map", { zoomControl: true, minZoom: 13, maxZoom: MAX_Z });
+    const map = L.map("map", { zoomControl: true, minZoom: 8, maxZoom: MAX_Z });
     map.zoomControl.setPosition("bottomright");
     map.createPane("fondo"); map.getPane("fondo").style.zIndex = 200;
     map.createPane("rotulos"); map.getPane("rotulos").style.zIndex = 250;
@@ -298,22 +433,53 @@
     const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
       pane: "fondo", attribution: "Esri · SRTM · INTA · FCV UCCuyo", maxZoom: MAX_Z, maxNativeZoom: 17
     });
-    const rotulos = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}", {
-      pane: "rotulos", maxZoom: MAX_Z, maxNativeZoom: 13
-    });
     const topo = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
       pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 16
     });
     function setFondo(id) {
-      [sat, topo, rotulos].forEach((l) => { if (map.hasLayer(l)) map.removeLayer(l); });
+      if (map.hasLayer(sat)) map.removeLayer(sat);
+      if (map.hasLayer(topo)) map.removeLayer(topo);
       if (id === "relieve") topo.addTo(map);
-      else { sat.addTo(map); if (id === "nombres") rotulos.addTo(map); }
+      else sat.addTo(map);
       document.querySelectorAll(".fondos button").forEach((b) => b.classList.toggle("on", b.dataset.fondo === id));
     }
     setFondo("sat");
     document.querySelector(".fondos").addEventListener("click", (ev) => {
       const b = ev.target.closest("button[data-fondo]");
       if (b) setFondo(b.dataset.fondo);
+    });
+
+    function aplicarNombre(nombre) {
+      const n = (nombre || "").trim() || "Campo gemelo · 500 ha · La Calera";
+      store.nombreCampo = n;
+      saveStore(store);
+      document.querySelector(".title").textContent = n;
+      document.title = n;
+      document.getElementById("cartelNombre").textContent = n;
+      document.getElementById("fNombreCampo").value = n;
+    }
+    document.getElementById("btnNombres").addEventListener("click", () => {
+      const caja = document.getElementById("cajaNombre");
+      const btn = document.getElementById("btnNombres");
+      const abrir = caja.hidden;
+      caja.hidden = !abrir;
+      btn.classList.toggle("on", abrir);
+      btn.setAttribute("aria-expanded", abrir ? "true" : "false");
+      if (abrir) {
+        document.getElementById("fNombreCampo").value = store.nombreCampo || "";
+        document.getElementById("fNombreCampo").focus();
+      }
+    });
+    document.getElementById("btnCargarNombre").addEventListener("click", () => {
+      aplicarNombre(document.getElementById("fNombreCampo").value);
+      document.getElementById("msg").hidden = false;
+      document.getElementById("msg").textContent = "Nombre del campo cargado en el mapa y en Google Earth.";
+    });
+    document.getElementById("fNombreCampo").addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        document.getElementById("btnCargarNombre").click();
+      }
     });
 
     const S = window.SUPERFICIE, g = S.grid;
@@ -383,7 +549,26 @@
         icon: L.divIcon({ className: "drop", html: "<i style='background:" + a.color + "'></i>", iconSize: [14, 14], iconAnchor: [7, 7] })
       }).bindPopup("<b>" + a.name + "</b><br>No se recorta bebida.").addTo(group);
     });
-    map.fitBounds(group.getBounds(), { padding: [150, 36], maxZoom: 15 });
+    const pueblos = [
+      { name: "La Calera", lat: -32.8631, lon: -66.8489, nota: "Comisión municipal · 766 hab. (INDEC 2022)" },
+      { name: "Nogolí", lat: -32.9167, lon: -66.3333, nota: "Dique Nogolí · 1.221 hab." },
+      { name: "Villa de la Quebrada", lat: -33.0333, lon: -66.3000, nota: "RN 146 · 1.176 hab." },
+      { name: "Los Manantiales", lat: -32.6662, lon: -66.4518, nota: "Cabecera Belgrano (ex Villa Gral. Roca) · 290 hab." },
+      { name: "San Luis", lat: -33.3017, lon: -66.3378, nota: "Capital provincial" }
+    ];
+    const refs = L.featureGroup().addTo(map);
+    pueblos.forEach((t) => {
+      L.marker([t.lat, t.lon], {
+        icon: L.divIcon({
+          className: "pueblo",
+          html: "<span>" + t.name + "</span>",
+          iconSize: [120, 20],
+          iconAnchor: [60, 10]
+        })
+      }).bindPopup("<b>" + t.name + "</b><br>" + t.nota).addTo(refs);
+    });
+    map.fitBounds(refs.getBounds().extend(group.getBounds()), { padding: [36, 36], maxZoom: 10 });
+    setTimeout(() => map.invalidateSize(), 200);
 
     const campos = document.getElementById("campos");
     const pills = document.getElementById("pills");
@@ -446,11 +631,24 @@
       set("fPre", d.prenhez);
       set("fServ", d.servicio);
       document.getElementById("aviso").innerHTML = "<span class='sema' style='background:" + v.color + "'></span><b>" +
-        (v.sem === "rojo" ? "Actuar ahora" : v.sem === "amarillo" ? "Vigilar esta semana" : v.sem === "descanso" ? "En descanso" : "En equilibrio") +
+        (v.sem === "rojo" ? "No posible / actuar" : v.sem === "amarillo" ? "Vigilar esta semana" : v.sem === "descanso" ? "En descanso" : "Posible y en equilibrio") +
         "</b> · " + v.accion;
+      const sit = SITIO[p.n];
       document.getElementById("hechos").innerHTML =
-        "<b>P" + p.n + " · 83 ha · " + p.z + " m</b> · " + p.agua + " a " + p.dist + " m.<br>" +
-        TERRITORIO.lluvia + " " + TERRITORIO.agua + " " + TERRITORIO.otbn;
+        "<b>P" + p.n + " · 83 ha · " + sit.paisaje + " · " + p.z + " m</b><br>" +
+        sit.suelo + " · aptitud " + sit.aptitud + ".<br>" +
+        p.agua + " a " + p.dist + " m. " + TERRITORIO.lluvia + " " + TERRITORIO.agua + " " + TERRITORIO.otbn;
+      const t = techoEscena(p, store[p.n].tipo || "ganadero", escSel);
+      const val = validarCarga(p, store[p.n].tipo || "ganadero", d, escSel);
+      const topeEl = document.getElementById("topeEscena");
+      topeEl.style.background = val.posible ? "#E7F3EC" : "#FDECEC";
+      topeEl.style.borderColor = val.posible ? "#9FCBB0" : "#E8A0A0";
+      topeEl.style.color = val.posible ? "#064A31" : "#8A1F16";
+      topeEl.textContent = val.posible ? t.texto : ("Semáforo rojo: " + val.motivos.join(" "));
+      const lock = escSel === "actual";
+      document.querySelectorAll("#campos input, #fLote, #fAccion").forEach((el) => { el.readOnly = lock; });
+      document.getElementById("btnGuardar").disabled = lock;
+      document.getElementById("btnEstimar").textContent = lock ? "Ver datos INTA / carta" : "Cargar tope posible";
       document.getElementById("leyenda").innerHTML =
         (modSel === "pastoreo"
           ? "<div><i style='background:#1B7A4A'></i>Pasto alcanza / descanso listo</div><div><i style='background:#C4A035'></i>Cambiar de potrero pronto</div><div><i style='background:#B42318'></i>Sobrecarga o sin días</div>"
@@ -487,18 +685,25 @@
     });
     document.getElementById("btnEstimar").addEventListener("click", () => {
       const p = potreros.find((x) => x.n === pSel);
+      const tipo = store[p.n].tipo || "ganadero";
       if (!store[p.n][modSel]) store[p.n][modSel] = {};
-      store[p.n][modSel][escSel] = estimar(p, store[p.n].tipo || "ganadero", escSel);
+      store[p.n][modSel][escSel] = estimar(p, tipo, escSel);
+      saveStore(store);
       refrescarMapa();
       document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = "Estimación INTA / REM / distancia al agua. Se puede editar.";
+      document.getElementById("msg").textContent = escSel === "actual"
+        ? "Actual cargada desde INTA Región III y carta de suelos de este lote. No se edita."
+        : "Se cargó el tope posible de esta solapa. Si lo supera, el semáforo pasa a rojo en el mapa y en Earth.";
     });
     document.getElementById("btnGuardar").addEventListener("click", () => {
+      if (escSel === "actual") return;
       const val = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
+      const p = potreros.find((x) => x.n === pSel);
+      const tipo = document.getElementById("fTipo").value;
       if (!store[pSel][modSel]) store[pSel][modSel] = {};
-      store[pSel][modSel][escSel] = Object.assign(dato(potreros.find((p) => p.n === pSel)), {
+      const carga = Object.assign(dato(p), {
         lote: val("fLote"),
-        estado: val("fEstado") || dato(potreros.find((p) => p.n === pSel)).estado,
+        estado: val("fEstado") || dato(p).estado,
         diasRestan: Number(val("fDias") || 0),
         diasDescanso: Number(val("fDesc") || 0),
         fo: Number(val("fFo") || 0),
@@ -513,11 +718,15 @@
         kg: Number(val("fKg") || 0),
         accion: val("fAccion")
       });
-      store[pSel].tipo = document.getElementById("fTipo").value;
+      store[pSel][modSel][escSel] = carga;
+      store[pSel].tipo = tipo;
       saveStore(store);
       refrescarMapa();
+      const chequeo = validarCarga(p, tipo, carga, escSel);
       document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = "Guardado en este aparato.";
+      document.getElementById("msg").textContent = chequeo.posible
+        ? "Guardado. Es posible con la carta de suelos, el agua y este lote. Ábralo en Google Earth."
+        : "Guardado, pero no es posible: semáforo rojo en el mapa y en Earth. " + chequeo.motivos[0];
     });
 
     function kmlColor(hex) {
@@ -542,8 +751,11 @@
           "<outerBoundaryIs><LinearRing><coordinates>" + ring.join(" ") + "</coordinates></LinearRing></outerBoundaryIs></Polygon>" +
           "<Point><coordinates>" + c[1].toFixed(6) + "," + c[0].toFixed(6) + ",0</coordinates></Point></MultiGeometry></Placemark>";
       });
-      const kml = "<?xml version='1.0' encoding='UTF-8'?><kml xmlns='http://www.opengis.net/kml/2.2'><Document><name>GEMELO · " +
-        nombre + " · " + escena + "</name><open>1</open>" + marks + "</Document></kml>";
+      const campo = store.nombreCampo || "Campo gemelo";
+      const kml = "<?xml version='1.0' encoding='UTF-8'?><kml xmlns='http://www.opengis.net/kml/2.2'><Document><name>" +
+        campo.replace(/[<>&]/g, "") + " · " + nombre + " · " + escena + "</name><open>1</open>" +
+        "<Placemark><name>" + campo.replace(/[<>&]/g, "") + "</name><Point><coordinates>-66.881623,-32.911017,0</coordinates></Point></Placemark>" +
+        marks + "</Document></kml>";
       const blob = new Blob([kml], { type: "application/vnd.google-earth.kml+xml" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -555,6 +767,7 @@
     document.getElementById("btnKml").addEventListener("click", exportarKml);
 
     pintarCampos();
+    aplicarNombre(store.nombreCampo);
     refrescarMapa();
     abrir(1);
   </script>
