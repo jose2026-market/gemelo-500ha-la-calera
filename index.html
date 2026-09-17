@@ -10,130 +10,162 @@
     #map { height: 100%; width: 100%; }
     .bar {
       position: absolute; z-index: 1000; left: 10px; right: 10px; top: 10px;
-      background: rgba(255,255,255,.94); color: #1C2B26;
+      background: rgba(255,255,255,.96); color: #1C2B26;
       padding: 10px 12px; border-radius: 10px; border: 1px solid #d5dbd6;
+      max-height: 58vh; overflow: auto;
     }
-    .bar b { color: #064A31; font-size: 15px; }
-    .bar p { margin: 3px 0 0; font-size: 12px; color: #5C564F; line-height: 1.35; }
-    .chip {
-      display: inline-block; margin: 6px 6px 0 0; padding: 3px 8px;
-      background: #064A31; color: #fff; border-radius: 99px; font-size: 11px;
+    .bar b.title { color: #064A31; font-size: 15px; display: block; }
+    .bar .lead { margin: 3px 0 0; font-size: 12px; color: #5C564F; line-height: 1.35; }
+    .fondos, .usos { display: flex; gap: 6px; margin-top: 8px; }
+    .fondos button, .usos button, .escenas button, .pills button, .acciones button {
+      border-radius: 8px; font-weight: 600; font-size: 12px; padding: 8px 6px;
+      border: 1px solid #c5cdc8; background: #f4f6f5; color: #1C2B26;
     }
-    .fondos { display: flex; gap: 6px; margin-top: 8px; }
-    .fondos button {
-      flex: 1; border: 1px solid #c5cdc8; background: #f4f6f5; color: #1C2B26;
-      border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: 600;
+    .fondos button, .usos button { flex: 1; }
+    .fondos button.on, .usos button.on, .escenas button.on, .pills button.on {
+      background: #064A31; color: #fff; border-color: #064A31;
     }
-    .fondos button.on { background: #064A31; color: #fff; border-color: #064A31; }
+    .usos button { background: #E7F3EC; color: #064A31; border-color: #9FCBB0; }
+    .usos button.on { background: #064A31; color: #fff; }
+    .panel { margin-top: 8px; border-top: 1px solid #e2e8e4; padding-top: 8px; }
+    .panel[hidden] { display: none; }
+    .hechos { font-size: 11px; color: #5C564F; line-height: 1.4; margin: 0 0 8px; }
+    .hechos b { color: #1C2B26; }
+    .escenas, .pills { display: flex; gap: 6px; margin: 0 0 8px; flex-wrap: wrap; }
+    .escenas button, .pills button { flex: 1; min-width: 72px; padding: 6px; }
+    .aviso {
+      background: #FFF6E5; border: 1px solid #E6C989; color: #6A4B12;
+      font-size: 11px; padding: 6px 8px; border-radius: 8px; margin: 0 0 8px;
+    }
+    label { display: block; font-size: 11px; color: #5C564F; margin: 6px 0 2px; }
+    input, textarea, select {
+      width: 100%; box-sizing: border-box; border: 1px solid #c5cdc8;
+      border-radius: 7px; padding: 6px 8px; font-size: 13px; font-family: inherit;
+    }
+    textarea { min-height: 52px; resize: vertical; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .acciones { display: flex; gap: 6px; margin-top: 8px; }
+    .acciones button { flex: 1; background: #064A31; color: #fff; border-color: #064A31; }
+    .acciones button.sec { background: #f4f6f5; color: #064A31; }
+    .ok { font-size: 11px; color: #064A31; margin: 6px 0 0; }
     .lab { background: none; border: 0; }
     .lab span {
-      display: block; text-align: center; min-width: 72px;
+      display: block; text-align: center; min-width: 78px;
       background: #064A31; color: #fff; border: 1px solid #fff;
-      border-radius: 8px; padding: 5px 7px; font-size: 12px; font-weight: 700;
-      line-height: 1.2;
+      border-radius: 8px; padding: 5px 7px; font-size: 12px; font-weight: 700; line-height: 1.2;
     }
     .lab em { display: block; font-style: normal; font-weight: 500; font-size: 11px; opacity: .92; }
     .drop { background: none; border: 0; }
-    .drop i {
-      display: block; width: 14px; height: 14px; border-radius: 50%;
-      border: 2px solid #fff;
-    }
+    .drop i { display: block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; }
     .leaflet-popup-content { margin: 10px 12px; font-size: 14px; }
     .leaflet-popup-content b { color: #064A31; }
-    .leaflet-bottom.leaflet-right { margin-bottom: 8px; }
+    .leyenda {
+      position: absolute; z-index: 1000; left: 10px; bottom: 12px;
+      background: rgba(255,255,255,.92); border-radius: 8px; padding: 6px 8px;
+      font-size: 10px; color: #5C564F; border: 1px solid #d5dbd6;
+    }
+    .leyenda i { display: inline-block; width: 18px; height: 8px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
   </style>
 </head>
 <body>
   <div class="bar">
-    <b>Campo gemelo · 500 ha · La Calera</b>
-    <p>Demostrativo (no es un padrón). Foto Esri de marzo 2022. El zoom se corta para no estirarla.</p>
-    <span class="chip">6.000 kg carne/año</span>
-    <span class="chip">50 EV</span>
-    <span class="chip">Mejorado 1</span>
+    <b class="title">Campo gemelo · 500 ha · La Calera</b>
+    <p class="lead">Demostrativo (no es un padrón). La superficie sigue el relieve SRTM. Tocá un potrero o una solapa verde.</p>
     <div class="fondos" role="tablist" aria-label="Fondo del mapa">
-      <button type="button" class="on" data-fondo="sat" aria-pressed="true">Satélite</button>
-      <button type="button" data-fondo="nombres" aria-pressed="false">Nombres</button>
-      <button type="button" data-fondo="relieve" aria-pressed="false">Relieve</button>
+      <button type="button" class="on" data-fondo="sat">Satélite</button>
+      <button type="button" data-fondo="nombres">Nombres</button>
+      <button type="button" data-fondo="relieve">Relieve</button>
     </div>
+    <div class="usos" role="tablist" aria-label="Tipo de campo">
+      <button type="button" data-uso="monte">Monte</button>
+      <button type="button" data-uso="ganadero">Ganadero</button>
+      <button type="button" data-uso="agricola">Agrícola</button>
+    </div>
+    <div id="panel" class="panel" hidden>
+      <div class="pills" id="pills"></div>
+      <p class="hechos" id="hechos"></p>
+      <div class="aviso" id="aviso" hidden></div>
+      <div class="escenas">
+        <button type="button" class="on" data-esc="actual">Actual</button>
+        <button type="button" data-esc="m1">Mejorado 1</button>
+        <button type="button" data-esc="optimo">Óptimo</button>
+      </div>
+      <div class="grid2">
+        <div><label id="labKg">kg carne / año</label><input id="fKg" type="number" /></div>
+        <div><label>EV en el potrero</label><input id="fEv" type="number" step="0.1" /></div>
+        <div><label>ha / EV</label><input id="fHaEv" type="number" step="0.1" /></div>
+        <div><label>Destete %</label><input id="fDest" type="number" step="0.1" /></div>
+      </div>
+      <label>Mejoras o manejo</label>
+      <textarea id="fMej"></textarea>
+      <label>Agua (fuentes oficiales + predio)</label>
+      <textarea id="fAgua"></textarea>
+      <label>Suelo, vegetación y aptitud (carta INTA)</label>
+      <textarea id="fSuelo"></textarea>
+      <div class="acciones">
+        <button type="button" class="sec" id="btnEstimar">Cargar estimación</button>
+        <button type="button" id="btnGuardar">Guardar</button>
+      </div>
+      <p class="ok" id="msg" hidden></p>
+    </div>
+  </div>
+  <div class="leyenda">
+    <div><i style="background:#1B4D2E"></i>Bajo · más pasto</div>
+    <div><i style="background:#C9A36A"></i>Loma · menos agua</div>
+    Superficie SRTM 30 m · 859–1091 m
   </div>
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="superficie.js"></script>
   <script>
-    const MAX_Z = 17;
-    const map = L.map("map", {
-      zoomControl: true,
-      attributionControl: true,
-      minZoom: 13,
-      maxZoom: MAX_Z
-    });
-    map.zoomControl.setPosition("bottomright");
-    map.createPane("fondo");
-    map.getPane("fondo").style.zIndex = 200;
-    map.createPane("rotulos");
-    map.getPane("rotulos").style.zIndex = 250;
-
-    const sat = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      {
-        pane: "fondo",
-        attribution: "Imagen Esri WorldView-2 · mar 2022 · FCV UCCuyo",
-        maxZoom: MAX_Z,
-        maxNativeZoom: 17
+    const KEY = "gemelo-500ha-carga-v1";
+    const TERRITORIO = {
+      suelo: "Planicies pedemontanas occidentales. Suelos Ortentes/Ortides (Peña Zubiate et al., 1998, carta INTA 1:800.000). Limitaciones: clima ~300 mm, erosión hídrica, baja reserva de agua. Aptitud VI–VII: ganadera / silvopastoril, no grano de renta.",
+      vegetacion: "Espinal de quebracho blanco y algarrobo, con jarillal en lomas más secas (INTA Región III / carta de vegetación).",
+      otbn: "Ley 26.331. Categoría II (amarillo) predominante: uso sustentable. No se modela desmonte. El óptimo de monte es MBGI, no campo limpio.",
+      lluvia: "REM La Calera, 6/9/2026: 307,7 mm año a la fecha; 0 mm en 30 días. Promedio INTA Región III ~300 mm.",
+      aguaRed: "San Luis Agua: Dique Nogolí 25,8 hm³ (cuenca, sin toma directa del módulo). Ramales Recodo Sur / La Aguada / Santa Rita no abastecen este demostrativo. Agua predial: represas + molino. AURA: no recortar bebida.",
+      recarga: "INA / INTA: recarga estival por lechos de sierra y tormentas. Sin río permanente en el módulo."
+    };
+    const USOS = {
+      monte: {
+        nombre: "Campo de monte",
+        actual: { haEV: 14, destete: 58, kgHa: 4.2, mej: "Cría continua bajo bosque. Destete bajo. Sin descansos." },
+        m1: { haEV: 12, destete: 78, kgHa: 8, mej: "MBGI: potreros, descansos, sanitario y agua cerca. Sin desmonte." },
+        optimo: { haEV: 10, destete: 85, kgHa: 12, mej: "Techo INTA M1 bajo bosque. Buffel no: Ley 26.331." }
+      },
+      ganadero: {
+        nombre: "Campo ganadero",
+        actual: { haEV: 12.6, destete: 62, kgHa: 5.9, mej: "Pastizal/bosque, manejo continuo. INTA Región III actual." },
+        m1: { haEV: 10, destete: 85, kgHa: 12, mej: "Bajos insumos INTA: descansos, potreros, equilibrio oferta-demanda, sanitario." },
+        optimo: { haEV: 5.9, destete: 90, kgHa: 23.5, mej: "M2: lo anterior + ~30 % buffel solo si OTBN lo permite y hay bajo. Si no, techo = M1." }
+      },
+      agricola: {
+        nombre: "Campo limpio agrícola",
+        actual: { haEV: 20, destete: 0, kgHa: 0, kgHaMS: 800, mej: "Forraje residual / rastrojo. CNA 2018: ~50 ha agrícolas en todo Belgrano. No soja." },
+        m1: { haEV: 8, destete: 0, kgHa: 0, kgHaMS: 2500, mej: "Verdeo o sorgo forrajero en bajos con agua. No se desmonta para llegar acá." },
+        optimo: { haEV: 6, destete: 0, kgHa: 0, kgHaMS: 4500, mej: "Pastura perenne (digitaria / llorón) en suelo de bajo. No grano de renta ni soja." }
       }
-    );
-    const rotulos = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}",
-      {
-        pane: "rotulos",
-        maxZoom: MAX_Z,
-        maxNativeZoom: 13,
-        opacity: 0.92
-      }
-    );
-    const relieve = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
-      {
-        pane: "fondo",
-        attribution: "Relieve Esri · FCV UCCuyo (demostrativo)",
-        maxZoom: MAX_Z,
-        maxNativeZoom: 16
-      }
-    );
-
-    function setFondo(id) {
-      if (map.hasLayer(sat)) map.removeLayer(sat);
-      if (map.hasLayer(relieve)) map.removeLayer(relieve);
-      if (map.hasLayer(rotulos)) map.removeLayer(rotulos);
-      if (id === "relieve") relieve.addTo(map);
-      else {
-        sat.addTo(map);
-        if (id === "nombres") rotulos.addTo(map);
-      }
-      document.querySelectorAll(".fondos button").forEach((b) => {
-        const on = b.dataset.fondo === id;
-        b.classList.toggle("on", on);
-        b.setAttribute("aria-pressed", on ? "true" : "false");
-      });
-    }
-    setFondo("sat");
-    document.querySelector(".fondos").addEventListener("click", (ev) => {
-      const b = ev.target.closest("button[data-fondo]");
-      if (b) setFondo(b.dataset.fondo);
-    });
-
+    };
     const potreros = [
-      { n:1, kg:998, ev:8.3, z:999, dist:236, agua:"A2 Casco", color:"#1B7A4A",
-        ring:[[-32.920000,-66.895000],[-32.920000,-66.886082],[-32.911017,-66.886082],[-32.911017,-66.895000]] },
-      { n:2, kg:974, ev:8.1, z:1021, dist:400, agua:"A4 Centro", color:"#2E9A5C",
-        ring:[[-32.920000,-66.886082],[-32.920000,-66.877164],[-32.911017,-66.877164],[-32.911017,-66.886082]] },
-      { n:3, kg:972, ev:8.1, z:1023, dist:600, agua:"A5 Este", color:"#C4A035",
-        ring:[[-32.920000,-66.877164],[-32.920000,-66.868246],[-32.911017,-66.868246],[-32.911017,-66.877164]] },
-      { n:4, kg:971, ev:8.1, z:1023, dist:400, agua:"A3 Oeste", color:"#3D6B4F",
-        ring:[[-32.911017,-66.895000],[-32.911017,-66.886082],[-32.902034,-66.886082],[-32.902034,-66.895000]] },
-      { n:5, kg:1001, ev:8.3, z:995, dist:193, agua:"A1 Represa", color:"#0E7C8B",
-        ring:[[-32.911017,-66.886082],[-32.911017,-66.877164],[-32.902034,-66.877164],[-32.902034,-66.886082]] },
-      { n:6, kg:1084, ev:9.0, z:917, dist:400, agua:"A5 Este", color:"#6B8F3A",
-        ring:[[-32.911017,-66.877164],[-32.911017,-66.868246],[-32.902034,-66.868246],[-32.902034,-66.877164]] }
+      { n:1, ha:83.3, z:999, dist:236, agua:"A2 Casco", color:"#1B7A4A",
+        ring:[[-32.920000,-66.895000],[-32.920000,-66.886082],[-32.911017,-66.886082],[-32.911017,-66.895000]],
+        sitio:"Loma-pedimento. Ortentes, erosión hídrica, jarilla/espinal." },
+      { n:2, ha:83.3, z:1021, dist:400, agua:"A4 Centro", color:"#2E9A5C",
+        ring:[[-32.920000,-66.886082],[-32.920000,-66.877164],[-32.911017,-66.877164],[-32.911017,-66.886082]],
+        sitio:"Loma alta. Menos reserva de agua. Espinal abierto." },
+      { n:3, ha:83.3, z:1023, dist:600, agua:"A5 Este", color:"#C4A035",
+        ring:[[-32.920000,-66.877164],[-32.920000,-66.868246],[-32.911017,-66.868246],[-32.911017,-66.877164]],
+        sitio:"Loma este. Agua a 600 m: baja la cosecha de pasto si no se acerca bebida." },
+      { n:4, ha:83.3, z:1023, dist:400, agua:"A3 Oeste", color:"#3D6B4F",
+        ring:[[-32.911017,-66.895000],[-32.911017,-66.886082],[-32.902034,-66.886082],[-32.902034,-66.895000]],
+        sitio:"Loma oeste. Suelo somero, aptitud ganadera." },
+      { n:5, ha:83.3, z:995, dist:193, agua:"A1 Represa", color:"#0E7C8B",
+        ring:[[-32.911017,-66.886082],[-32.911017,-66.877164],[-32.902034,-66.877164],[-32.902034,-66.886082]],
+        sitio:"Media loma junto a la represa. Mejor acceso al agua oficial-predial." },
+      { n:6, ha:83.3, z:917, dist:400, agua:"A5 Este", color:"#6B8F3A",
+        ring:[[-32.911017,-66.877164],[-32.911017,-66.868246],[-32.902034,-66.868246],[-32.902034,-66.877164]],
+        sitio:"Bajo (917 m). Mejor humedad edáfica. Único lote donde un agrícola limpio histórico tendría sentido; no desmontar." }
     ];
     const aguadas = [
       { id:"A1", name:"A1 Represa", lat:-32.908142, lon:-66.882372, color:"#1E6BB8" },
@@ -142,57 +174,264 @@
       { id:"A4", name:"A4 Centro", lat:-32.911915, lon:-66.881623, color:"#6B3FA0" },
       { id:"A5", name:"A5 Este", lat:-32.910119, lon:-66.872527, color:"#D35400" }
     ];
+    const zmin = 859, zmax = 1091;
+    const COLOR_USO = { monte:"#1B4D2E", ganadero:"#2E9A5C", agricola:"#C4A035" };
+
+    function loadStore() {
+      try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; }
+    }
+    function saveStore(s) { localStorage.setItem(KEY, JSON.stringify(s)); }
+    const store = loadStore();
+    potreros.forEach((p) => {
+      if (!store[p.n]) store[p.n] = { uso: "ganadero" };
+    });
+
+    function factor(p) {
+      let f = 1.12 - 0.24 * ((p.z - zmin) / (zmax - zmin));
+      if (p.dist > 800) f *= 0.82;
+      else if (p.dist > 400) f *= 0.92;
+      return f;
+    }
+    function estimar(p, uso, esc) {
+      const base = USOS[uso][esc];
+      const f = factor(p);
+      let kgHa = base.kgHa * f;
+      if (uso === "ganadero" && esc === "optimo" && p.z > 980) {
+        kgHa = USOS.ganadero.m1.kgHa * f;
+      }
+      const kg = uso === "agricola" ? Math.round((base.kgHaMS || 0) * p.ha * f) : Math.round(kgHa * p.ha);
+      const ev = uso === "agricola" ? 0 : +(p.ha / base.haEV).toFixed(1);
+      const suelo = p.sitio + " " + TERRITORIO.suelo + " Vegetación: " + TERRITORIO.vegetacion;
+      const agua = "Aguada " + p.agua + " a " + p.dist + " m. " + TERRITORIO.lluvia + " " + TERRITORIO.aguaRed + " " + TERRITORIO.recarga;
+      return {
+        kg, ev, haEV: base.haEV, destete: base.destete, mej: base.mej, agua, suelo,
+        agricola: uso === "agricola"
+      };
+    }
+    function dato(p, uso, esc) {
+      const slot = (store[p.n][uso] || {})[esc];
+      return slot || estimar(p, uso, esc);
+    }
+
+    const MAX_Z = 17;
+    const map = L.map("map", { zoomControl: true, minZoom: 13, maxZoom: MAX_Z });
+    map.zoomControl.setPosition("bottomright");
+    map.createPane("fondo"); map.getPane("fondo").style.zIndex = 200;
+    map.createPane("rotulos"); map.getPane("rotulos").style.zIndex = 250;
+    map.createPane("suelo"); map.getPane("suelo").style.zIndex = 350;
+    map.createPane("alambrado"); map.getPane("alambrado").style.zIndex = 450;
+
+    const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      pane: "fondo", attribution: "Esri WV02 mar 2022 · SRTM · INTA · FCV UCCuyo", maxZoom: MAX_Z, maxNativeZoom: 17
+    });
+    const rotulos = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}", {
+      pane: "rotulos", maxZoom: MAX_Z, maxNativeZoom: 13, opacity: 0.92
+    });
+    const topo = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
+      pane: "fondo", attribution: "Relieve Esri · FCV UCCuyo", maxZoom: MAX_Z, maxNativeZoom: 16
+    });
+    function setFondo(id) {
+      if (map.hasLayer(sat)) map.removeLayer(sat);
+      if (map.hasLayer(topo)) map.removeLayer(topo);
+      if (map.hasLayer(rotulos)) map.removeLayer(rotulos);
+      if (id === "relieve") topo.addTo(map);
+      else { sat.addTo(map); if (id === "nombres") rotulos.addTo(map); }
+      document.querySelectorAll(".fondos button").forEach((b) => b.classList.toggle("on", b.dataset.fondo === id));
+    }
+    setFondo("sat");
+    document.querySelector(".fondos").addEventListener("click", (ev) => {
+      const b = ev.target.closest("button[data-fondo]");
+      if (b) setFondo(b.dataset.fondo);
+    });
+
+    const S = window.SUPERFICIE;
+    const g = S.grid;
+    const cellLayer = L.layerGroup().addTo(map);
+    function colorZ(z) {
+      const t = (z - g.zmin) / (g.zmax - g.zmin);
+      const stops = [[27,77,46],[61,122,60],[196,181,106],[201,163,106],[216,201,180]];
+      const x = t * (stops.length - 1);
+      const i = Math.min(Math.floor(x), stops.length - 2);
+      const u = x - i;
+      const a = stops[i], b = stops[i + 1];
+      const rgb = a.map((v, k) => Math.round(v + (b[k] - v) * u));
+      return "rgb(" + rgb.join(",") + ")";
+    }
+    for (let i = 0; i < g.ny - 1; i++) {
+      for (let j = 0; j < g.nx - 1; j++) {
+        const zc = 0.25 * (g.z[i][j] + g.z[i][j + 1] + g.z[i + 1][j] + g.z[i + 1][j + 1]);
+        const lat0 = g.south + i * g.dlat, lon0 = g.west + j * g.dlon;
+        L.polygon(
+          [[lat0, lon0], [lat0, lon0 + g.dlon], [lat0 + g.dlat, lon0 + g.dlon], [lat0 + g.dlat, lon0]],
+          { pane: "suelo", color: colorZ(zc), weight: 0, fillColor: colorZ(zc), fillOpacity: 0.55, interactive: false }
+        ).addTo(cellLayer);
+      }
+    }
+    L.imageOverlay(S.png, [[g.south, g.west], [g.north, g.east]], {
+      pane: "suelo", opacity: 0.7, interactive: false
+    }).addTo(map);
+    S.contours.forEach((c) => {
+      L.polyline(c.latlngs, {
+        pane: "suelo", color: c.z % 40 === 0 ? "#fff8e8" : "rgba(255,255,255,.45)",
+        weight: c.z % 40 === 0 ? 1.6 : 0.8, interactive: false
+      }).addTo(map);
+    });
+
+    const group = L.featureGroup().addTo(map);
+    const polyByN = {};
+    const labByN = {};
+    let usoSel = null, escSel = "actual", pSel = 1;
 
     function centro(ring) {
       const lat = ring.reduce((s, p) => s + p[0], 0) / ring.length;
       const lon = ring.reduce((s, p) => s + p[1], 0) / ring.length;
       return [lat, lon];
     }
-
-    const group = L.featureGroup().addTo(map);
+    function etiqueta(p) {
+      const uso = store[p.n].uso;
+      const d = dato(p, uso, escSel);
+      const extra = d.agricola ? (d.kg + " kg MS") : (d.kg + " kg");
+      return "P" + p.n + " · " + USOS[uso].nombre.split(" ").pop() + "<em>" + extra + "</em>";
+    }
+    function pintarPotrero(p) {
+      const uso = store[p.n].uso;
+      const col = COLOR_USO[uso];
+      if (polyByN[p.n]) polyByN[p.n].setStyle({ fillColor: col, color: "#fff" });
+      if (labByN[p.n]) {
+        labByN[p.n].setIcon(L.divIcon({
+          className: "lab",
+          html: "<span>" + etiqueta(p) + "</span>",
+          iconSize: [92, 40],
+          iconAnchor: [46, 20]
+        }));
+      }
+    }
 
     potreros.forEach((p) => {
-      L.polygon(p.ring, {
-        color: "#fff", weight: 3, fillColor: p.color, fillOpacity: 0.16
+      const poly = L.polygon(p.ring, {
+        pane: "alambrado", color: "#fff", weight: 3, fillColor: COLOR_USO[store[p.n].uso], fillOpacity: 0.18
       }).addTo(group);
       L.polygon(p.ring, {
-        color: p.color, weight: 1.6, dashArray: "10 6", fill: false
+        pane: "alambrado", color: COLOR_USO[store[p.n].uso], weight: 1.5, dashArray: "10 6", fill: false
       }).addTo(group);
-
+      polyByN[p.n] = poly;
       const c = centro(p.ring);
       const agua = aguadas.find((a) => p.agua.indexOf(a.id) === 0);
       if (agua) {
         L.polyline([c, [agua.lat, agua.lon]], {
-          color: agua.color, weight: 2, dashArray: "5 7", opacity: 0.95
+          pane: "alambrado", color: agua.color, weight: 2, dashArray: "5 7", opacity: 0.9
         }).addTo(group);
       }
-
-      L.marker(c, {
-        icon: L.divIcon({
-          className: "lab",
-          html: "<span>P" + p.n + "<em>" + p.kg + " kg/año</em></span>",
-          iconSize: [78, 40],
-          iconAnchor: [39, 20]
-        })
-      }).bindPopup(
-        "<b>Potrero P" + p.n + " · 83 ha</b><br>" +
-        "<b>" + p.kg + " kg carne/año</b> · " + p.ev + " EV<br>" +
-        "Cota " + p.z + " m<br>Agua: " + p.agua + " a <b>" + p.dist + " m</b>"
-      ).addTo(group);
+      const lab = L.marker(c, {
+        icon: L.divIcon({ className: "lab", html: "<span>" + etiqueta(p) + "</span>", iconSize: [92, 40], iconAnchor: [46, 20] })
+      }).addTo(group);
+      labByN[p.n] = lab;
+      function abrir() { abrirPanel(store[p.n].uso, p.n); }
+      poly.on("click", abrir);
+      lab.on("click", abrir);
     });
-
     aguadas.forEach((a) => {
       L.marker([a.lat, a.lon], {
-        icon: L.divIcon({
-          className: "drop",
-          html: "<i style='background:" + a.color + "'></i>",
-          iconSize: [14, 14],
-          iconAnchor: [7, 7]
-        })
-      }).bindPopup("<b>" + a.name + "</b><br>Aguada del gemelo M1. No se recorta bebida.").addTo(group);
+        icon: L.divIcon({ className: "drop", html: "<i style='background:" + a.color + "'></i>", iconSize: [14, 14], iconAnchor: [7, 7] })
+      }).bindPopup("<b>" + a.name + "</b><br>Aguada del gemelo. No se recorta bebida. San Luis Agua no toma aquí; agua predial + cuenca Nogolí.").addTo(group);
+    });
+    map.fitBounds(group.getBounds(), { padding: [130, 36], maxZoom: 15 });
+
+    const panel = document.getElementById("panel");
+    const pills = document.getElementById("pills");
+    potreros.forEach((p) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = "P" + p.n;
+      b.dataset.n = p.n;
+      b.addEventListener("click", () => abrirPanel(usoSel || store[p.n].uso, p.n));
+      pills.appendChild(b);
     });
 
-    map.fitBounds(group.getBounds(), { padding: [120, 36], maxZoom: 15 });
+    function llenarForm(p, uso, esc) {
+      const d = dato(p, uso, esc);
+      document.getElementById("labKg").textContent = d.agricola ? "kg MS forraje / año" : "kg carne / año";
+      document.getElementById("fKg").value = d.kg;
+      document.getElementById("fEv").value = d.ev;
+      document.getElementById("fHaEv").value = d.haEV;
+      document.getElementById("fDest").value = d.destete;
+      document.getElementById("fMej").value = d.mej;
+      document.getElementById("fAgua").value = d.agua;
+      document.getElementById("fSuelo").value = d.suelo;
+      const av = document.getElementById("aviso");
+      if (uso === "agricola") {
+        av.hidden = false;
+        av.textContent = "Campo limpio agrícola solo si ya está desmontado de hecho. OTBN / Ley 26.331: no se propone abrir monte. No soja. CNA 2018: la agricultura en Belgrano es residual (~50 ha en todo el departamento).";
+      } else if (uso === "monte") {
+        av.hidden = false;
+        av.textContent = "Monte: el óptimo es MBGI (bosque con ganadería integrada). No hay escenario de desmonte.";
+      } else {
+        av.hidden = p.z <= 980;
+        av.textContent = "En loma, el Óptimo ganadero se recorta a Mejorado 1: el buffel (M2) pide bajo y permiso OTBN.";
+      }
+      document.getElementById("hechos").innerHTML =
+        "<b>P" + p.n + " · 83 ha · " + p.z + " m</b> · agua " + p.agua + " a " + p.dist + " m.<br>" +
+        TERRITORIO.otbn + "<br>" + TERRITORIO.lluvia;
+    }
+    function abrirPanel(uso, n) {
+      usoSel = uso;
+      pSel = n;
+      store[n].uso = uso;
+      panel.hidden = false;
+      document.querySelectorAll(".usos button").forEach((b) => b.classList.toggle("on", b.dataset.uso === uso));
+      document.querySelectorAll(".pills button").forEach((b) => b.classList.toggle("on", Number(b.dataset.n) === n));
+      document.querySelectorAll(".escenas button").forEach((b) => b.classList.toggle("on", b.dataset.esc === escSel));
+      llenarForm(potreros.find((p) => p.n === n), uso, escSel);
+      pintarPotrero(potreros.find((p) => p.n === n));
+      map.invalidateSize();
+    }
+    document.querySelector(".usos").addEventListener("click", (ev) => {
+      const b = ev.target.closest("button[data-uso]");
+      if (!b) return;
+      if (usoSel === b.dataset.uso && !panel.hidden) {
+        panel.hidden = true;
+        usoSel = null;
+        document.querySelectorAll(".usos button").forEach((x) => x.classList.remove("on"));
+        return;
+      }
+      abrirPanel(b.dataset.uso, pSel);
+    });
+    document.querySelector(".escenas").addEventListener("click", (ev) => {
+      const b = ev.target.closest("button[data-esc]");
+      if (!b) return;
+      escSel = b.dataset.esc;
+      document.querySelectorAll(".escenas button").forEach((x) => x.classList.toggle("on", x === b));
+      llenarForm(potreros.find((p) => p.n === pSel), store[pSel].uso, escSel);
+      potreros.forEach(pintarPotrero);
+    });
+    document.getElementById("btnEstimar").addEventListener("click", () => {
+      const p = potreros.find((x) => x.n === pSel);
+      const uso = store[pSel].uso;
+      if (!store[pSel][uso]) store[pSel][uso] = {};
+      store[pSel][uso][escSel] = estimar(p, uso, escSel);
+      llenarForm(p, uso, escSel);
+      pintarPotrero(p);
+      document.getElementById("msg").hidden = false;
+      document.getElementById("msg").textContent = "Estimación cargada con INTA, REM, San Luis Agua, carta de suelos y SRTM. Se puede editar.";
+    });
+    document.getElementById("btnGuardar").addEventListener("click", () => {
+      const uso = store[pSel].uso;
+      if (!store[pSel][uso]) store[pSel][uso] = {};
+      store[pSel][uso][escSel] = {
+        kg: Number(document.getElementById("fKg").value),
+        ev: Number(document.getElementById("fEv").value),
+        haEV: Number(document.getElementById("fHaEv").value),
+        destete: Number(document.getElementById("fDest").value),
+        mej: document.getElementById("fMej").value,
+        agua: document.getElementById("fAgua").value,
+        suelo: document.getElementById("fSuelo").value,
+        agricola: uso === "agricola"
+      };
+      saveStore(store);
+      pintarPotrero(potreros.find((p) => p.n === pSel));
+      document.getElementById("msg").hidden = false;
+      document.getElementById("msg").textContent = "Guardado en este teléfono/PC. No sube al servidor.";
+    });
   </script>
 </body>
 </html>
