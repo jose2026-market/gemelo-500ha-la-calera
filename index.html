@@ -46,17 +46,19 @@
     }
     .bar b.title { color: #064A31; font-size: 15px; display: block; }
     .bar .lead { margin: 3px 0 0; font-size: 12px; color: #5C564F; line-height: 1.35; }
-    .fondos { display: flex; gap: 6px; margin-top: 8px; flex-wrap: nowrap; }
+    .fondos { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .fondos button { flex: 1; min-width: 0; }
     button, select, input, textarea {
       font-family: inherit; font-size: 12px;
     }
     .modulos, .escenas, .pills, .acciones { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
     .fondos button, .nombres-fila button, .modulos button, .escenas button, .pills button, .acciones button, .caja-nombre button {
-      border-radius: 6px; font-weight: 600; padding: 4px 5px;
+      border-radius: 6px; font-weight: 600; padding: 8px 10px;
       border: 1px solid #c5cdc8; background: #f4f6f5; color: #1C2B26; font-size: 11px;
+      white-space: normal; overflow-wrap: anywhere; line-height: 1.25; min-width: 0;
     }
-    .modulos button, .escenas button { flex: 1; min-width: 0; }
+    .bar .escenas, .bar .acciones { flex-direction: column; }
+    .bar .escenas button, .bar .acciones button { width: 100%; flex: none; }
     .pills button { min-width: 36px; padding: 4px 6px; }
     .modulos button { background: #E7F3EC; color: #064A31; border-color: #9FCBB0; }
     .fondos button.on, .nombres-fila button.on, .modulos button.on, .escenas button.on, .pills button.on {
@@ -109,23 +111,58 @@
       position: absolute; z-index: 1100;
       top: calc(58px + env(safe-area-inset-top, 0px));
       left: calc(10px + env(safe-area-inset-left, 0px));
-      width: min(230px, 72vw);
+      width: min(250px, 78vw);
+      max-height: calc(100dvh - 160px);
+      overflow: auto;
     }
     .desplegables details {
       background: rgba(255,255,255,.96); border: 1px solid #d5dbd6;
-      border-radius: 8px; margin-bottom: 6px;
+      border-radius: 8px; margin-bottom: 6px; overflow: hidden;
     }
     .desplegables summary {
       list-style: none; cursor: pointer; font-weight: 700; font-size: 12px;
-      color: #0D5C2C; padding: 8px 10px;
+      color: #0D5C2C; padding: 8px 28px 8px 10px; position: relative;
+      white-space: normal; overflow-wrap: anywhere; line-height: 1.25;
     }
     .desplegables summary::-webkit-details-marker { display: none; }
-    .desplegables .cuerpo { padding: 0 8px 8px; }
-    .desplegables .hint { margin: 0 0 6px; font-size: 10px; color: #5C564F; }
+    .desplegables summary::after {
+      content: "+"; position: absolute; right: 10px; top: 8px; font-weight: 800;
+    }
+    .desplegables details[open] > summary::after { content: "–"; }
+    .desplegables .cuerpo { padding: 0 8px 8px; overflow: visible; }
+    .desplegables .hint { margin: 0 0 6px; font-size: 10px; color: #5C564F; line-height: 1.3; }
+    .desplegables .fondos,
+    .desplegables .modulos,
+    .desplegables .escenas,
+    .desplegables .capas {
+      display: flex; flex-direction: column; flex-wrap: nowrap; gap: 4px; margin-top: 0;
+    }
+    .desplegables .fondos button,
+    .desplegables .modulos button,
+    .desplegables .escenas button,
+    .desplegables .capas button {
+      width: 100%; flex: none; min-width: 0;
+      white-space: normal; text-align: left; line-height: 1.25;
+      padding: 8px 10px; overflow-wrap: anywhere;
+    }
     .desplegables .ficha-oficial, .desplegables .leyenda {
       position: static; max-width: none; left: auto; bottom: auto;
-      margin-top: 6px; background: #f4f6f5;
+      margin-top: 6px; background: #f4f6f5; overflow-wrap: anywhere;
+      font-size: 11px; line-height: 1.35;
     }
+    .desplegables details.sub {
+      border: 1px solid #e2e8e4; background: #f4f6f5; margin: 0 0 4px;
+    }
+    .desplegables details.sub > summary {
+      font-size: 12px; padding: 7px 26px 7px 10px;
+    }
+    .desplegables details.sub[open] > summary { background: #E7F3EC; }
+    .desplegables .capa-btn {
+      width: 100%; text-align: left; margin-top: 4px;
+      border-radius: 6px; font-weight: 700; padding: 8px 10px;
+      border: 1px solid #c5cdc8; background: #fff; color: #0D5C2C;
+    }
+    .desplegables .capa-btn.on { background: #0D5C2C; color: #fff; border-color: #0D5C2C; }
     .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
     .ficha-oficial b { color: #064A31; }
     .ficha-oficial[hidden] { display: none; }
@@ -411,23 +448,56 @@
       <details id="dropCapas">
         <summary>Capas</summary>
         <div class="cuerpo">
-          <div class="capas fondos" role="group" aria-label="Capas oficiales">
+          <details class="sub" data-capa-drop="suelos">
+            <summary>Suelos</summary>
+            <div class="cuerpo">
+              <button type="button" class="capa-btn" data-capa="suelos">Ver en el mapa</button>
+              <div class="ficha-oficial" id="fichaSuelos">INTA · Peña Zubiate 1:500.000 · UCSV 4 Torriortente típico · aptitud VII · pastoreo extensivo.</div>
+            </div>
+          </details>
+          <details class="sub" data-capa-drop="otbn">
+            <summary>OTBN</summary>
+            <div class="cuerpo">
+              <button type="button" class="capa-btn" data-capa="otbn">Ver en el mapa</button>
+              <div class="ficha-oficial">Ley 26.331: no se desmonta. Óptimo de monte = bosque con ganadería integrada.</div>
+            </div>
+          </details>
+          <details class="sub" data-capa-drop="agua">
+            <summary>Agua</summary>
+            <div class="cuerpo">
+              <button type="button" class="capa-btn" data-capa="agua">Ver en el mapa</button>
+              <div class="ficha-oficial">5 aguadas. Círculo 400 m = alcance de cría. No se recorta bebida.</div>
+            </div>
+          </details>
+          <div class="capas fondos" hidden>
             <button type="button" data-capa="suelos">Suelos</button>
             <button type="button" data-capa="otbn">OTBN</button>
             <button type="button" data-capa="agua">Agua</button>
           </div>
-          <div class="ficha-oficial" id="fichaOficial" hidden>
-            <b>Carta de suelos INTA · Peña Zubiate 1:500.000</b><br>
-            UCSV 4 · Sierras del complejo sedimentario de San Luis<br>
-            Torriortente típico · aptitud VII · pastoreo extensivo · franco arenoso a gravilloso
-          </div>
+          <div class="ficha-oficial" id="fichaOficial" hidden></div>
         </div>
       </details>
       <details id="dropManejo">
         <summary>Manejo</summary>
         <div class="cuerpo">
-          <p class="hint">Actual se lee. Mejorado 1 y Óptimo se cargan.</p>
-          <div class="modulos" role="tablist" aria-label="Módulo de decisión">
+          <p class="hint">Toque una solapa. Actual se lee; Mejorado 1 y Óptimo se cargan.</p>
+          <details class="sub" data-mod-drop="pastoreo" open>
+            <summary>Pastoreo</summary>
+            <div class="cuerpo"><p class="hint">Carga, días de pasto y descanso del potrero.</p></div>
+          </details>
+          <details class="sub" data-mod-drop="nutricion">
+            <summary>Nutrición</summary>
+            <div class="cuerpo"><p class="hint">Condición corporal, forraje y distancia al agua.</p></div>
+          </details>
+          <details class="sub" data-mod-drop="reproduccion">
+            <summary>Reproducción</summary>
+            <div class="cuerpo"><p class="hint">Destete, preñez y parición cerca de la aguada.</p></div>
+          </details>
+          <details class="sub" data-mod-drop="agua">
+            <summary>Agua</summary>
+            <div class="cuerpo"><p class="hint">Aguada que usa el lote y si alcanza para cría.</p></div>
+          </details>
+          <div class="modulos" hidden>
             <button type="button" class="on" data-mod="pastoreo">Pastoreo</button>
             <button type="button" data-mod="nutricion">Nutrición</button>
             <button type="button" data-mod="reproduccion">Reproducción</button>
@@ -834,8 +904,11 @@
         if (on && !map.hasLayer(lyr)) lyr.addTo(map);
         if (!on && map.hasLayer(lyr)) map.removeLayer(lyr);
       });
-      document.querySelectorAll(".capas button").forEach((b) => {
-        if (b.dataset.capa === id) b.classList.toggle("on", on);
+      document.querySelectorAll(".capas button, .capa-btn").forEach((b) => {
+        if (b.dataset.capa === id) {
+          b.classList.toggle("on", on);
+          if (b.classList.contains("capa-btn")) b.textContent = on ? "Ocultar del mapa" : "Ver en el mapa";
+        }
       });
       actualizarFichaOficial();
       if (refresh) llenar();
@@ -1323,7 +1396,7 @@
       llenar();
       const drop = document.getElementById("dropLote");
       if (drop && document.body.classList.contains("vista-visor")) {
-        document.querySelectorAll(".desplegables details").forEach((o) => { o.open = o === drop; });
+        document.querySelectorAll("#desplegables > details").forEach((o) => { o.open = o === drop; });
         drop.open = true;
       }
       if (conPanel && !esMovil()) setPanel(true);
@@ -1564,10 +1637,29 @@
         }
       });
     });
-    document.querySelectorAll(".desplegables details").forEach((d) => {
+    document.querySelectorAll("#desplegables > details").forEach((d) => {
       d.addEventListener("toggle", () => {
         if (!d.open) return;
-        document.querySelectorAll(".desplegables details").forEach((o) => { if (o !== d) o.open = false; });
+        document.querySelectorAll("#desplegables > details").forEach((o) => { if (o !== d) o.open = false; });
+      });
+    });
+    document.querySelectorAll("[data-capa-drop]").forEach((d) => {
+      d.addEventListener("toggle", () => {
+        if (!d.open) return;
+        document.querySelectorAll("[data-capa-drop]").forEach((o) => { if (o !== d) o.open = false; });
+      });
+    });
+    document.querySelectorAll(".capa-btn").forEach((b) => {
+      b.addEventListener("click", () => setCapa(b.dataset.capa, !capaEncendida(b.dataset.capa), true));
+    });
+    document.querySelectorAll("[data-mod-drop]").forEach((d) => {
+      d.addEventListener("toggle", () => {
+        if (!d.open) return;
+        document.querySelectorAll("[data-mod-drop]").forEach((o) => { if (o !== d) o.open = false; });
+        modSel = d.dataset.modDrop;
+        document.querySelectorAll(".modulos button").forEach((x) => x.classList.toggle("on", x.dataset.mod === modSel));
+        pintarCampos();
+        refrescarMapa();
       });
     });
     document.getElementById("btnVerDemo").addEventListener("click", () => mostrarVista("visor"));
@@ -1576,7 +1668,7 @@
       mostrarVista("visor");
       const drop = document.getElementById("dropCapas");
       if (drop) {
-        document.querySelectorAll(".desplegables details").forEach((o) => { o.open = o === drop; });
+        document.querySelectorAll("#desplegables > details").forEach((o) => { o.open = o === drop; });
         drop.open = true;
       }
     });
