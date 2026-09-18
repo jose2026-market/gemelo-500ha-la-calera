@@ -104,11 +104,12 @@
     .drop i { display: block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; }
     .leaflet-popup-content { margin: 10px 12px; font-size: 14px; }
     .leaflet-popup-content b { color: #064A31; }
-    .nombres-fila { margin-top: 8px; }
-    .nombres-fila button { width: 100%; }
+    .nombres-fila { margin-top: 8px; display: flex; gap: 6px; }
+    .nombres-fila button { flex: 1; width: auto; }
     .caja-nombre { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8e4; }
     .caja-nombre[hidden] { display: none; }
     .caja-nombre button { width: 100%; margin-top: 8px; background: #064A31; color: #fff; border-color: #064A31; }
+    .caja-nombre textarea { min-height: 64px; font-size: 12px; }
     .cartel-nombre {
       position: absolute; z-index: 900; top: calc(12px + env(safe-area-inset-top, 0px));
       left: 86px; right: 54px;
@@ -150,11 +151,31 @@
     <p class="lead">Las solapas de pastoreo, nutrición y reproducción están sobre el mapa. Acá se cargan y se guardan los lotes. Google Earth solo muestra el semáforo.</p>
     <div class="nombres-fila">
       <button type="button" id="btnNombres" aria-expanded="false">Nombres</button>
+      <button type="button" id="btnMiCampo" aria-expanded="false">Mi campo</button>
     </div>
     <div id="cajaNombre" class="caja-nombre" hidden>
       <label for="fNombreCampo">Nombre del campo</label>
       <input id="fNombreCampo" type="text" placeholder="Ej. Establecimiento La Calera" autocomplete="off" />
       <button type="button" id="btnCargarNombre">Cargar nombre</button>
+    </div>
+    <div id="cajaCampo" class="caja-nombre" hidden>
+      <p class="aviso">Un punto no es el padrón. Para ver el satélite alcanza latitud y longitud. Para dibujar el límite, pegue las esquinas. Las solapas y el INTA se aplican igual.</p>
+      <div class="grid2">
+        <div>
+          <label for="fLat">Latitud</label>
+          <input id="fLat" type="text" inputmode="decimal" placeholder="-32.9110" autocomplete="off" />
+        </div>
+        <div>
+          <label for="fLon">Longitud</label>
+          <input id="fLon" type="text" inputmode="decimal" placeholder="-66.8816" autocomplete="off" />
+        </div>
+      </div>
+      <label for="fHaCampo">Superficie (ha)</label>
+      <input id="fHaCampo" type="number" step="1" min="20" max="20000" value="500" />
+      <label for="fLimites">Límites opcionales (una esquina por línea: lat, lon)</label>
+      <textarea id="fLimites" placeholder="-32.9200, -66.8950&#10;-32.9200, -66.8682&#10;-32.9020, -66.8682&#10;-32.9020, -66.8950"></textarea>
+      <button type="button" id="btnVerCampo">Ver mi campo con INTA</button>
+      <button type="button" id="btnDemoCalera" class="sec" style="background:#f4f6f5;color:#064A31;margin-top:6px">Volver al demostrativo La Calera</button>
     </div>
     <div class="modulos" role="tablist" aria-label="Módulo de decisión">
       <button type="button" class="on" data-mod="pastoreo">Pastoreo</button>
@@ -235,7 +256,7 @@
       lluvia: "REM La Calera (6/9/2026): 307,7 mm en el año; 0 mm en 30 días.",
       agua: "San Luis Agua: Dique Nogolí 25,8 hm³ (cuenca). Este módulo usa represas y molino. No se recorta bebida."
     };
-    const potreros = [
+    let potreros = [
       { n:1, ha:83.3, z:999, dist:236, agua:"A2 Casco",
         ring:[[-32.920000,-66.895000],[-32.920000,-66.886082],[-32.911017,-66.886082],[-32.911017,-66.895000]] },
       { n:2, ha:83.3, z:1021, dist:400, agua:"A4 Centro",
@@ -249,7 +270,7 @@
       { n:6, ha:83.3, z:917, dist:400, agua:"A5 Este",
         ring:[[-32.911017,-66.877164],[-32.911017,-66.868246],[-32.902034,-66.868246],[-32.902034,-66.877164]] }
     ];
-    const aguadas = [
+    let aguadas = [
       { id:"A1", name:"A1 Represa", lat:-32.908142, lon:-66.882372, color:"#1E6BB8" },
       { id:"A2", name:"A2 Casco", lat:-32.916586, lon:-66.888365, color:"#0AA3A3" },
       { id:"A3", name:"A3 Oeste", lat:-32.910119, lon:-66.890719, color:"#2E8B57" },
@@ -264,7 +285,9 @@
       5: { estado:"pastoreando", lote:"Cría · represa", categoria:"Vacas con ternero" },
       6: { estado:"descanso", lote:"Reserva · bajo", categoria:"Reserva de pasto" }
     };
-    const zmin = 859, zmax = 1091;
+    const DEMO_POTREROS = JSON.parse(JSON.stringify(potreros));
+    const DEMO_AGUADAS = JSON.parse(JSON.stringify(aguadas));
+    let esDemoCalera = true;
 
     function loadStore() {
       try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; }
@@ -303,6 +326,7 @@
       5: { paisaje:"Media loma / represa", suelo:"Ortentes, mejor acceso al agua", aptitud:"VI ganadera", bajo:false },
       6: { paisaje:"Bajo (917 m)", suelo:"Ortentes más profundos, mejor humedad", aptitud:"VI; M2 solo si OTBN lo permite", bajo:true }
     };
+    const DEMO_SITIO = JSON.parse(JSON.stringify(SITIO));
     function techoEscena(p, tipo, esc) {
       const f = factor(p);
       const sit = SITIO[p.n];
@@ -315,7 +339,9 @@
           haEV, destete, prenhez: destete + 8, kgHa, fo: Math.round(280 * f), cc: 2.7,
           evMax: +(p.ha / haEV * f).toFixed(1),
           kgMax: Math.round(kgHa * p.ha * f),
-          texto: "Situación actual del lote según INTA Región III y carta de suelos (Ortentes/Ortides, aptitud " + sit.aptitud + "). No se edita: es el diagnóstico.",
+          texto: esDemoCalera
+            ? "Situación actual del lote según INTA Región III y carta de suelos (Ortentes/Ortides, aptitud " + sit.aptitud + "). No se edita: es el diagnóstico."
+            : "Situación actual estimada con INTA Región III sobre " + p.ha.toFixed(1) + " ha de este lote. No es la carta de suelos del padrón. No se edita.",
           bloqueado: true
         };
       }
@@ -543,6 +569,8 @@
       const btn = document.getElementById("btnNombres");
       const abrir = caja.hidden;
       caja.hidden = !abrir;
+      document.getElementById("cajaCampo").hidden = true;
+      document.getElementById("btnMiCampo").classList.remove("on");
       btn.classList.toggle("on", abrir);
       btn.setAttribute("aria-expanded", abrir ? "true" : "false");
       if (abrir) {
@@ -561,6 +589,157 @@
         document.getElementById("btnCargarNombre").click();
       }
     });
+    document.getElementById("btnMiCampo").addEventListener("click", () => {
+      const caja = document.getElementById("cajaCampo");
+      const btn = document.getElementById("btnMiCampo");
+      const abrirCaja = caja.hidden;
+      caja.hidden = !abrirCaja;
+      document.getElementById("cajaNombre").hidden = true;
+      document.getElementById("btnNombres").classList.remove("on");
+      btn.classList.toggle("on", abrirCaja);
+      btn.setAttribute("aria-expanded", abrirCaja ? "true" : "false");
+      setPanel(true);
+    });
+    function parseNum(s) {
+      return Number(String(s || "").trim().replace(",", "."));
+    }
+    function parseLimites(txt) {
+      const out = [];
+      String(txt || "").split(/\n|;/).forEach((line) => {
+        const p = line.trim().replace(/[()]/g, "").split(/[,\s]+/).filter(Boolean);
+        if (p.length >= 2) {
+          const lat = parseNum(p[0]), lon = parseNum(p[1]);
+          if (isFinite(lat) && isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) out.push([lat, lon]);
+        }
+      });
+      return out;
+    }
+    function aplicarSitioGenerico() {
+      for (let n = 1; n <= 6; n++) {
+        SITIO[n] = {
+          paisaje: n === 6 ? "Bajo del módulo (estimado)" : "Loma del módulo (estimado)",
+          suelo: "INTA Región III · sin carta de este padrón",
+          aptitud: "VI–VII ganadera (estimación regional)",
+          bajo: n === 6
+        };
+      }
+    }
+    function armarPotreros(south, west, north, east, haTotal) {
+      const dLat = (north - south) / 2, dLon = (east - west) / 3, haP = haTotal / 6;
+      const grid = [];
+      let n = 1;
+      for (let r = 0; r < 2; r++) {
+        for (let c = 0; c < 3; c++) {
+          const s = south + r * dLat, w = west + c * dLon;
+          grid.push({
+            n: n, ha: +haP.toFixed(1), z: 1000, dist: 400, agua: "A4 Centro",
+            ring: [[s, w], [s, w + dLon], [s + dLat, w + dLon], [s + dLat, w]]
+          });
+          n++;
+        }
+      }
+      return grid;
+    }
+    function armarAguadas(south, west, north, east) {
+      const H = north - south, W = east - west;
+      const pts = [
+        { id: "A1", name: "A1 Represa", fy: 0.66, fx: 0.47, color: "#1E6BB8" },
+        { id: "A2", name: "A2 Casco", fy: 0.19, fx: 0.25, color: "#0AA3A3" },
+        { id: "A3", name: "A3 Oeste", fy: 0.55, fx: 0.16, color: "#2E8B57" },
+        { id: "A4", name: "A4 Centro", fy: 0.45, fx: 0.50, color: "#6B3FA0" },
+        { id: "A5", name: "A5 Este", fy: 0.55, fx: 0.84, color: "#D35400" }
+      ];
+      return pts.map((a) => ({ id: a.id, name: a.name, color: a.color, lat: south + H * a.fy, lon: west + W * a.fx }));
+    }
+    function asignarAgua() {
+      potreros.forEach((p) => {
+        const c = centro(p.ring);
+        let best = aguadas[0], bestD = 1e12;
+        aguadas.forEach((a) => {
+          const d = distM(c, [a.lat, a.lon]);
+          if (d < bestD) { best = a; bestD = d; }
+        });
+        p.agua = best.name;
+        p.dist = Math.round(bestD);
+        p.z = 1000;
+      });
+    }
+    function mostrarRelieveDemo(on) {
+      if (on) {
+        if (!map.hasLayer(capaRelieveLocal)) capaRelieveLocal.addTo(map);
+        if (relieveOverlay) relieveOverlay.setOpacity(0.12);
+      } else {
+        if (map.hasLayer(capaRelieveLocal)) map.removeLayer(capaRelieveLocal);
+        if (relieveOverlay) relieveOverlay.setOpacity(0);
+      }
+    }
+    function cargarCampoProductor() {
+      const lat = parseNum(document.getElementById("fLat").value);
+      const lon = parseNum(document.getElementById("fLon").value);
+      let ha = parseNum(document.getElementById("fHaCampo").value);
+      const ring = parseLimites(document.getElementById("fLimites").value);
+      limiteReal.clearLayers();
+      let south, west, north, east;
+      if (ring.length >= 3) {
+        const lats = ring.map((p) => p[0]), lons = ring.map((p) => p[1]);
+        south = Math.min.apply(null, lats); north = Math.max.apply(null, lats);
+        west = Math.min.apply(null, lons); east = Math.max.apply(null, lons);
+        if (!ha) {
+          const mLat = (north - south) * 111320;
+          const mLon = (east - west) * 111320 * Math.cos(((south + north) / 2) * Math.PI / 180);
+          ha = Math.max(20, (mLat * mLon) / 10000);
+        }
+        L.polygon(ring, {
+          pane: "alambrado", color: "#E4C87A", weight: 4, fill: false, dashArray: "8 6"
+        }).bindPopup("Límite declarado por el productor. No es el padrón catastral.").addTo(limiteReal);
+      } else {
+        if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+          document.getElementById("msg").hidden = false;
+          document.getElementById("msg").textContent = "Faltan coordenadas válidas (latitud, longitud) o las esquinas del límite.";
+          return;
+        }
+        if (!ha || ha < 20) ha = 500;
+        const ratio = 1.25;
+        const alto = Math.sqrt((ha * 10000) / ratio);
+        const ancho = ratio * alto;
+        const dLat = alto / 111320;
+        const dLon = ancho / (111320 * Math.cos(lat * Math.PI / 180));
+        south = lat - dLat / 2; north = lat + dLat / 2;
+        west = lon - dLon / 2; east = lon + dLon / 2;
+      }
+      esDemoCalera = false;
+      aplicarSitioGenerico();
+      potreros = armarPotreros(south, west, north, east, ha);
+      aguadas = armarAguadas(south, west, north, east);
+      asignarAgua();
+      mostrarRelieveDemo(false);
+      dibujarPredio();
+      Object.keys(tints).forEach((k) => { tints[k] = []; });
+      verCampo();
+      aplicarNombre((store.nombreCampo && store.nombreCampo.indexOf("La Calera") === -1)
+        ? store.nombreCampo
+        : "Campo del productor · " + Math.round(ha) + " ha");
+      document.getElementById("msg").hidden = false;
+      document.getElementById("msg").textContent = ring.length >= 3
+        ? "Campo cargado. El polígono dorado es el límite que usted declaró. Las solapas y Actual / Mejorado 1 / Óptimo usan INTA Región III. No es el padrón catastral."
+        : "Se ve el satélite en ese punto, con un módulo de " + Math.round(ha) + " ha (6 potreros). Eso no es el alambrado real. Para el límite, pegue las esquinas. INTA ya está aplicado.";
+      saveStore(store);
+    }
+    function volverDemo() {
+      esDemoCalera = true;
+      potreros = JSON.parse(JSON.stringify(DEMO_POTREROS));
+      aguadas = JSON.parse(JSON.stringify(DEMO_AGUADAS));
+      Object.keys(DEMO_SITIO).forEach((k) => { SITIO[k] = JSON.parse(JSON.stringify(DEMO_SITIO[k])); });
+      limiteReal.clearLayers();
+      mostrarRelieveDemo(true);
+      dibujarPredio();
+      aplicarNombre("Campo gemelo · 500 ha · La Calera");
+      verCampo();
+      document.getElementById("msg").hidden = false;
+      document.getElementById("msg").textContent = "Volvió al demostrativo de La Calera.";
+    }
+    document.getElementById("btnVerCampo").addEventListener("click", cargarCampoProductor);
+    document.getElementById("btnDemoCalera").addEventListener("click", volverDemo);
 
     const S = window.SUPERFICIE, g = S.grid;
     function hillFactor(i, j) {
@@ -578,6 +757,7 @@
           lon >= Math.min.apply(null, lo) && lon <= Math.max.apply(null, lo);
       });
     }
+    const capaRelieveLocal = L.featureGroup().addTo(map);
     const tints = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
     for (let i = 0; i < g.ny - 1; i++) {
       for (let j = 0; j < g.nx - 1; j++) {
@@ -588,12 +768,12 @@
         L.polygon(cell, {
           pane: "suelo", weight: 0, fillColor: "rgb(" + v + "," + v + "," + v + ")",
           fillOpacity: 0.16, interactive: false
-        }).addTo(map);
+        }).addTo(capaRelieveLocal);
         const p = potreroDe(lat0 + g.dlat / 2, lon0 + g.dlon / 2);
         if (p) {
           const tint = L.polygon(cell, {
             pane: "suelo", weight: 0, fillColor: SEM.verde, fillOpacity: 0.14, interactive: false
-          }).addTo(map);
+          }).addTo(capaRelieveLocal);
           tints[p.n].push({ poly: tint, hs: hs });
         }
       }
@@ -609,9 +789,17 @@
     });
 
     const group = L.featureGroup().addTo(map);
+    const limiteReal = L.featureGroup().addTo(map);
     const polyByN = {}, labByN = {};
     function centro(ring) {
       return [ring.reduce((s, p) => s + p[0], 0) / ring.length, ring.reduce((s, p) => s + p[1], 0) / ring.length];
+    }
+    function distM(a, b) {
+      const R = 6371000;
+      const p1 = a[0] * Math.PI / 180, p2 = b[0] * Math.PI / 180;
+      const dp = (b[0] - a[0]) * Math.PI / 180, dl = (b[1] - a[1]) * Math.PI / 180;
+      const x = Math.sin(dp / 2) * Math.sin(dp / 2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) * Math.sin(dl / 2);
+      return 2 * R * Math.asin(Math.min(1, Math.sqrt(x)));
     }
     function pintar(p) {
       const v = decision(p);
@@ -629,28 +817,34 @@
         labByN[p.n].bindPopup("<b>" + v.titulo + "</b><br>" + v.sub + "<br><br>" + v.accion);
       }
     }
-    potreros.forEach((p) => {
-      const poly = L.polygon(p.ring, {
-        pane: "alambrado", color: "#fff", weight: 2.2, fillColor: SEM.verde, fillOpacity: 0.07
-      }).addTo(group);
-      polyByN[p.n] = poly;
-      const c = centro(p.ring);
-      const agua = aguadas.find((a) => p.agua.indexOf(a.id) === 0);
-      if (agua) {
-        L.polyline([c, [agua.lat, agua.lon]], {
-          pane: "alambrado", color: agua.color, weight: 2, dashArray: "5 7"
+    function dibujarPredio() {
+      group.clearLayers();
+      Object.keys(polyByN).forEach((k) => { delete polyByN[k]; });
+      Object.keys(labByN).forEach((k) => { delete labByN[k]; });
+      potreros.forEach((p) => {
+        const poly = L.polygon(p.ring, {
+          pane: "alambrado", color: "#fff", weight: 2.2, fillColor: SEM.verde, fillOpacity: 0.07
         }).addTo(group);
-      }
-      const lab = L.marker(c, { icon: L.divIcon({ className: "lab", html: "<span>P" + p.n + "</span>", iconSize: [110, 42], iconAnchor: [55, 21] }) }).addTo(group);
-      labByN[p.n] = lab;
-      poly.on("click", () => abrir(p.n, true));
-      lab.on("click", () => abrir(p.n, true));
-    });
-    aguadas.forEach((a) => {
-      L.marker([a.lat, a.lon], {
-        icon: L.divIcon({ className: "drop", html: "<i style='background:" + a.color + "'></i>", iconSize: [14, 14], iconAnchor: [7, 7] })
-      }).bindPopup("<b>" + a.name + "</b><br>No se recorta bebida.").addTo(group);
-    });
+        polyByN[p.n] = poly;
+        const c = centro(p.ring);
+        const agua = aguadas.find((a) => p.agua.indexOf(a.id) === 0);
+        if (agua) {
+          L.polyline([c, [agua.lat, agua.lon]], {
+            pane: "alambrado", color: agua.color, weight: 2, dashArray: "5 7"
+          }).addTo(group);
+        }
+        const lab = L.marker(c, { icon: L.divIcon({ className: "lab", html: "<span>P" + p.n + "</span>", iconSize: [110, 42], iconAnchor: [55, 21] }) }).addTo(group);
+        labByN[p.n] = lab;
+        poly.on("click", () => abrir(p.n, true));
+        lab.on("click", () => abrir(p.n, true));
+      });
+      aguadas.forEach((a) => {
+        L.marker([a.lat, a.lon], {
+          icon: L.divIcon({ className: "drop", html: "<i style='background:" + a.color + "'></i>", iconSize: [14, 14], iconAnchor: [7, 7] })
+        }).bindPopup("<b>" + a.name + "</b><br>No se recorta bebida.").addTo(group);
+      });
+    }
+    dibujarPredio();
     const pueblos = [
       { name: "La Calera", lat: -32.8631, lon: -66.8489, nota: "Comisión municipal · 766 hab. (INDEC 2022)" },
       { name: "Nogolí", lat: -32.9167, lon: -66.3333, nota: "Dique Nogolí · 1.221 hab." },
