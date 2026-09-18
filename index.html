@@ -42,7 +42,7 @@
     .mapa-tools {
       position: absolute; z-index: 1100; top: calc(52px + env(safe-area-inset-top, 0px));
       left: calc(10px + env(safe-area-inset-left, 0px));
-      display: flex; flex-direction: column; gap: 6px; max-width: 248px;
+      display: flex; flex-direction: column; gap: 6px; max-width: 268px;
     }
     .mapa-tools .fondos, .mapa-tools .vista, .mapa-tools .capas { margin-top: 0; }
     @media (min-width: 900px) {
@@ -126,7 +126,7 @@
     .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
     .ficha-oficial {
       position: absolute; z-index: 1000; left: 10px; bottom: 196px;
-      max-width: min(280px, 70vw);
+      max-width: min(320px, 78vw);
       background: rgba(255,255,255,.93); border-radius: 8px; padding: 6px 8px;
       font-size: 10px; color: #1C2B26; border: 1px solid #d5dbd6; line-height: 1.35;
     }
@@ -302,7 +302,11 @@
       <div class="capas fondos" role="group" aria-label="Capas oficiales">
         <button type="button" data-capa="suelos">Suelos</button>
         <button type="button" data-capa="otbn">OTBN</button>
-        <button type="button" data-capa="agua">Agua</button>
+        <button type="button" data-capa="agua">Aguadas</button>
+      </div>
+      <div class="capas fondos" role="group" aria-label="Napa INTA">
+        <button type="button" data-capa="sales">Sales</button>
+        <button type="button" data-capa="sulfatos">Sulfatos</button>
       </div>
     </div>
     <div class="ficha-oficial" id="fichaOficial" hidden>
@@ -338,7 +342,18 @@
     const TERRITORIO = {
       otbn: "Ley 26.331: no se desmonta. El óptimo de monte es bosque con ganadería integrada.",
       lluvia: "REM La Calera (6/9/2026): 307,7 mm en el año; 0 mm en 30 días.",
-      agua: "San Luis Agua: Dique Nogolí 25,8 hm³ (cuenca). Este módulo usa represas y molino. No se recorta bebida."
+      agua: "Geo San Luis: napa salina y profunda en La Calera. Este módulo usa represas y molino. No se recorta bebida."
+    };
+    const NAPA_INTA = {
+      fuente: "INTA San Luis · Sager 2005 · agua de bebida para bovinos",
+      sales: {
+        clase: "hasta 6.000 mg/L de sales totales",
+        aptitud: "Exceso de sales. La cría es la menos afectada; el engorde no acompaña al pasto en verano."
+      },
+      sulfatos: {
+        clase: "hasta 1.000 mg/L de sulfatos",
+        aptitud: "Una dosis anual de cobre inyectable a la vaca en el tacto."
+      }
     };
     let potreros = [
       { n:1, ha:83.3, z:999, dist:236, agua:"A2 Casco",
@@ -588,7 +603,7 @@
             ? "Más de 550 m a la bebida: acercar bebedero o cambiar de potrero. No se recorta agua."
             : lejos
               ? "Agua a más de 400 m. Vientres con ternero convienen más cerca (P1 o P5)."
-              : "Agua a " + p.dist + " m. Alcance de cría OK. " + TERRITORIO.agua
+              : "Agua a " + p.dist + " m. Alcance de cría OK. " + TERRITORIO.agua + " " + NAPA_INTA.sales.clase + ": " + NAPA_INTA.sales.aptitud
         };
       }
       const cria = d.categoria.indexOf("ternero") >= 0;
@@ -687,7 +702,20 @@
       attribution: "MAyDS · OTBN Ley 26.331"
     });
     const capaAgua = L.layerGroup();
-    const capasOff = { suelos: [wmsSuelos, wmsRoca], otbn: [capaOtbn], agua: [capaAgua] };
+    const BBOX_NAPA = [[-35.99, -67.28], [-31.86, -64.87]];
+    const overlaySales = L.imageOverlay("napa-sales.png", BBOX_NAPA, {
+      pane: "oficial", opacity: 0.48, attribution: "INTA San Luis · Sager 2005"
+    });
+    const overlaySulfatos = L.imageOverlay("napa-sulfatos.png", BBOX_NAPA, {
+      pane: "oficial", opacity: 0.48, attribution: "INTA San Luis · Sager 2005"
+    });
+    const capasOff = {
+      suelos: [wmsSuelos, wmsRoca],
+      otbn: [capaOtbn],
+      agua: [capaAgua],
+      sales: [overlaySales],
+      sulfatos: [overlaySulfatos]
+    };
     function capaEncendida(id) {
       const lyr = (capasOff[id] || [])[0];
       return !!(lyr && map.hasLayer(lyr));
@@ -705,10 +733,16 @@
       if (capaEncendida("agua")) {
         partes.push("<b>Agua de bebida</b><br>5 aguadas. Círculo lleno = 400 m (alcance de cría). Línea punteada = 800 m. No se recorta bebida. " + TERRITORIO.lluvia);
       }
+      if (capaEncendida("sales")) {
+        partes.push("<b>Sales totales · " + NAPA_INTA.fuente + "</b><br>Este campo: " + NAPA_INTA.sales.clase + ". " + NAPA_INTA.sales.aptitud + " Napa salina y profunda (Geo San Luis · La Calera).");
+      }
+      if (capaEncendida("sulfatos")) {
+        partes.push("<b>Sulfatos · " + NAPA_INTA.fuente + "</b><br>Este campo: " + NAPA_INTA.sulfatos.clase + ". " + NAPA_INTA.sulfatos.aptitud);
+      }
       ficha.innerHTML = partes.join("<br><br>");
       ficha.hidden = partes.length === 0;
     }
-    function setCapa(id, on, refresh) {
+    function setCapa(id, on, refresh, encuadre) {
       (capasOff[id] || []).forEach((lyr) => {
         if (on && !map.hasLayer(lyr)) lyr.addTo(map);
         if (!on && map.hasLayer(lyr)) map.removeLayer(lyr);
@@ -717,15 +751,22 @@
         if (b.dataset.capa === id) b.classList.toggle("on", on);
       });
       actualizarFichaOficial();
+      if (encuadre && on && (id === "sales" || id === "sulfatos")) {
+        map.fitBounds(BBOX_NAPA, { padding: [28, 28], maxZoom: 8 });
+      }
       if (refresh) llenar();
     }
     setCapa("suelos", true);
     setCapa("otbn", true);
     setCapa("agua", true);
-    document.querySelector(".capas").addEventListener("click", (ev) => {
-      const b = ev.target.closest("button[data-capa]");
-      if (!b) return;
-      setCapa(b.dataset.capa, !capaEncendida(b.dataset.capa), true);
+    setCapa("sales", true);
+    setCapa("sulfatos", false);
+    document.querySelectorAll(".capas").forEach((el) => {
+      el.addEventListener("click", (ev) => {
+        const b = ev.target.closest("button[data-capa]");
+        if (!b) return;
+        setCapa(b.dataset.capa, !capaEncendida(b.dataset.capa), true, true);
+      });
     });
 
     function aplicarNombre(nombre) {
@@ -1077,6 +1118,7 @@
       setCapa("suelos", true);
       setCapa("otbn", true);
       setCapa("agua", true);
+      setCapa("sales", true);
       setPanel(false);
       map.fitBounds(group.getBounds(), { padding: [48, 48], maxZoom: 15 });
       marcarVista("todo");
@@ -1128,9 +1170,9 @@
         campos.innerHTML =
           campo("fAgua", "Aguada que usa") +
           campo("fDist", "Distancia al agua (m)", "number") +
+          campo("fTds", "Sales totales (mg/L)") +
+          campo("fSo4", "Sulfatos (mg/L)") +
           campo("fEv", "Carga (EV)", "number", "0.1") +
-          campo("fCc", "Condición corporal (1 a 5)", "number", "0.1") +
-          campo("fCat", "Categoría en el potrero") +
           campo("fKg", "kg carne / año", "number");
       } else {
         campos.innerHTML =
@@ -1160,6 +1202,8 @@
       set("fSup", d.suplemento);
       set("fDist", p.dist);
       set("fAgua", p.agua);
+      set("fTds", NAPA_INTA.sales.clase);
+      set("fSo4", NAPA_INTA.sulfatos.clase);
       set("fKg", d.kg);
       set("fCat", d.categoria);
       set("fDest", d.destete);
@@ -1196,7 +1240,9 @@
         "<div>Capa: " + ({ pastoreo: "Pastoreo", nutricion: "Nutrición", reproduccion: "Reproducción", agua: "Agua" }[modSel]) + "</div>" +
         (capaEncendida("suelos") ? "<div>Suelos INTA · UCSV 4 Torriortente típico (apt. VII)</div>" : "") +
         (capaEncendida("otbn") ? "<div><i style='background:#B42318'></i>OTBN I · <i style='background:#C4A035'></i>II · <i style='background:#1B7A4A'></i>III · MAyDS 2016</div>" : "") +
-        (capaEncendida("agua") ? "<div>Agua · círculo 400 m / línea 800 m · no recortar bebida</div>" : "");
+        (capaEncendida("agua") ? "<div>Aguadas · círculo 400 m / línea 800 m · no recortar bebida</div>" : "") +
+        (capaEncendida("sales") ? "<div><i style='background:#2E6BFF'></i>1.000 <i style='background:#3EC8C8'></i>2.000 <i style='background:#3CB43C'></i>4.000 <i style='background:#E6D02A'></i>6.000 <i style='background:#D23A2A'></i>10.000 mg/L sales INTA</div>" : "") +
+        (capaEncendida("sulfatos") ? "<div>Sulfatos INTA · este campo ~1.000 mg/L · cobre al tacto</div>" : "");
     }
     function abrir(n, conPanel) {
       pSel = n;
