@@ -189,7 +189,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="portada" id="portada">
+  <div class="portada" id="portada" hidden>
     <div class="portada-card">
       <p class="marca">FCV UCCuyo · Coordinación de Investigación · San Luis</p>
       <h1>Gemelo Digital Ganadero</h1>
@@ -297,6 +297,7 @@
       <div class="vista fondos" role="group" aria-label="Encadre">
         <button type="button" id="btnVistaPueblos">Pueblos</button>
         <button type="button" class="on" id="btnVistaCampo">Campo</button>
+        <button type="button" id="btnVerTodo">Todo</button>
       </div>
       <div class="capas fondos" role="group" aria-label="Capas oficiales">
         <button type="button" data-capa="suelos">Suelos</button>
@@ -644,7 +645,7 @@
       layers: "geonode:suelosvegetacion_geonodo",
       format: "image/png",
       transparent: true,
-      opacity: 0.42,
+      opacity: 0.32,
       attribution: "INTA · Peña Zubiate suelos y vegetación 1:500.000",
       version: "1.1.1",
       tiled: true
@@ -661,7 +662,7 @@
     });
     const capaOtbn = L.tileLayer("https://tiles.arcgis.com/tiles/RTK5Unh1Z71JKIiR/arcgis/rest/services/OTBN_MAyDS2016/MapServer/tile/{z}/{y}/{x}", {
       pane: "oficial",
-      opacity: 0.45,
+      opacity: 0.38,
       maxNativeZoom: 13,
       maxZoom: MAX_Z,
       attribution: "MAyDS · OTBN Ley 26.331"
@@ -683,8 +684,8 @@
       if (ficha) ficha.hidden = !capaEncendida("suelos") && !capaEncendida("otbn");
       if (refresh) llenar();
     }
-    setCapa("suelos", false);
-    setCapa("otbn", false);
+    setCapa("suelos", true);
+    setCapa("otbn", true);
     document.querySelector(".capas").addEventListener("click", (ev) => {
       const b = ev.target.closest("button[data-capa]");
       if (!b) return;
@@ -1008,7 +1009,19 @@
     });
     function marcarVista(id) {
       document.getElementById("btnVistaPueblos").classList.toggle("on", id === "pueblos");
-      document.getElementById("btnVistaCampo").classList.toggle("on", id === "campo");
+      document.getElementById("btnVistaCampo").classList.toggle("on", id === "campo" || id === "todo");
+      const t = document.getElementById("btnVerTodo");
+      if (t) t.classList.toggle("on", id === "todo");
+    }
+    function verTodo() {
+      document.getElementById("portada").hidden = true;
+      setFondo("sat");
+      setCapa("suelos", true);
+      setCapa("otbn", true);
+      setPanel(false);
+      map.fitBounds(group.getBounds(), { padding: [48, 48], maxZoom: 15 });
+      marcarVista("todo");
+      if (typeof llenar === "function") llenar();
     }
     function verPueblos() {
       map.fitBounds(refs.getBounds().extend(group.getBounds()), { padding: [36, 36], maxZoom: 10 });
@@ -1020,8 +1033,9 @@
     }
     document.getElementById("btnVistaPueblos").addEventListener("click", verPueblos);
     document.getElementById("btnVistaCampo").addEventListener("click", verCampo);
-    verCampo();
-    setTimeout(() => { map.invalidateSize(); verCampo(); }, 250);
+    document.getElementById("btnVerTodo").addEventListener("click", verTodo);
+    verTodo();
+    setTimeout(() => { map.invalidateSize(); verTodo(); }, 250);
 
     const campos = document.getElementById("campos");
     const pills = document.getElementById("pills");
