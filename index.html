@@ -117,23 +117,37 @@
       text-shadow: 0 1px 3px #000, 0 0 12px #000;
     }
     .leyenda {
-      position: absolute; z-index: 1000; left: 10px; bottom: 12px;
+      position: absolute; z-index: 1000; left: 10px; bottom: 118px;
       background: rgba(255,255,255,.92); border-radius: 8px; padding: 6px 8px;
       font-size: 10px; color: #5C564F; border: 1px solid #d5dbd6;
     }
     .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
+    .solapas-mapa {
+      position: absolute; z-index: 1100;
+      left: calc(8px + env(safe-area-inset-left, 0px));
+      right: calc(8px + env(safe-area-inset-right, 0px));
+      bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+      background: rgba(255,255,255,.95); border: 1px solid #d5dbd6;
+      border-radius: 10px; padding: 6px 8px 8px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.18);
+    }
+    .solapas-mapa .hint { margin: 0 0 2px; font-size: 10px; color: #5C564F; }
+    .solapas-mapa .modulos, .solapas-mapa .escenas { margin-top: 5px; }
+    @media (min-width: 900px) {
+      body.panel-abierto .solapas-mapa { left: 372px; }
+    }
   </style>
 </head>
 <body>
 <div class="app">
-  <button type="button" class="btn-menu" id="btnMenu" aria-expanded="false" aria-controls="bar">Menú</button>
+  <button type="button" class="btn-menu" id="btnMenu" aria-expanded="false" aria-controls="bar">Cargar datos</button>
   <div class="velo" id="velo"></div>
   <aside class="bar" id="bar">
     <div class="bar-head">
       <b class="title">Campo gemelo · 500 ha · decisión ganadera</b>
       <button type="button" class="btn-cerrar" id="btnCerrar" aria-label="Cerrar menú">×</button>
     </div>
-    <p class="lead">Actual = INTA y carta de suelos. Mejorado y Óptimo = lo que el productor carga; si no es posible, semáforo rojo.</p>
+    <p class="lead">Las solapas de pastoreo, nutrición y reproducción están sobre el mapa. Acá se cargan y se guardan los lotes. Google Earth solo muestra el semáforo.</p>
     <div class="nombres-fila">
       <button type="button" id="btnNombres" aria-expanded="false">Nombres</button>
     </div>
@@ -195,6 +209,19 @@
       </div>
     </div>
     <div class="leyenda" id="leyenda"></div>
+    <div class="solapas-mapa" id="solapasMapa">
+      <p class="hint">Seguimiento de lotes · toque una solapa o un potrero para cargar datos</p>
+      <div class="modulos" role="tablist" aria-label="Módulo de decisión">
+        <button type="button" class="on" data-mod="pastoreo">Pastoreo</button>
+        <button type="button" data-mod="nutricion">Nutrición</button>
+        <button type="button" data-mod="reproduccion">Reproducción</button>
+      </div>
+      <div class="escenas" role="tablist" aria-label="Escena">
+        <button type="button" class="on" data-esc="actual">Actual</button>
+        <button type="button" data-esc="m1">Mejorado 1</button>
+        <button type="button" data-esc="optimo">Óptimo</button>
+      </div>
+    </div>
     <div id="map"></div>
   </div>
 </div>
@@ -465,7 +492,7 @@
     let modSel = "pastoreo", escSel = "actual", pSel = 1;
     const MAX_Z = 17;
     const map = L.map("map", { zoomControl: true, minZoom: 8, maxZoom: MAX_Z });
-    map.zoomControl.setPosition("bottomright");
+    map.zoomControl.setPosition("topright");
     function esMovil() { return window.matchMedia("(max-width: 900px)").matches; }
     function setPanel(abierto) {
       document.body.classList.toggle("panel-abierto", abierto);
@@ -748,20 +775,26 @@
     }
     function refrescarMapa() { potreros.forEach(pintar); llenar(); }
 
-    document.querySelector(".modulos").addEventListener("click", (ev) => {
-      const b = ev.target.closest("button[data-mod]");
-      if (!b) return;
-      modSel = b.dataset.mod;
-      document.querySelectorAll(".modulos button").forEach((x) => x.classList.toggle("on", x === b));
-      pintarCampos();
-      refrescarMapa();
+    document.querySelectorAll(".modulos").forEach((el) => {
+      el.addEventListener("click", (ev) => {
+        const b = ev.target.closest("button[data-mod]");
+        if (!b) return;
+        modSel = b.dataset.mod;
+        document.querySelectorAll(".modulos button").forEach((x) => x.classList.toggle("on", x.dataset.mod === modSel));
+        pintarCampos();
+        refrescarMapa();
+        setPanel(true);
+      });
     });
-    document.querySelector(".escenas").addEventListener("click", (ev) => {
-      const b = ev.target.closest("button[data-esc]");
-      if (!b) return;
-      escSel = b.dataset.esc;
-      document.querySelectorAll(".escenas button").forEach((x) => x.classList.toggle("on", x === b));
-      refrescarMapa();
+    document.querySelectorAll(".escenas").forEach((el) => {
+      el.addEventListener("click", (ev) => {
+        const b = ev.target.closest("button[data-esc]");
+        if (!b) return;
+        escSel = b.dataset.esc;
+        document.querySelectorAll(".escenas button").forEach((x) => x.classList.toggle("on", x.dataset.esc === escSel));
+        refrescarMapa();
+        setPanel(true);
+      });
     });
     document.getElementById("fTipo").addEventListener("change", () => {
       store[pSel].tipo = document.getElementById("fTipo").value;
