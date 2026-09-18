@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>GEMELO 500 ha · Decisión ganadera</title>
+  <title>Gemelo Digital Ganadero</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body { margin: 0; height: 100%; height: 100dvh; overflow: hidden; font-family: system-ui, Segoe UI, sans-serif; }
@@ -44,12 +44,13 @@
       left: calc(10px + env(safe-area-inset-left, 0px));
       display: flex; flex-direction: column; gap: 6px; max-width: 210px;
     }
-    .mapa-tools .fondos, .mapa-tools .vista { margin-top: 0; }
+    .mapa-tools .fondos, .mapa-tools .vista, .mapa-tools .capas { margin-top: 0; }
     @media (min-width: 900px) {
       .velo { display: none !important; }
       body.panel-abierto .mapa-tools { left: 372px; }
       body.panel-abierto .cartel-nombre { left: 390px; }
-      body.panel-abierto .leyenda { left: 372px; }
+      body.panel-abierto .leyenda,
+      body.panel-abierto .ficha-oficial { left: 372px; }
     }
     .bar b.title { color: #064A31; font-size: 15px; display: block; }
     .bar .lead { margin: 3px 0 0; font-size: 12px; color: #5C564F; line-height: 1.35; }
@@ -123,6 +124,14 @@
       font-size: 10px; color: #5C564F; border: 1px solid #d5dbd6;
     }
     .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
+    .ficha-oficial {
+      position: absolute; z-index: 1000; left: 10px; bottom: 196px;
+      max-width: min(280px, 70vw);
+      background: rgba(255,255,255,.93); border-radius: 8px; padding: 6px 8px;
+      font-size: 10px; color: #1C2B26; border: 1px solid #d5dbd6; line-height: 1.35;
+    }
+    .ficha-oficial b { color: #064A31; }
+    .ficha-oficial[hidden] { display: none; }
     .solapas-mapa {
       position: absolute; z-index: 1100;
       left: calc(8px + env(safe-area-inset-left, 0px));
@@ -134,6 +143,45 @@
     }
     .solapas-mapa .hint { margin: 0 0 2px; font-size: 10px; color: #5C564F; }
     .solapas-mapa .modulos, .solapas-mapa .escenas { margin-top: 5px; }
+    .solapas-mapa button { cursor: pointer; }
+    .acciones button:disabled { opacity: 1; background: #E7F3EC; color: #064A31; border-color: #9FCBB0; }
+    input[readonly], textarea[readonly] { background: #f4f6f5; color: #5C564F; }
+    .leaflet-pane.oficial { pointer-events: none; }
+    .portada {
+      position: absolute; inset: 0; z-index: 2000;
+      background: rgba(6, 32, 24, .55);
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .portada[hidden] { display: none; }
+    .portada-card {
+      width: min(520px, 100%);
+      background: #fff; color: #1C2B26;
+      border: 1px solid #d5dbd6; border-radius: 12px;
+      padding: 18px 18px 16px;
+    }
+    .portada-card .marca { margin: 0; font-size: 11px; letter-spacing: .04em; color: #064A31; font-weight: 700; text-transform: uppercase; }
+    .portada-card h1 { margin: 4px 0 8px; font-size: 26px; line-height: 1.15; color: #064A31; }
+    .portada-card .pitch { margin: 0 0 12px; font-size: 14px; line-height: 1.4; color: #1C2B26; }
+    .pasos { display: grid; gap: 8px; margin: 0 0 14px; }
+    .pasos div { border: 1px solid #e2e8e4; border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.35; color: #5C564F; }
+    .pasos b { display: block; color: #064A31; font-size: 13px; margin-bottom: 2px; }
+    .portada-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+    .portada-acciones button {
+      flex: 1; min-width: 140px; border-radius: 8px; font-weight: 700; font-size: 13px;
+      padding: 10px 12px; border: 1px solid #064A31; background: #064A31; color: #fff;
+    }
+    .portada-acciones button.sec { background: #fff; color: #064A31; }
+    .portada-card .fine { margin: 10px 0 0; font-size: 11px; color: #5C564F; line-height: 1.35; }
+    .consulta { margin-top: 10px; border: 1px solid #9FCBB0; background: #E7F3EC; border-radius: 8px; padding: 8px; }
+    .consulta b { color: #064A31; font-size: 12px; }
+    .consulta p { margin: 4px 0 0; font-size: 11px; color: #1C2B26; line-height: 1.35; }
+    .consulta button {
+      width: 100%; margin-top: 8px; border-radius: 8px; font-weight: 700; font-size: 13px;
+      padding: 10px 12px; border: 1px solid #064A31; background: #064A31; color: #fff;
+    }
+    .consulta .aviso, .consulta .ok { margin-top: 8px; }
+    .consulta .ok { background: #fff; border: 1px solid #9FCBB0; padding: 6px 8px; border-radius: 8px; }
     @media (min-width: 900px) {
       body.panel-abierto .solapas-mapa { left: 372px; }
     }
@@ -141,14 +189,37 @@
 </head>
 <body>
 <div class="app">
-  <button type="button" class="btn-menu" id="btnMenu" aria-expanded="false" aria-controls="bar">Cargar datos</button>
+  <div class="portada" id="portada">
+    <div class="portada-card">
+      <p class="marca">FCV UCCuyo · Coordinación de Investigación · San Luis</p>
+      <h1>Gemelo Digital Ganadero</h1>
+      <p class="pitch">Su campo en el mapa: cómo está hoy, qué se puede mejorar y cuál es el techo real. Sin desmonte y sin recortar el agua de bebida.</p>
+      <div class="pasos">
+        <div><b>1 · Actual</b>Diagnóstico con INTA Región III, carta de suelos y OTBN. Es la foto de su campo, no un número inventado.</div>
+        <div><b>2 · Mejorado 1</b>Usted carga el plan. Si la tierra, el agua o el bosque no lo bancan, el semáforo se pone rojo.</div>
+        <div><b>3 · Óptimo</b>El techo posible de su establecimiento. Lo que se puede pedir al campo, no lo que vende un paquete.</div>
+      </div>
+      <div class="portada-acciones">
+        <button type="button" class="sec" id="btnVerDemo">Ver el demostrativo</button>
+        <button type="button" id="btnIrConsulta">Consultar mi campo</button>
+      </div>
+      <p class="fine">Las 500 ha son un módulo para mostrar el método. El servicio es para su establecimiento: coordenadas, potreros y un informe Actual / Mejorado / Óptimo.</p>
+    </div>
+  </div>
+  <button type="button" class="btn-menu" id="btnMenu" aria-expanded="false" aria-controls="bar">Menú</button>
   <div class="velo" id="velo"></div>
   <aside class="bar" id="bar">
     <div class="bar-head">
-      <b class="title">Campo gemelo · 500 ha · decisión ganadera</b>
+      <b class="title">Gemelo Digital Ganadero</b>
       <button type="button" class="btn-cerrar" id="btnCerrar" aria-label="Cerrar menú">×</button>
     </div>
-    <p class="lead">Las solapas de pastoreo, nutrición y reproducción están sobre el mapa. Acá se cargan y se guardan los lotes. Google Earth solo muestra el semáforo.</p>
+    <p class="lead">Consulta para el productor: ver su campo, saber la situación actual y cargar un plan de mejora con tope real. Pastoreo, nutrición y reproducción están abajo, sobre el mapa.</p>
+    <div class="consulta">
+      <b>Servicio de consulta</b>
+      <p>Se carga su establecimiento (coordenadas o esquinas), se lee suelos + OTBN + INTA, y se entrega el semáforo Actual / Mejorado 1 / Óptimo.</p>
+      <button type="button" id="btnPedirConsulta">Pedir consulta de Gemelo Digital</button>
+      <p class="aviso" id="msgConsulta" hidden></p>
+    </div>
     <div class="nombres-fila">
       <button type="button" id="btnNombres" aria-expanded="false">Nombres</button>
       <button type="button" id="btnMiCampo" aria-expanded="false">Mi campo</button>
@@ -159,7 +230,11 @@
       <button type="button" id="btnCargarNombre">Cargar nombre</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
-      <p class="aviso">Un punto no es el padrón. Para ver el satélite alcanza latitud y longitud. Para dibujar el límite, pegue las esquinas. Las solapas y el INTA se aplican igual.</p>
+      <p class="aviso">Para la consulta: un punto alcanza para ver el satélite. Las esquinas dibujan el límite declarado (no es el padrón). INTA, suelos y OTBN se aplican igual.</p>
+      <label for="fProd">Nombre del productor / establecimiento</label>
+      <input id="fProd" type="text" placeholder="Ej. Juan Pérez · Los Algarrobos" autocomplete="name" />
+      <label for="fTel">Teléfono o WhatsApp</label>
+      <input id="fTel" type="tel" placeholder="2664..." autocomplete="tel" />
       <div class="grid2">
         <div>
           <label for="fLat">Latitud</label>
@@ -175,12 +250,7 @@
       <label for="fLimites">Límites opcionales (una esquina por línea: lat, lon)</label>
       <textarea id="fLimites" placeholder="-32.9200, -66.8950&#10;-32.9200, -66.8682&#10;-32.9020, -66.8682&#10;-32.9020, -66.8950"></textarea>
       <button type="button" id="btnVerCampo">Ver mi campo con INTA</button>
-      <button type="button" id="btnDemoCalera" class="sec" style="background:#f4f6f5;color:#064A31;margin-top:6px">Volver al demostrativo La Calera</button>
-    </div>
-    <div class="modulos" role="tablist" aria-label="Módulo de decisión">
-      <button type="button" class="on" data-mod="pastoreo">Pastoreo</button>
-      <button type="button" data-mod="nutricion">Nutrición</button>
-      <button type="button" data-mod="reproduccion">Reproducción</button>
+      <button type="button" id="btnDemoCalera" class="sec" style="background:#f4f6f5;color:#064A31;margin-top:6px">Volver al demostrativo</button>
     </div>
     <div id="panel" class="panel">
       <div class="pills" id="pills"></div>
@@ -218,7 +288,7 @@
     </div>
   </aside>
   <div class="mapa-wrap">
-    <div class="cartel-nombre" id="cartelNombre">Campo gemelo · 500 ha · La Calera</div>
+    <div class="cartel-nombre" id="cartelNombre">Gemelo Digital Ganadero</div>
     <div class="mapa-tools">
       <div class="fondos" role="tablist" aria-label="Fondo del mapa">
         <button type="button" class="on" data-fondo="sat">Satélite</button>
@@ -226,12 +296,21 @@
       </div>
       <div class="vista fondos" role="group" aria-label="Encadre">
         <button type="button" id="btnVistaPueblos">Pueblos</button>
-        <button type="button" id="btnVistaCampo">Campo</button>
+        <button type="button" class="on" id="btnVistaCampo">Campo</button>
       </div>
+      <div class="capas fondos" role="group" aria-label="Capas oficiales">
+        <button type="button" data-capa="suelos">Suelos</button>
+        <button type="button" data-capa="otbn">OTBN</button>
+      </div>
+    </div>
+    <div class="ficha-oficial" id="fichaOficial" hidden>
+      <b>Carta de suelos INTA · Peña Zubiate 1:500.000</b><br>
+      UCSV 4 · Sierras del complejo sedimentario de San Luis<br>
+      Torriortente típico · aptitud VII · pastoreo extensivo · franco arenoso a gravilloso
     </div>
     <div class="leyenda" id="leyenda"></div>
     <div class="solapas-mapa" id="solapasMapa">
-      <p class="hint">Seguimiento de lotes · toque una solapa o un potrero para cargar datos</p>
+      <p class="hint">Actual es el diagnóstico (se lee). Mejorado 1 y Óptimo se cargan. Toque una solapa o un potrero.</p>
       <div class="modulos" role="tablist" aria-label="Módulo de decisión">
         <button type="button" class="on" data-mod="pastoreo">Pastoreo</button>
         <button type="button" data-mod="nutricion">Nutrición</button>
@@ -249,6 +328,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="superficie.js"></script>
   <script>
+    const MARCA = "Gemelo Digital Ganadero";
+    const DEMO_NOMBRE = "Gemelo Digital Ganadero · demostrativo 500 ha";
     const KEY = "gemelo-500ha-manejo-v1";
     const SEM = { verde: "#1B7A4A", amarillo: "#C4A035", rojo: "#B42318", descanso: "#5C7A8A" };
     const TERRITORIO = {
@@ -293,8 +374,9 @@
       try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; }
     }
     function saveStore(s) { localStorage.setItem(KEY, JSON.stringify(s)); }
+    let zmin = 917, zmax = 1023;
     const store = loadStore();
-    if (!store.nombreCampo) store.nombreCampo = "Campo gemelo · 500 ha · La Calera";
+    if (!store.nombreCampo || store.nombreCampo === "Campo gemelo · 500 ha · La Calera") store.nombreCampo = DEMO_NOMBRE;
     potreros.forEach((p) => { if (!store[p.n]) store[p.n] = { tipo: "ganadero" }; });
 
     function factor(p) {
@@ -517,7 +599,7 @@
 
     let modSel = "pastoreo", escSel = "actual", pSel = 1;
     const MAX_Z = 17;
-    const map = L.map("map", { zoomControl: true, minZoom: 8, maxZoom: MAX_Z });
+    const map = L.map("map", { zoomControl: true, minZoom: 8, maxZoom: MAX_Z }).setView([-32.9110, -66.8816], 14);
     map.zoomControl.setPosition("topright");
     function esMovil() { return window.matchMedia("(max-width: 900px)").matches; }
     function setPanel(abierto) {
@@ -528,9 +610,11 @@
     document.getElementById("btnMenu").addEventListener("click", () => setPanel(true));
     document.getElementById("btnCerrar").addEventListener("click", () => setPanel(false));
     document.getElementById("velo").addEventListener("click", () => setPanel(false));
-    if (!esMovil()) setPanel(true);
+    setPanel(false);
     map.createPane("fondo"); map.getPane("fondo").style.zIndex = 200;
     map.createPane("rotulos"); map.getPane("rotulos").style.zIndex = 250;
+    map.createPane("oficial"); map.getPane("oficial").style.zIndex = 280;
+    map.getPane("oficial").style.pointerEvents = "none";
     map.createPane("suelo"); map.getPane("suelo").style.zIndex = 350;
     map.createPane("alambrado"); map.getPane("alambrado").style.zIndex = 450;
 
@@ -547,7 +631,7 @@
       if (id === "relieve") topo.addTo(map);
       else sat.addTo(map);
       if (relieveOverlay) relieveOverlay.setOpacity(id === "relieve" ? 0.46 : 0.12);
-      document.querySelectorAll(".fondos button").forEach((b) => b.classList.toggle("on", b.dataset.fondo === id));
+      document.querySelectorAll(".fondos button[data-fondo]").forEach((b) => b.classList.toggle("on", b.dataset.fondo === id));
     }
     setFondo("sat");
     document.querySelector(".fondos").addEventListener("click", (ev) => {
@@ -555,8 +639,60 @@
       if (b) setFondo(b.dataset.fondo);
     });
 
+    const wmsSuelos = L.tileLayer.wms("https://geo-nodo15.inta.gob.ar/geoserver/wms", {
+      pane: "oficial",
+      layers: "geonode:suelosvegetacion_geonodo",
+      format: "image/png",
+      transparent: true,
+      opacity: 0.42,
+      attribution: "INTA · Peña Zubiate suelos y vegetación 1:500.000",
+      version: "1.1.1",
+      tiled: true
+    });
+    const wmsRoca = L.tileLayer.wms("https://geo-nodo15.inta.gob.ar/geoserver/wms", {
+      pane: "oficial",
+      layers: "geonode:villagralroca_v0",
+      format: "image/png",
+      transparent: true,
+      opacity: 0.5,
+      attribution: "INTA · Hoja Villa General Roca",
+      version: "1.1.1",
+      tiled: true
+    });
+    const capaOtbn = L.tileLayer("https://tiles.arcgis.com/tiles/RTK5Unh1Z71JKIiR/arcgis/rest/services/OTBN_MAyDS2016/MapServer/tile/{z}/{y}/{x}", {
+      pane: "oficial",
+      opacity: 0.45,
+      maxNativeZoom: 13,
+      maxZoom: MAX_Z,
+      attribution: "MAyDS · OTBN Ley 26.331"
+    });
+    const capasOff = { suelos: [wmsSuelos, wmsRoca], otbn: [capaOtbn] };
+    function capaEncendida(id) {
+      const lyr = (capasOff[id] || [])[0];
+      return !!(lyr && map.hasLayer(lyr));
+    }
+    function setCapa(id, on, refresh) {
+      (capasOff[id] || []).forEach((lyr) => {
+        if (on && !map.hasLayer(lyr)) lyr.addTo(map);
+        if (!on && map.hasLayer(lyr)) map.removeLayer(lyr);
+      });
+      document.querySelectorAll(".capas button").forEach((b) => {
+        if (b.dataset.capa === id) b.classList.toggle("on", on);
+      });
+      const ficha = document.getElementById("fichaOficial");
+      if (ficha) ficha.hidden = !capaEncendida("suelos") && !capaEncendida("otbn");
+      if (refresh) llenar();
+    }
+    setCapa("suelos", false);
+    setCapa("otbn", false);
+    document.querySelector(".capas").addEventListener("click", (ev) => {
+      const b = ev.target.closest("button[data-capa]");
+      if (!b) return;
+      setCapa(b.dataset.capa, !capaEncendida(b.dataset.capa), true);
+    });
+
     function aplicarNombre(nombre) {
-      const n = (nombre || "").trim() || "Campo gemelo · 500 ha · La Calera";
+      const n = (nombre || "").trim() || DEMO_NOMBRE;
       store.nombreCampo = n;
       saveStore(store);
       document.querySelector(".title").textContent = n;
@@ -716,9 +852,10 @@
       dibujarPredio();
       Object.keys(tints).forEach((k) => { tints[k] = []; });
       verCampo();
-      aplicarNombre((store.nombreCampo && store.nombreCampo.indexOf("La Calera") === -1)
+      const prodNom = (document.getElementById("fProd").value || "").trim();
+      aplicarNombre(prodNom || ((store.nombreCampo && store.nombreCampo.indexOf("demostrativo") === -1 && store.nombreCampo.indexOf("La Calera") === -1)
         ? store.nombreCampo
-        : "Campo del productor · " + Math.round(ha) + " ha");
+        : MARCA + " · " + Math.round(ha) + " ha"));
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = ring.length >= 3
         ? "Campo cargado. El polígono dorado es el límite que usted declaró. Las solapas y Actual / Mejorado 1 / Óptimo usan INTA Región III. No es el padrón catastral."
@@ -733,60 +870,66 @@
       limiteReal.clearLayers();
       mostrarRelieveDemo(true);
       dibujarPredio();
-      aplicarNombre("Campo gemelo · 500 ha · La Calera");
+      aplicarNombre(DEMO_NOMBRE);
       verCampo();
       document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = "Volvió al demostrativo de La Calera.";
+      document.getElementById("msg").textContent = "Volvió al demostrativo de Gemelo Digital Ganadero (500 ha).";
     }
     document.getElementById("btnVerCampo").addEventListener("click", cargarCampoProductor);
     document.getElementById("btnDemoCalera").addEventListener("click", volverDemo);
 
-    const S = window.SUPERFICIE, g = S.grid;
-    function hillFactor(i, j) {
-      const z = g.z;
-      const dzx = z[i][Math.min(j + 1, g.nx - 1)] - z[i][Math.max(j - 1, 0)];
-      const dzy = z[Math.min(i + 1, g.ny - 1)][j] - z[Math.max(i - 1, 0)][j];
-      const lit = Math.max(-1, Math.min(1, (-dzx + dzy) / 70));
-      const t = (z[i][j] - g.zmin) / Math.max(1, g.zmax - g.zmin);
-      return Math.max(0.12, Math.min(1, 0.32 + 0.38 * t + 0.36 * lit));
-    }
-    function potreroDe(lat, lon) {
-      return potreros.find((p) => {
-        const la = p.ring.map((r) => r[0]), lo = p.ring.map((r) => r[1]);
-        return lat >= Math.min.apply(null, la) && lat <= Math.max.apply(null, la) &&
-          lon >= Math.min.apply(null, lo) && lon <= Math.max.apply(null, lo);
-      });
-    }
-    const capaRelieveLocal = L.featureGroup().addTo(map);
+    const capaRelieveLocal = L.featureGroup();
     const tints = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-    for (let i = 0; i < g.ny - 1; i++) {
-      for (let j = 0; j < g.nx - 1; j++) {
-        const hs = hillFactor(i, j);
-        const v = Math.round(28 + hs * 200);
-        const lat0 = g.south + i * g.dlat, lon0 = g.west + j * g.dlon;
-        const cell = [[lat0, lon0], [lat0, lon0 + g.dlon], [lat0 + g.dlat, lon0 + g.dlon], [lat0 + g.dlat, lon0]];
-        L.polygon(cell, {
-          pane: "suelo", weight: 0, fillColor: "rgb(" + v + "," + v + "," + v + ")",
-          fillOpacity: 0.16, interactive: false
-        }).addTo(capaRelieveLocal);
-        const p = potreroDe(lat0 + g.dlat / 2, lon0 + g.dlon / 2);
-        if (p) {
-          const tint = L.polygon(cell, {
-            pane: "suelo", weight: 0, fillColor: SEM.verde, fillOpacity: 0.14, interactive: false
+    try {
+      const S = window.SUPERFICIE, g = S.grid;
+      zmin = g.zmin; zmax = g.zmax;
+      capaRelieveLocal.addTo(map);
+      function hillFactor(i, j) {
+        const z = g.z;
+        const dzx = z[i][Math.min(j + 1, g.nx - 1)] - z[i][Math.max(j - 1, 0)];
+        const dzy = z[Math.min(i + 1, g.ny - 1)][j] - z[Math.max(i - 1, 0)][j];
+        const lit = Math.max(-1, Math.min(1, (-dzx + dzy) / 70));
+        const t = (z[i][j] - g.zmin) / Math.max(1, g.zmax - g.zmin);
+        return Math.max(0.12, Math.min(1, 0.32 + 0.38 * t + 0.36 * lit));
+      }
+      function potreroDe(lat, lon) {
+        return potreros.find((p) => {
+          const la = p.ring.map((r) => r[0]), lo = p.ring.map((r) => r[1]);
+          return lat >= Math.min.apply(null, la) && lat <= Math.max.apply(null, la) &&
+            lon >= Math.min.apply(null, lo) && lon <= Math.max.apply(null, lo);
+        });
+      }
+      for (let i = 0; i < g.ny - 1; i++) {
+        for (let j = 0; j < g.nx - 1; j++) {
+          const hs = hillFactor(i, j);
+          const v = Math.round(28 + hs * 200);
+          const lat0 = g.south + i * g.dlat, lon0 = g.west + j * g.dlon;
+          const cell = [[lat0, lon0], [lat0, lon0 + g.dlon], [lat0 + g.dlat, lon0 + g.dlon], [lat0 + g.dlat, lon0]];
+          L.polygon(cell, {
+            pane: "suelo", weight: 0, fillColor: "rgb(" + v + "," + v + "," + v + ")",
+            fillOpacity: 0.16, interactive: false
           }).addTo(capaRelieveLocal);
-          tints[p.n].push({ poly: tint, hs: hs });
+          const p = potreroDe(lat0 + g.dlat / 2, lon0 + g.dlon / 2);
+          if (p) {
+            const tint = L.polygon(cell, {
+              pane: "suelo", weight: 0, fillColor: SEM.verde, fillOpacity: 0.14, interactive: false
+            }).addTo(capaRelieveLocal);
+            tints[p.n].push({ poly: tint, hs: hs });
+          }
         }
       }
-    }
-    relieveOverlay = L.imageOverlay(S.png, [[g.south, g.west], [g.north, g.east]], {
-      pane: "suelo", opacity: 0.12, interactive: false
-    }).addTo(map);
-    S.contours.forEach((c) => {
-      L.polyline(c.latlngs, {
-        pane: "suelo", color: c.z % 40 === 0 ? "rgba(255,248,232,.85)" : "rgba(255,255,255,.38)",
-        weight: c.z % 40 === 0 ? 1.6 : 0.7, interactive: false
+      relieveOverlay = L.imageOverlay(S.png, [[g.south, g.west], [g.north, g.east]], {
+        pane: "suelo", opacity: 0.12, interactive: false
       }).addTo(map);
-    });
+      S.contours.forEach((c) => {
+        L.polyline(c.latlngs, {
+          pane: "suelo", color: c.z % 40 === 0 ? "rgba(255,248,232,.85)" : "rgba(255,255,255,.38)",
+          weight: c.z % 40 === 0 ? 1.6 : 0.7, interactive: false
+        }).addTo(capaRelieveLocal);
+      });
+    } catch (err) {
+      console.warn("Relieve local no disponible", err);
+    }
 
     const group = L.featureGroup().addTo(map);
     const limiteReal = L.featureGroup().addTo(map);
@@ -803,7 +946,7 @@
     }
     function pintar(p) {
       const v = decision(p);
-      if (polyByN[p.n]) polyByN[p.n].setStyle({ fillColor: v.color, color: "#fff", weight: 2.2, fillOpacity: 0.07 });
+      if (polyByN[p.n]) polyByN[p.n].setStyle({ fillColor: v.color, color: "#fff", weight: 3, fillOpacity: 0.22 });
       (tints[p.n] || []).forEach((c) => {
         c.poly.setStyle({ fillColor: v.color, fillOpacity: 0.08 + 0.16 * c.hs });
       });
@@ -823,7 +966,7 @@
       Object.keys(labByN).forEach((k) => { delete labByN[k]; });
       potreros.forEach((p) => {
         const poly = L.polygon(p.ring, {
-          pane: "alambrado", color: "#fff", weight: 2.2, fillColor: SEM.verde, fillOpacity: 0.07
+          pane: "alambrado", color: "#fff", weight: 3, fillColor: SEM.verde, fillOpacity: 0.22
         }).addTo(group);
         polyByN[p.n] = poly;
         const c = centro(p.ring);
@@ -863,16 +1006,22 @@
         })
       }).bindPopup("<b>" + t.name + "</b><br>" + t.nota).addTo(refs);
     });
-    map.fitBounds(refs.getBounds().extend(group.getBounds()), { padding: [36, 36], maxZoom: 10 });
+    function marcarVista(id) {
+      document.getElementById("btnVistaPueblos").classList.toggle("on", id === "pueblos");
+      document.getElementById("btnVistaCampo").classList.toggle("on", id === "campo");
+    }
     function verPueblos() {
       map.fitBounds(refs.getBounds().extend(group.getBounds()), { padding: [36, 36], maxZoom: 10 });
+      marcarVista("pueblos");
     }
     function verCampo() {
-      map.fitBounds(group.getBounds(), { padding: [40, 40], maxZoom: 15 });
+      map.fitBounds(group.getBounds(), { padding: [48, 48], maxZoom: 15 });
+      marcarVista("campo");
     }
     document.getElementById("btnVistaPueblos").addEventListener("click", verPueblos);
     document.getElementById("btnVistaCampo").addEventListener("click", verCampo);
-    setTimeout(() => map.invalidateSize(), 200);
+    verCampo();
+    setTimeout(() => { map.invalidateSize(); verCampo(); }, 250);
 
     const campos = document.getElementById("campos");
     const pills = document.getElementById("pills");
@@ -952,6 +1101,7 @@
       const lock = escSel === "actual";
       document.querySelectorAll("#campos input, #fLote, #fAccion").forEach((el) => { el.readOnly = lock; });
       document.getElementById("btnGuardar").disabled = lock;
+      document.getElementById("btnGuardar").textContent = lock ? "Diagnóstico · no se edita" : "Guardar plan";
       document.getElementById("btnEstimar").textContent = lock ? "Ver datos INTA / carta" : "Cargar tope posible";
       document.getElementById("leyenda").innerHTML =
         (modSel === "pastoreo"
@@ -959,7 +1109,9 @@
           : modSel === "nutricion"
             ? "<div><i style='background:#1B7A4A'></i>Comen y beben bien</div><div><i style='background:#C4A035'></i>Condición justa / loma</div><div><i style='background:#B42318'></i>Lejos del agua o flacas</div>"
             : "<div><i style='background:#1B7A4A'></i>Parición cerca del agua</div><div><i style='background:#C4A035'></i>Destete bajo</div><div><i style='background:#B42318'></i>Cría lejos de la aguada</div>") +
-        "<div>Capa: " + ({ pastoreo: "Pastoreo", nutricion: "Nutrición", reproduccion: "Reproducción" }[modSel]) + "</div>";
+        "<div>Capa: " + ({ pastoreo: "Pastoreo", nutricion: "Nutrición", reproduccion: "Reproducción" }[modSel]) + "</div>" +
+        (capaEncendida("suelos") ? "<div>Suelos INTA · UCSV 4 Torriortente típico (apt. VII)</div>" : "") +
+        (capaEncendida("otbn") ? "<div><i style='background:#B42318'></i>OTBN I · <i style='background:#C4A035'></i>II · <i style='background:#1B7A4A'></i>III · MAyDS 2016</div>" : "");
     }
     function abrir(n, conPanel) {
       pSel = n;
@@ -977,7 +1129,7 @@
         document.querySelectorAll(".modulos button").forEach((x) => x.classList.toggle("on", x.dataset.mod === modSel));
         pintarCampos();
         refrescarMapa();
-        setPanel(true);
+        if (esMovil()) setPanel(true);
       });
     });
     document.querySelectorAll(".escenas").forEach((el) => {
@@ -987,7 +1139,7 @@
         escSel = b.dataset.esc;
         document.querySelectorAll(".escenas button").forEach((x) => x.classList.toggle("on", x.dataset.esc === escSel));
         refrescarMapa();
-        setPanel(true);
+        if (esMovil()) setPanel(true);
       });
     });
     document.getElementById("fTipo").addEventListener("change", () => {
@@ -1044,6 +1196,8 @@
       return "48" + hex.slice(5, 7) + hex.slice(3, 5) + hex.slice(1, 3);
     }
     function zEn(lat, lon) {
+      const g = window.SUPERFICIE && window.SUPERFICIE.grid;
+      if (!g) return 1000;
       const gj = (lon - g.west) / g.dlon;
       const gi = (lat - g.south) / g.dlat;
       const i0 = Math.max(0, Math.min(g.ny - 2, Math.floor(gi)));
@@ -1087,7 +1241,7 @@
           "<outerBoundaryIs><LinearRing><coordinates>" + ring + "</coordinates></LinearRing></outerBoundaryIs></Polygon>" +
           "<Point><coordinates>" + c[1].toFixed(6) + "," + c[0].toFixed(6) + "," + zEn(c[0], c[1]).toFixed(1) + "</coordinates></Point></MultiGeometry></Placemark>";
       });
-      const campo = store.nombreCampo || "Campo gemelo";
+      const campo = store.nombreCampo || MARCA;
       const kml = "<?xml version='1.0' encoding='UTF-8'?><kml xmlns='http://www.opengis.net/kml/2.2'><Document><name>" +
         campo.replace(/[<>&]/g, "") + " · " + nombre + " · " + escena + "</name><open>1</open>" +
         "<Placemark><name>" + campo.replace(/[<>&]/g, "") + "</name><Point><coordinates>-66.881623,-32.911017,0</coordinates></Point></Placemark>" +
@@ -1095,7 +1249,7 @@
       const blob = new Blob([kml], { type: "application/vnd.google-earth.kml+xml" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "GEMELO-" + nombre + "-" + escena + ".kml";
+      a.download = "GemeloDigitalGanadero-" + nombre + "-" + escena + ".kml";
       a.click();
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = "Se bajó el KML. Abrilo con Google Earth: el color del potrero es el semáforo de " + nombre.toLowerCase() + ".";
@@ -1106,6 +1260,47 @@
     aplicarNombre(store.nombreCampo);
     refrescarMapa();
     abrir(1);
+
+    function cerrarPortada() {
+      document.getElementById("portada").hidden = true;
+      setTimeout(() => { map.invalidateSize(); verCampo(); }, 80);
+    }
+    function irConsulta() {
+      cerrarPortada();
+      document.getElementById("cajaCampo").hidden = false;
+      document.getElementById("cajaNombre").hidden = true;
+      document.getElementById("btnMiCampo").classList.add("on");
+      setPanel(true);
+    }
+    document.getElementById("btnVerDemo").addEventListener("click", cerrarPortada);
+    document.getElementById("btnIrConsulta").addEventListener("click", irConsulta);
+    document.getElementById("btnPedirConsulta").addEventListener("click", () => {
+      const caja = document.getElementById("cajaCampo");
+      caja.hidden = false;
+      document.getElementById("cajaNombre").hidden = true;
+      document.getElementById("btnMiCampo").classList.add("on");
+      const aviso = document.getElementById("msgConsulta");
+      const decir = (texto, bien) => {
+        aviso.hidden = false;
+        aviso.className = bien ? "ok" : "aviso";
+        aviso.textContent = texto;
+        aviso.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      };
+      const prod = (document.getElementById("fProd").value || "").trim();
+      const tel = (document.getElementById("fTel").value || "").trim();
+      const lat = (document.getElementById("fLat").value || "").trim();
+      const lon = (document.getElementById("fLon").value || "").trim();
+      const ha = (document.getElementById("fHaCampo").value || "").trim();
+      if (!prod || !tel) {
+        decir("Complete nombre y teléfono en Mi campo (abajo) y vuelva a tocar Pedir consulta. Ahí le confirmamos el pedido.");
+        document.getElementById("fProd").focus();
+        return;
+      }
+      if (prod) aplicarNombre(prod);
+      store.consulta = { prod, tel, lat, lon, ha, fecha: new Date().toISOString() };
+      saveStore(store);
+      decir("Consulta pedida. Recibimos el pedido de " + prod + ". Lo contactamos al " + tel + " para ver su campo y armar Actual, Mejorado 1 y Óptimo.", true);
+    });
   </script>
 </body>
 </html>
