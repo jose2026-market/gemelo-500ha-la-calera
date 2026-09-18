@@ -42,7 +42,7 @@
     .mapa-tools {
       position: absolute; z-index: 1100; top: calc(52px + env(safe-area-inset-top, 0px));
       left: calc(10px + env(safe-area-inset-left, 0px));
-      display: flex; flex-direction: column; gap: 6px; max-width: 210px;
+      display: flex; flex-direction: column; gap: 6px; max-width: 248px;
     }
     .mapa-tools .fondos, .mapa-tools .vista, .mapa-tools .capas { margin-top: 0; }
     @media (min-width: 900px) {
@@ -302,6 +302,7 @@
       <div class="capas fondos" role="group" aria-label="Capas oficiales">
         <button type="button" data-capa="suelos">Suelos</button>
         <button type="button" data-capa="otbn">OTBN</button>
+        <button type="button" data-capa="agua">Agua</button>
       </div>
     </div>
     <div class="ficha-oficial" id="fichaOficial" hidden>
@@ -311,11 +312,12 @@
     </div>
     <div class="leyenda" id="leyenda"></div>
     <div class="solapas-mapa" id="solapasMapa">
-      <p class="hint">Actual es el diagnóstico (se lee). Mejorado 1 y Óptimo se cargan. Toque una solapa o un potrero.</p>
+      <p class="hint">Actual es el diagnóstico (se lee). Mejorado 1 y Óptimo se cargan. Toque Pastoreo, Nutrición, Reproducción, Agua o un potrero.</p>
       <div class="modulos" role="tablist" aria-label="Módulo de decisión">
         <button type="button" class="on" data-mod="pastoreo">Pastoreo</button>
         <button type="button" data-mod="nutricion">Nutrición</button>
         <button type="button" data-mod="reproduccion">Reproducción</button>
+        <button type="button" data-mod="agua">Agua</button>
       </div>
       <div class="escenas" role="tablist" aria-label="Escena">
         <button type="button" class="on" data-esc="actual">Actual</button>
@@ -573,6 +575,22 @@
               : "Oferta y agua alcanzan. Mantener sal. No gastar grano."
         };
       }
+      if (modSel === "agua") {
+        const muyLejos = p.dist > 550;
+        const lejos = p.dist > 400;
+        let sem = d.estado === "descanso" ? "verde" : muyLejos ? "rojo" : lejos ? "amarillo" : "verde";
+        return {
+          color: SEM[sem],
+          sem,
+          titulo: "P" + p.n + " · " + p.agua,
+          sub: p.dist + " m a la aguada",
+          accion: muyLejos
+            ? "Más de 550 m a la bebida: acercar bebedero o cambiar de potrero. No se recorta agua."
+            : lejos
+              ? "Agua a más de 400 m. Vientres con ternero convienen más cerca (P1 o P5)."
+              : "Agua a " + p.dist + " m. Alcance de cría OK. " + TERRITORIO.agua
+        };
+      }
       const cria = d.categoria.indexOf("ternero") >= 0;
       let sem = "verde";
       if (cria && p.dist > 500) sem = "rojo";
@@ -617,6 +635,7 @@
     map.createPane("oficial"); map.getPane("oficial").style.zIndex = 280;
     map.getPane("oficial").style.pointerEvents = "none";
     map.createPane("suelo"); map.getPane("suelo").style.zIndex = 350;
+    map.createPane("agua"); map.getPane("agua").style.zIndex = 400;
     map.createPane("alambrado"); map.getPane("alambrado").style.zIndex = 450;
 
     const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
@@ -667,10 +686,27 @@
       maxZoom: MAX_Z,
       attribution: "MAyDS · OTBN Ley 26.331"
     });
-    const capasOff = { suelos: [wmsSuelos, wmsRoca], otbn: [capaOtbn] };
+    const capaAgua = L.layerGroup();
+    const capasOff = { suelos: [wmsSuelos, wmsRoca], otbn: [capaOtbn], agua: [capaAgua] };
     function capaEncendida(id) {
       const lyr = (capasOff[id] || [])[0];
       return !!(lyr && map.hasLayer(lyr));
+    }
+    function actualizarFichaOficial() {
+      const ficha = document.getElementById("fichaOficial");
+      if (!ficha) return;
+      const partes = [];
+      if (capaEncendida("suelos")) {
+        partes.push("<b>Carta de suelos INTA · Peña Zubiate 1:500.000</b><br>UCSV 4 · Torriortente típico · aptitud VII · pastoreo extensivo");
+      }
+      if (capaEncendida("otbn")) {
+        partes.push("<b>OTBN Ley 26.331</b><br>No se desmonta. El óptimo de monte es bosque con ganadería integrada.");
+      }
+      if (capaEncendida("agua")) {
+        partes.push("<b>Agua de bebida</b><br>5 aguadas. Círculo lleno = 400 m (alcance de cría). Línea punteada = 800 m. No se recorta bebida. " + TERRITORIO.lluvia);
+      }
+      ficha.innerHTML = partes.join("<br><br>");
+      ficha.hidden = partes.length === 0;
     }
     function setCapa(id, on, refresh) {
       (capasOff[id] || []).forEach((lyr) => {
@@ -680,12 +716,12 @@
       document.querySelectorAll(".capas button").forEach((b) => {
         if (b.dataset.capa === id) b.classList.toggle("on", on);
       });
-      const ficha = document.getElementById("fichaOficial");
-      if (ficha) ficha.hidden = !capaEncendida("suelos") && !capaEncendida("otbn");
+      actualizarFichaOficial();
       if (refresh) llenar();
     }
     setCapa("suelos", true);
     setCapa("otbn", true);
+    setCapa("agua", true);
     document.querySelector(".capas").addEventListener("click", (ev) => {
       const b = ev.target.closest("button[data-capa]");
       if (!b) return;
@@ -987,6 +1023,28 @@
           icon: L.divIcon({ className: "drop", html: "<i style='background:" + a.color + "'></i>", iconSize: [14, 14], iconAnchor: [7, 7] })
         }).bindPopup("<b>" + a.name + "</b><br>No se recorta bebida.").addTo(group);
       });
+      dibujarAgua();
+    }
+    function dibujarAgua() {
+      capaAgua.clearLayers();
+      aguadas.forEach((a) => {
+        L.circle([a.lat, a.lon], {
+          pane: "agua",
+          radius: 400,
+          color: a.color,
+          weight: 2,
+          fillColor: a.color,
+          fillOpacity: 0.16
+        }).bindPopup("<b>" + a.name + "</b><br>Alcance de cría: 400 m. No se recorta bebida.").addTo(capaAgua);
+        L.circle([a.lat, a.lon], {
+          pane: "agua",
+          radius: 800,
+          color: a.color,
+          weight: 1.5,
+          dashArray: "5 7",
+          fill: false
+        }).addTo(capaAgua);
+      });
     }
     dibujarPredio();
     const pueblos = [
@@ -1018,6 +1076,7 @@
       setFondo("sat");
       setCapa("suelos", true);
       setCapa("otbn", true);
+      setCapa("agua", true);
       setPanel(false);
       map.fitBounds(group.getBounds(), { padding: [48, 48], maxZoom: 15 });
       marcarVista("todo");
@@ -1065,6 +1124,14 @@
           campo("fDist", "Distancia al agua (m)", "number") +
           campo("fEv", "Carga (EV)", "number", "0.1") +
           campo("fKg", "kg carne / año", "number");
+      } else if (modSel === "agua") {
+        campos.innerHTML =
+          campo("fAgua", "Aguada que usa") +
+          campo("fDist", "Distancia al agua (m)", "number") +
+          campo("fEv", "Carga (EV)", "number", "0.1") +
+          campo("fCc", "Condición corporal (1 a 5)", "number", "0.1") +
+          campo("fCat", "Categoría en el potrero") +
+          campo("fKg", "kg carne / año", "number");
       } else {
         campos.innerHTML =
           campo("fCat", "Categoría en el potrero") +
@@ -1092,6 +1159,7 @@
       set("fCc", d.cc);
       set("fSup", d.suplemento);
       set("fDist", p.dist);
+      set("fAgua", p.agua);
       set("fKg", d.kg);
       set("fCat", d.categoria);
       set("fDest", d.destete);
@@ -1122,10 +1190,13 @@
           ? "<div><i style='background:#1B7A4A'></i>Pasto alcanza / descanso listo</div><div><i style='background:#C4A035'></i>Cambiar de potrero pronto</div><div><i style='background:#B42318'></i>Sobrecarga o sin días</div>"
           : modSel === "nutricion"
             ? "<div><i style='background:#1B7A4A'></i>Comen y beben bien</div><div><i style='background:#C4A035'></i>Condición justa / loma</div><div><i style='background:#B42318'></i>Lejos del agua o flacas</div>"
+            : modSel === "agua"
+              ? "<div><i style='background:#1E6BB8'></i>Agua a menos de 400 m</div><div><i style='background:#C4A035'></i>400–550 m</div><div><i style='background:#B42318'></i>Más de 550 m</div>"
             : "<div><i style='background:#1B7A4A'></i>Parición cerca del agua</div><div><i style='background:#C4A035'></i>Destete bajo</div><div><i style='background:#B42318'></i>Cría lejos de la aguada</div>") +
-        "<div>Capa: " + ({ pastoreo: "Pastoreo", nutricion: "Nutrición", reproduccion: "Reproducción" }[modSel]) + "</div>" +
+        "<div>Capa: " + ({ pastoreo: "Pastoreo", nutricion: "Nutrición", reproduccion: "Reproducción", agua: "Agua" }[modSel]) + "</div>" +
         (capaEncendida("suelos") ? "<div>Suelos INTA · UCSV 4 Torriortente típico (apt. VII)</div>" : "") +
-        (capaEncendida("otbn") ? "<div><i style='background:#B42318'></i>OTBN I · <i style='background:#C4A035'></i>II · <i style='background:#1B7A4A'></i>III · MAyDS 2016</div>" : "");
+        (capaEncendida("otbn") ? "<div><i style='background:#B42318'></i>OTBN I · <i style='background:#C4A035'></i>II · <i style='background:#1B7A4A'></i>III · MAyDS 2016</div>" : "") +
+        (capaEncendida("agua") ? "<div>Agua · círculo 400 m / línea 800 m · no recortar bebida</div>" : "");
     }
     function abrir(n, conPanel) {
       pSel = n;
@@ -1141,6 +1212,7 @@
         if (!b) return;
         modSel = b.dataset.mod;
         document.querySelectorAll(".modulos button").forEach((x) => x.classList.toggle("on", x.dataset.mod === modSel));
+        if (modSel === "agua") setCapa("agua", true);
         pintarCampos();
         refrescarMapa();
         if (esMovil()) setPanel(true);
