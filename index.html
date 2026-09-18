@@ -319,7 +319,7 @@
       <article class="acordeon" id="accCapas">
         <button type="button" class="cab" data-acc="accCapas"><div><small>3 · Capas oficiales</small><b>Imágenes, suelos y bosque</b></div><i>+</i></button>
         <div class="cuerpo">
-          Satélite, IGN/IDERA y Sentinel-2 se piden por recorte (no pesan en el celular). Suelos INTA, OTBN y aguadas se prenden aparte, para no tapar los potreros.
+          Satélite y Sentinel-2 se piden por recorte. El verde del campo (NDVI) y el uso del suelo se ven sobre el lote, también en el celular.
           <button type="button" id="btnCapasOficiales">Ir a Capas</button>
         </div>
       </article>
@@ -331,7 +331,7 @@
         </div>
       </article>
     </div>
-    <p class="nota">Las 500 ha de La Calera son el demostrativo. El servicio es para cualquier campo del productor. Capas: IGN/IDERA, Sentinel-2, INTA, MAyDS (OTBN).</p>
+    <p class="nota">Las 500 ha de La Calera son el demostrativo. El servicio es para cualquier campo del productor. Capas: satélite, verde NDVI, INTA, MAyDS (OTBN).</p>
   </section>
   <section class="informe" id="informe">
     <article class="papel" id="cuerpoInforme"></article>
@@ -447,13 +447,17 @@
           <details class="sub" data-capa-drop="imagenes">
             <summary>Imágenes</summary>
             <div class="cuerpo">
-              <p class="hint">Una sola foto a la vez. Teselas de IGN/IDERA y Sentinel; no se bajan al teléfono.</p>
               <div class="fondos" id="fondosImg" role="tablist" aria-label="Imagen de fondo">
                 <button type="button" class="on" data-fondo="sat">Satélite</button>
-                <button type="button" data-fondo="ign">IGN · IDERA</button>
                 <button type="button" data-fondo="sentinel">Sentinel-2</button>
+                <button type="button" data-fondo="ign">Carta IGN</button>
                 <button type="button" data-fondo="relieve">Relieve</button>
               </div>
+              <div class="fondos" id="prodImg" role="group" aria-label="Productividad">
+                <button type="button" data-prod="ndvi">Verde NDVI</button>
+                <button type="button" data-prod="cobertura">Uso del suelo</button>
+              </div>
+              <div class="ficha-oficial" id="fichaImg">Marrón = poco pasto. Verde = más biomasa. Se ve sobre el campo en el celular.</div>
             </div>
           </details>
           <details class="sub" data-capa-drop="suelos">
@@ -481,6 +485,8 @@
             <button type="button" data-capa="suelos">Suelos</button>
             <button type="button" data-capa="otbn">OTBN</button>
             <button type="button" data-capa="agua">Aguadas</button>
+            <button type="button" data-capa="ndvi">NDVI</button>
+            <button type="button" data-capa="cobertura">Uso del suelo</button>
           </div>
           <div class="ficha-oficial" id="fichaOficial" hidden></div>
         </div>
@@ -844,7 +850,7 @@
       pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 16
     });
     const ign = L.tileLayer("https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/mapabase_hibrido@EPSG%3A3857@png/{z}/{x}/{-y}.png", {
-      pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 18, attribution: "IGN · IDERA"
+      pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 18, attribution: "IGN"
     });
     const sentinel = L.tileLayer("https://s2maps-tiles.eu/wmts/1.0.0/s2cloudless-2023_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg", {
       pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 16, attribution: "Sentinel-2 cloudless · EOX · Copernicus"
@@ -894,8 +900,33 @@
       maxZoom: MAX_Z,
       attribution: "MAyDS · OTBN Ley 26.331"
     });
+    function fechaModis8d() {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - 16);
+      const start = Date.UTC(d.getUTCFullYear(), 0, 1);
+      const doy = Math.floor((d - start) / 86400000) + 1;
+      const period = Math.floor((doy - 1) / 8) * 8 + 1;
+      return new Date(Date.UTC(d.getUTCFullYear(), 0, period)).toISOString().slice(0, 10);
+    }
+    const capaNdvi = L.tileLayer("https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_8Day/default/" + fechaModis8d() + "/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png", {
+      pane: "oficial",
+      opacity: 0.58,
+      maxNativeZoom: 9,
+      maxZoom: MAX_Z,
+      attribution: "NASA MODIS NDVI"
+    });
+    const wmsCobertura = L.tileLayer.wms("https://imagenes.ign.gob.ar/geoserver/coberturas_del_suelo/wms", {
+      pane: "oficial",
+      layers: "cobertura",
+      format: "image/png",
+      transparent: true,
+      opacity: 0.52,
+      attribution: "IGN · cobertura del suelo",
+      version: "1.1.1",
+      tiled: true
+    });
     const capaAgua = L.layerGroup();
-    const capasOff = { suelos: [wmsSuelos, wmsRoca], otbn: [capaOtbn], agua: [capaAgua] };
+    const capasOff = { suelos: [wmsSuelos, wmsRoca], otbn: [capaOtbn], agua: [capaAgua], ndvi: [capaNdvi], cobertura: [wmsCobertura] };
     function capaEncendida(id) {
       const lyr = (capasOff[id] || [])[0];
       return !!(lyr && map.hasLayer(lyr));
@@ -912,6 +943,18 @@
       }
       if (capaEncendida("agua")) {
         partes.push("<b>Aguadas</b><br>5 aguadas. Círculo lleno = 400 m (alcance de cría). Línea punteada = 800 m. No se recorta bebida. " + TERRITORIO.lluvia);
+      }
+      if (capaEncendida("ndvi")) {
+        partes.push("<b>Verde NDVI</b><br>NASA MODIS. Marrón = poco pasto. Verde = más biomasa. Cubre San Luis y se ve sobre las 500 ha.");
+      }
+      if (capaEncendida("cobertura")) {
+        partes.push("<b>Uso del suelo</b><br>IGN. Monte, pastizal y suelo desnudo del territorio. Se ve sobre el campo.");
+      }
+      const fichaImg = document.getElementById("fichaImg");
+      if (fichaImg) {
+        if (capaEncendida("ndvi")) fichaImg.textContent = "Verde NDVI sobre el campo. Marrón = poco pasto. Verde = más biomasa.";
+        else if (capaEncendida("cobertura")) fichaImg.textContent = "Uso del suelo IGN sobre el campo: monte, pastizal y suelo desnudo.";
+        else fichaImg.textContent = "Toque Verde NDVI o Uso del suelo para verlo sobre el lote, también en el celular.";
       }
       ficha.innerHTML = partes.join("<br><br>");
       ficha.hidden = partes.length === 0;
@@ -933,10 +976,21 @@
     setCapa("suelos", false);
     setCapa("otbn", false);
     setCapa("agua", false);
+    setCapa("ndvi", false);
+    setCapa("cobertura", false);
     document.querySelector(".capas").addEventListener("click", (ev) => {
       const b = ev.target.closest("button[data-capa]");
       if (!b) return;
       setCapa(b.dataset.capa, !capaEncendida(b.dataset.capa), true);
+    });
+    document.getElementById("prodImg").addEventListener("click", (ev) => {
+      const b = ev.target.closest("button[data-prod]");
+      if (!b) return;
+      const id = b.dataset.prod;
+      const prender = !capaEncendida(id);
+      ["ndvi", "cobertura"].forEach((k) => setCapa(k, prender && k === id, false));
+      document.querySelectorAll("[data-prod]").forEach((x) => x.classList.toggle("on", prender && x.dataset.prod === id));
+      llenar();
     });
 
     function aplicarNombre(nombre) {
@@ -1397,7 +1451,9 @@
         "<div>Capa: " + ({ pastoreo: "Pastoreo", nutricion: "Nutrición", reproduccion: "Reproducción", agua: "Agua" }[modSel]) + "</div>" +
         (capaEncendida("suelos") ? "<div>Suelos INTA · UCSV 4 Torriortente típico (apt. VII)</div>" : "") +
         (capaEncendida("otbn") ? "<div><i style='background:#B42318'></i>OTBN I · <i style='background:#C4A035'></i>II · <i style='background:#1B7A4A'></i>III · MAyDS 2016</div>" : "") +
-        (capaEncendida("agua") ? "<div>Agua · círculo 400 m / línea 800 m · no recortar bebida</div>" : "");
+        (capaEncendida("agua") ? "<div>Agua · círculo 400 m / línea 800 m · no recortar bebida</div>" : "") +
+        (capaEncendida("ndvi") ? "<div><i style='background:#C4A035'></i>Marrón poco pasto · <i style='background:#1B7A4A'></i>verde más biomasa (NDVI)</div>" : "") +
+        (capaEncendida("cobertura") ? "<div>Uso del suelo IGN sobre el campo</div>" : "");
       const info = document.getElementById("infoLote");
       const sum = document.getElementById("sumLote");
       if (info) {
