@@ -487,11 +487,13 @@
     const topo = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
       pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 16
     });
+    let relieveOverlay = null;
     function setFondo(id) {
       if (map.hasLayer(sat)) map.removeLayer(sat);
       if (map.hasLayer(topo)) map.removeLayer(topo);
       if (id === "relieve") topo.addTo(map);
       else sat.addTo(map);
+      if (relieveOverlay) relieveOverlay.setOpacity(id === "relieve" ? 0.46 : 0.12);
       document.querySelectorAll(".fondos button").forEach((b) => b.classList.toggle("on", b.dataset.fondo === id));
     }
     setFondo("sat");
@@ -534,29 +536,48 @@
     });
 
     const S = window.SUPERFICIE, g = S.grid;
-    function colorZ(z) {
-      const t = (z - g.zmin) / (g.zmax - g.zmin);
-      const stops = [[27,77,46],[61,122,60],[196,181,106],[201,163,106],[216,201,180]];
-      const x = t * (stops.length - 1);
-      const i = Math.min(Math.floor(x), stops.length - 2);
-      const u = x - i;
-      const a = stops[i], b = stops[i + 1];
-      return "rgb(" + a.map((v, k) => Math.round(v + (b[k] - v) * u)).join(",") + ")";
+    function hillFactor(i, j) {
+      const z = g.z;
+      const dzx = z[i][Math.min(j + 1, g.nx - 1)] - z[i][Math.max(j - 1, 0)];
+      const dzy = z[Math.min(i + 1, g.ny - 1)][j] - z[Math.max(i - 1, 0)][j];
+      const lit = Math.max(-1, Math.min(1, (-dzx + dzy) / 70));
+      const t = (z[i][j] - g.zmin) / Math.max(1, g.zmax - g.zmin);
+      return Math.max(0.12, Math.min(1, 0.32 + 0.38 * t + 0.36 * lit));
     }
+    function potreroDe(lat, lon) {
+      return potreros.find((p) => {
+        const la = p.ring.map((r) => r[0]), lo = p.ring.map((r) => r[1]);
+        return lat >= Math.min.apply(null, la) && lat <= Math.max.apply(null, la) &&
+          lon >= Math.min.apply(null, lo) && lon <= Math.max.apply(null, lo);
+      });
+    }
+    const tints = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
     for (let i = 0; i < g.ny - 1; i++) {
       for (let j = 0; j < g.nx - 1; j++) {
-        const zc = 0.25 * (g.z[i][j] + g.z[i][j + 1] + g.z[i + 1][j] + g.z[i + 1][j + 1]);
+        const hs = hillFactor(i, j);
+        const v = Math.round(28 + hs * 200);
         const lat0 = g.south + i * g.dlat, lon0 = g.west + j * g.dlon;
-        L.polygon([[lat0, lon0], [lat0, lon0 + g.dlon], [lat0 + g.dlat, lon0 + g.dlon], [lat0 + g.dlat, lon0]], {
-          pane: "suelo", color: colorZ(zc), weight: 0, fillColor: colorZ(zc), fillOpacity: 0.42, interactive: false
+        const cell = [[lat0, lon0], [lat0, lon0 + g.dlon], [lat0 + g.dlat, lon0 + g.dlon], [lat0 + g.dlat, lon0]];
+        L.polygon(cell, {
+          pane: "suelo", weight: 0, fillColor: "rgb(" + v + "," + v + "," + v + ")",
+          fillOpacity: 0.16, interactive: false
         }).addTo(map);
+        const p = potreroDe(lat0 + g.dlat / 2, lon0 + g.dlon / 2);
+        if (p) {
+          const tint = L.polygon(cell, {
+            pane: "suelo", weight: 0, fillColor: SEM.verde, fillOpacity: 0.14, interactive: false
+          }).addTo(map);
+          tints[p.n].push({ poly: tint, hs: hs });
+        }
       }
     }
-    L.imageOverlay(S.png, [[g.south, g.west], [g.north, g.east]], { pane: "suelo", opacity: 0.55, interactive: false }).addTo(map);
+    relieveOverlay = L.imageOverlay(S.png, [[g.south, g.west], [g.north, g.east]], {
+      pane: "suelo", opacity: 0.12, interactive: false
+    }).addTo(map);
     S.contours.forEach((c) => {
       L.polyline(c.latlngs, {
-        pane: "suelo", color: c.z % 40 === 0 ? "#fff8e8" : "rgba(255,255,255,.4)",
-        weight: c.z % 40 === 0 ? 1.5 : 0.7, interactive: false
+        pane: "suelo", color: c.z % 40 === 0 ? "rgba(255,248,232,.85)" : "rgba(255,255,255,.38)",
+        weight: c.z % 40 === 0 ? 1.6 : 0.7, interactive: false
       }).addTo(map);
     });
 
@@ -567,7 +588,10 @@
     }
     function pintar(p) {
       const v = decision(p);
-      if (polyByN[p.n]) polyByN[p.n].setStyle({ fillColor: v.color, color: "#fff", fillOpacity: 0.38 });
+      if (polyByN[p.n]) polyByN[p.n].setStyle({ fillColor: v.color, color: "#fff", weight: 2.2, fillOpacity: 0.07 });
+      (tints[p.n] || []).forEach((c) => {
+        c.poly.setStyle({ fillColor: v.color, fillOpacity: 0.08 + 0.16 * c.hs });
+      });
       if (labByN[p.n]) {
         labByN[p.n].setIcon(L.divIcon({
           className: "lab",
@@ -580,7 +604,7 @@
     }
     potreros.forEach((p) => {
       const poly = L.polygon(p.ring, {
-        pane: "alambrado", color: "#fff", weight: 3, fillColor: SEM.verde, fillOpacity: 0.35
+        pane: "alambrado", color: "#fff", weight: 2.2, fillColor: SEM.verde, fillOpacity: 0.07
       }).addTo(group);
       polyByN[p.n] = poly;
       const c = centro(p.ring);
@@ -790,7 +814,33 @@
     });
 
     function kmlColor(hex) {
-      return "c8" + hex.slice(5, 7) + hex.slice(3, 5) + hex.slice(1, 3);
+      return "48" + hex.slice(5, 7) + hex.slice(3, 5) + hex.slice(1, 3);
+    }
+    function zEn(lat, lon) {
+      const gj = (lon - g.west) / g.dlon;
+      const gi = (lat - g.south) / g.dlat;
+      const i0 = Math.max(0, Math.min(g.ny - 2, Math.floor(gi)));
+      const j0 = Math.max(0, Math.min(g.nx - 2, Math.floor(gj)));
+      const ty = gi - i0, tx = gj - j0;
+      return (1 - tx) * (1 - ty) * g.z[i0][j0] + tx * (1 - ty) * g.z[i0][j0 + 1] +
+        (1 - tx) * ty * g.z[i0 + 1][j0] + tx * ty * g.z[i0 + 1][j0 + 1];
+    }
+    function anilloTerreno(ring) {
+      const pts = ring.concat([ring[0]]);
+      const out = [];
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1];
+        const dlat = b[0] - a[0], dlon = b[1] - a[1];
+        const m = Math.hypot(dlat * 111320, dlon * 111320 * Math.cos(a[0] * Math.PI / 180));
+        const n = Math.max(1, Math.round(m / 40));
+        for (let k = 0; k < n; k++) {
+          const t = k / n;
+          const lat = a[0] + t * dlat, lon = a[1] + t * dlon;
+          out.push(lon.toFixed(6) + "," + lat.toFixed(6) + "," + zEn(lat, lon).toFixed(1));
+        }
+      }
+      out.push(out[0]);
+      return out.join(" ");
     }
     function exportarKml() {
       const nombre = { pastoreo: "Pastoreo", nutricion: "Nutrición", reproduccion: "Reproducción" }[modSel];
@@ -798,18 +848,17 @@
       let marks = "";
       potreros.forEach((p) => {
         const v = decision(p);
-        const ring = p.ring.map((ll) => ll[1].toFixed(6) + "," + ll[0].toFixed(6) + ",0");
-        ring.push(ring[0]);
+        const ring = anilloTerreno(p.ring);
         const c = centro(p.ring);
         marks += "<Placemark><name>" + v.titulo + "</name><description><![CDATA[<p>" + v.sub +
           "</p><p><b>Decisión:</b> " + v.accion + "</p><p>" + p.agua + " a " + p.dist +
           " m. No recortar bebida.</p>]]></description>" +
-          "<Style><LineStyle><color>ffffffff</color><width>3</width></LineStyle>" +
-          "<PolyStyle><color>" + kmlColor(v.color) + "</color></PolyStyle>" +
+          "<Style><LineStyle><color>ffffffff</color><width>2.2</width></LineStyle>" +
+          "<PolyStyle><color>" + kmlColor(v.color) + "</color><fill>1</fill><outline>1</outline></PolyStyle>" +
           "<LabelStyle><scale>0.95</scale></LabelStyle></Style>" +
           "<MultiGeometry><Polygon><tessellate>1</tessellate><altitudeMode>clampToGround</altitudeMode>" +
-          "<outerBoundaryIs><LinearRing><coordinates>" + ring.join(" ") + "</coordinates></LinearRing></outerBoundaryIs></Polygon>" +
-          "<Point><coordinates>" + c[1].toFixed(6) + "," + c[0].toFixed(6) + ",0</coordinates></Point></MultiGeometry></Placemark>";
+          "<outerBoundaryIs><LinearRing><coordinates>" + ring + "</coordinates></LinearRing></outerBoundaryIs></Polygon>" +
+          "<Point><coordinates>" + c[1].toFixed(6) + "," + c[0].toFixed(6) + "," + zEn(c[0], c[1]).toFixed(1) + "</coordinates></Point></MultiGeometry></Placemark>";
       });
       const campo = store.nombreCampo || "Campo gemelo";
       const kml = "<?xml version='1.0' encoding='UTF-8'?><kml xmlns='http://www.opengis.net/kml/2.2'><Document><name>" +
