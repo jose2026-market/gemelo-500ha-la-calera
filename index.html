@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Gemelo Digital Ganadero</title>
+  <title>Gemelo Digital Ganadero · Sociedad Rural de San Luis</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body { margin: 0; height: 100%; height: 100dvh; overflow: hidden; font-family: system-ui, Segoe UI, sans-serif; }
@@ -147,32 +147,99 @@
     .acciones button:disabled { opacity: 1; background: #E7F3EC; color: #064A31; border-color: #9FCBB0; }
     input[readonly], textarea[readonly] { background: #f4f6f5; color: #5C564F; }
     .leaflet-pane.oficial { pointer-events: none; }
-    .portada {
-      position: absolute; inset: 0; z-index: 2000;
-      background: rgba(6, 32, 24, .55);
+    .topbar {
+      position: absolute; z-index: 1600; top: 0; left: 0; right: 0;
+      background: #0D5C2C; color: #F7F1E4;
+      padding: 8px 12px 8px;
+      padding-top: calc(8px + env(safe-area-inset-top, 0px));
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.22);
+    }
+    .topbar .sello {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: #C4A35A; color: #0D5C2C; font-weight: 800; font-size: 11px;
       display: flex; align-items: center; justify-content: center;
-      padding: 16px;
     }
-    .portada[hidden] { display: none; }
-    .portada-card {
-      width: min(520px, 100%);
-      background: #fff; color: #1C2B26;
-      border: 1px solid #d5dbd6; border-radius: 12px;
-      padding: 18px 18px 16px;
+    .topbar .who { flex: 1; min-width: 0; }
+    .topbar .who small { display: block; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: #E4C87A; }
+    .topbar .who b { display: block; font-size: 14px; line-height: 1.15; }
+    .topbar .desk { display: none; gap: 6px; }
+    .topbar .desk button {
+      background: transparent; color: #F7F1E4; border: 1px solid rgba(247,241,228,.35);
+      border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 12px;
     }
-    .portada-card .marca { margin: 0; font-size: 11px; letter-spacing: .04em; color: #064A31; font-weight: 700; text-transform: uppercase; }
-    .portada-card h1 { margin: 4px 0 8px; font-size: 26px; line-height: 1.15; color: #064A31; }
-    .portada-card .pitch { margin: 0 0 12px; font-size: 14px; line-height: 1.4; color: #1C2B26; }
-    .pasos { display: grid; gap: 8px; margin: 0 0 14px; }
-    .pasos div { border: 1px solid #e2e8e4; border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.35; color: #5C564F; }
-    .pasos b { display: block; color: #064A31; font-size: 13px; margin-bottom: 2px; }
-    .portada-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
-    .portada-acciones button {
-      flex: 1; min-width: 140px; border-radius: 8px; font-weight: 700; font-size: 13px;
-      padding: 10px 12px; border: 1px solid #064A31; background: #064A31; color: #fff;
+    .topbar .desk button.on { background: #C4A35A; color: #0D5C2C; border-color: #C4A35A; }
+    .inicio {
+      position: absolute; inset: 0; z-index: 1500;
+      background: #0D5C2C; color: #F7F1E4;
+      overflow: auto; -webkit-overflow-scrolling: touch;
+      padding: 72px 14px calc(88px + env(safe-area-inset-bottom, 0px));
     }
-    .portada-acciones button.sec { background: #fff; color: #064A31; }
-    .portada-card .fine { margin: 10px 0 0; font-size: 11px; color: #5C564F; line-height: 1.35; }
+    .inicio .hero { max-width: 720px; margin: 0 auto 16px; }
+    .inicio .hero h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.15; }
+    .inicio .hero p { margin: 0; font-size: 15px; line-height: 1.4; color: #E8E0D0; }
+    .servicios { max-width: 720px; margin: 0 auto; display: grid; gap: 10px; grid-template-columns: 1fr; }
+    .servicios button {
+      text-align: left; background: #F7F1E4; color: #2D2016;
+      border: 0; border-radius: 12px; padding: 14px 14px 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.18);
+    }
+    .servicios button small { display: block; color: #0D5C2C; font-weight: 800; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+    .servicios button b { display: block; font-size: 18px; color: #0D5C2C; margin-bottom: 4px; }
+    .servicios button span { display: block; font-size: 13px; line-height: 1.35; color: #5C564F; }
+    .inicio .nota { max-width: 720px; margin: 14px auto 0; font-size: 12px; line-height: 1.4; color: #D9CFAF; }
+    .inicio .nota a { color: #E4C87A; }
+    .informe {
+      position: absolute; inset: 0; z-index: 1500;
+      background: #F7F1E4; color: #2D2016;
+      overflow: auto; -webkit-overflow-scrolling: touch;
+      padding: 72px 14px calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+    .informe .papel { max-width: 720px; margin: 0 auto; background: #fff; border: 1px solid #e2d8c4; border-radius: 12px; padding: 16px; }
+    .informe h1 { margin: 0 0 4px; font-size: 22px; color: #0D5C2C; }
+    .informe .meta { margin: 0 0 12px; font-size: 12px; color: #5C564F; }
+    .informe h2 { margin: 16px 0 8px; font-size: 15px; color: #0D5C2C; border-bottom: 2px solid #C4A35A; padding-bottom: 4px; }
+    .informe .item { border: 1px solid #e2d8c4; border-radius: 8px; padding: 8px 10px; margin: 0 0 8px; font-size: 13px; line-height: 1.35; }
+    .informe .item b { display: block; color: #0D5C2C; }
+    .informe .tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin: 0 0 4px; }
+    .tag.sin { background: #E7F3EC; color: #0D5C2C; }
+    .tag.con { background: #FFF6E5; color: #6A4B12; }
+    .tag.med { background: #E8EEF6; color: #1C3A5C; }
+    .informe-acciones { max-width: 720px; margin: 12px auto 0; display: flex; gap: 8px; flex-wrap: wrap; }
+    .informe-acciones button {
+      flex: 1; min-width: 140px; font-weight: 700; padding: 10px 12px;
+      border-radius: 8px; border: 1px solid #0D5C2C; background: #0D5C2C; color: #fff;
+    }
+    .informe-acciones button.sec { background: #fff; color: #0D5C2C; }
+    .nav-bajo {
+      position: absolute; z-index: 1700; left: 0; right: 0; bottom: 0;
+      display: flex; background: #fff; border-top: 1px solid #d5dbd6;
+      padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+    }
+    .nav-bajo button { flex: 1; border: 0; background: none; color: #5C564F; font-weight: 700; font-size: 11px; padding: 8px 4px; border-radius: 8px; }
+    .nav-bajo button.on { color: #0D5C2C; background: #E7F3EC; }
+    body.vista-inicio .btn-menu, body.vista-informe .btn-menu { display: none; }
+    body.vista-visor .bar { padding-top: calc(60px + env(safe-area-inset-top, 0px)); }
+    body.vista-inicio .mapa-wrap, body.vista-informe .mapa-wrap { visibility: hidden; pointer-events: none; }
+    body.vista-visor .inicio, body.vista-informe .inicio { display: none; }
+    body.vista-visor .informe, body.vista-inicio .informe { display: none; }
+    body.vista-visor .btn-menu { top: calc(58px + env(safe-area-inset-top, 0px)); }
+    body.vista-visor .mapa-tools { top: calc(100px + env(safe-area-inset-top, 0px)); }
+    body.vista-visor .cartel-nombre { top: calc(60px + env(safe-area-inset-top, 0px)); }
+    body.vista-visor .solapas-mapa { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); }
+    body.vista-visor .leyenda { bottom: 172px; }
+    body.vista-visor .ficha-oficial { bottom: 250px; }
+    @media (min-width: 900px) {
+      .servicios { grid-template-columns: 1fr 1fr; }
+      .topbar .desk { display: flex; }
+      .nav-bajo { display: none; }
+      body.vista-visor .solapas-mapa { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+    }
+    @media print {
+      .topbar, .nav-bajo, .btn-menu, .bar, .velo, .mapa-wrap, .inicio, .informe-acciones { display: none !important; }
+      .informe { position: static; padding: 0; background: #fff; display: block !important; }
+      .informe .papel { border: 0; }
+    }
     .consulta { margin-top: 10px; border: 1px solid #9FCBB0; background: #E7F3EC; border-radius: 8px; padding: 8px; }
     .consulta b { color: #064A31; font-size: 12px; }
     .consulta p { margin: 4px 0 0; font-size: 11px; color: #1C2B26; line-height: 1.35; }
@@ -187,25 +254,62 @@
     }
   </style>
 </head>
-<body>
+<body class="vista-inicio">
 <div class="app">
-  <div class="portada" id="portada" hidden>
-    <div class="portada-card">
-      <p class="marca">FCV UCCuyo · Coordinación de Investigación · San Luis</p>
-      <h1>Gemelo Digital Ganadero</h1>
-      <p class="pitch">Su campo en el mapa: cómo está hoy, qué se puede mejorar y cuál es el techo real. Sin desmonte y sin recortar el agua de bebida.</p>
-      <div class="pasos">
-        <div><b>1 · Actual</b>Diagnóstico con INTA Región III, carta de suelos y OTBN. Es la foto de su campo, no un número inventado.</div>
-        <div><b>2 · Mejorado 1</b>Usted carga el plan. Si la tierra, el agua o el bosque no lo bancan, el semáforo se pone rojo.</div>
-        <div><b>3 · Óptimo</b>El techo posible de su establecimiento. Lo que se puede pedir al campo, no lo que vende un paquete.</div>
-      </div>
-      <div class="portada-acciones">
-        <button type="button" class="sec" id="btnVerDemo">Ver el demostrativo</button>
-        <button type="button" id="btnIrConsulta">Consultar mi campo</button>
-      </div>
-      <p class="fine">Las 500 ha son un módulo para mostrar el método. El servicio es para su establecimiento: coordenadas, potreros y un informe Actual / Mejorado / Óptimo.</p>
+  <header class="topbar">
+    <div class="sello" aria-hidden="true">SR</div>
+    <div class="who">
+      <small>Sociedad Rural de San Luis</small>
+      <b>Gemelo Digital Ganadero</b>
     </div>
-  </div>
+    <nav class="desk" aria-label="Servicios">
+      <button type="button" class="on" data-vista="inicio">Inicio</button>
+      <button type="button" data-vista="visor">Mapa</button>
+      <button type="button" data-vista="informe">Informe</button>
+    </nav>
+  </header>
+  <section class="inicio" id="inicio">
+    <div class="hero">
+      <h1>Datos del territorio para decidir en el campo</h1>
+      <p>Servicio al productor: ver su lote, leer la situación actual y salir con un informe de puntos críticos. Corto y mediano plazo, con o sin inversión inmediata. Sin desmonte y sin recortar el agua de bebida.</p>
+    </div>
+    <div class="servicios">
+      <button type="button" id="btnVerDemo">
+        <small>1 · Visualizador</small>
+        <b>Ver el campo</b>
+        <span>Satélite, potreros, suelos INTA y OTBN. Toque y vea. Igual que un visor de capas, pero para su establecimiento.</span>
+      </button>
+      <button type="button" id="btnIrConsulta">
+        <small>2 · Mi establecimiento</small>
+        <b>Cargar coordenadas</b>
+        <span>Un punto alcanza para abrir el satélite. Las esquinas dibujan el límite declarado. INTA y OTBN se aplican igual.</span>
+      </button>
+      <button type="button" id="btnCapasOficiales">
+        <small>3 · Capas oficiales</small>
+        <b>Suelos, bosque y agua</b>
+        <span>Carta de suelos INTA, OTBN Ley 26.331 y aguadas. Información pública relevante para San Luis, al estilo IDERA.</span>
+      </button>
+      <button type="button" id="btnIrInforme">
+        <small>4 · Entregable</small>
+        <b>Informe de puntos críticos</b>
+        <span>Qué resolver ya sin gastar, qué pide inversión y qué queda para el mediano plazo.</span>
+      </button>
+    </div>
+    <p class="nota">Las 500 ha de La Calera son el demostrativo. El servicio es para cualquier campo del productor. Capas: INTA, MAyDS (OTBN). Modelo de acceso: <a href="https://www.idera.gob.ar/" target="_blank" rel="noopener">IDERA</a>.</p>
+  </section>
+  <section class="informe" id="informe">
+    <article class="papel" id="cuerpoInforme"></article>
+    <div class="informe-acciones">
+      <button type="button" id="btnImprimir">Imprimir / PDF</button>
+      <button type="button" class="sec" id="btnWhatsapp">WhatsApp</button>
+      <button type="button" class="sec" id="btnVolverMapa">Volver al mapa</button>
+    </div>
+  </section>
+  <nav class="nav-bajo" aria-label="Navegación">
+    <button type="button" class="on" data-vista="inicio">Inicio</button>
+    <button type="button" data-vista="visor">Mapa</button>
+    <button type="button" data-vista="informe">Informe</button>
+  </nav>
   <button type="button" class="btn-menu" id="btnMenu" aria-expanded="false" aria-controls="bar">Menú</button>
   <div class="velo" id="velo"></div>
   <aside class="bar" id="bar">
@@ -213,11 +317,12 @@
       <b class="title">Gemelo Digital Ganadero</b>
       <button type="button" class="btn-cerrar" id="btnCerrar" aria-label="Cerrar menú">×</button>
     </div>
-    <p class="lead">Consulta para el productor: ver su campo, saber la situación actual y cargar un plan de mejora con tope real. Pastoreo, nutrición y reproducción están abajo, sobre el mapa.</p>
+    <p class="lead">Servicio de la Sociedad Rural de San Luis: ver el campo, diagnosticar Actual / Mejorado 1 / Óptimo y entregar un informe de puntos críticos.</p>
     <div class="consulta">
       <b>Servicio de consulta</b>
-      <p>Se carga su establecimiento (coordenadas o esquinas), se lee suelos + OTBN + INTA, y se entrega el semáforo Actual / Mejorado 1 / Óptimo.</p>
-      <button type="button" id="btnPedirConsulta">Pedir consulta de Gemelo Digital</button>
+      <p>Se carga su establecimiento, se leen suelos + OTBN + INTA, y se entrega el informe de puntos críticos (corto y mediano plazo).</p>
+      <button type="button" id="btnPedirConsulta">Pedir consulta</button>
+      <button type="button" id="btnInformeMenu" class="sec" style="background:#fff;color:#0D5C2C;margin-top:6px">Ver informe ahora</button>
       <p class="aviso" id="msgConsulta" hidden></p>
     </div>
     <div class="nombres-fila">
@@ -1072,7 +1177,7 @@
       if (t) t.classList.toggle("on", id === "todo");
     }
     function verTodo() {
-      document.getElementById("portada").hidden = true;
+      setFondo("sat");
       setFondo("sat");
       setCapa("suelos", true);
       setCapa("otbn", true);
@@ -1347,19 +1452,99 @@
     refrescarMapa();
     abrir(1);
 
-    function cerrarPortada() {
-      document.getElementById("portada").hidden = true;
-      setTimeout(() => { map.invalidateSize(); verCampo(); }, 80);
+    function mostrarVista(id) {
+      document.body.classList.remove("vista-inicio", "vista-visor", "vista-informe");
+      document.body.classList.add("vista-" + id);
+      document.querySelectorAll(".topbar .desk button, .nav-bajo button").forEach((b) => {
+        b.classList.toggle("on", b.dataset.vista === id);
+      });
+      if (id === "visor") {
+        setTimeout(() => { map.invalidateSize(); verCampo(); }, 80);
+      }
+      if (id === "informe") pintarInforme();
     }
     function irConsulta() {
-      cerrarPortada();
+      mostrarVista("visor");
       document.getElementById("cajaCampo").hidden = false;
       document.getElementById("cajaNombre").hidden = true;
       document.getElementById("btnMiCampo").classList.add("on");
       setPanel(true);
     }
-    document.getElementById("btnVerDemo").addEventListener("click", cerrarPortada);
+    function hallarCriticos() {
+      const guardMod = modSel, guardEsc = escSel;
+      const out = [];
+      const mods = [["pastoreo", "Pastoreo"], ["nutricion", "Nutrición"], ["reproduccion", "Reproducción"], ["agua", "Agua"]];
+      escSel = "actual";
+      potreros.forEach((p) => {
+        mods.forEach(([id, nom]) => {
+          modSel = id;
+          const v = decision(p);
+          if (v.sem === "rojo" || v.sem === "amarillo") {
+            const txt = (v.accion || "").toLowerCase();
+            let plazo = "sin";
+            if (p.dist > 400 && (id === "agua" || txt.indexOf("agua") >= 0 || txt.indexOf("bebedero") >= 0)) plazo = "con";
+            else if (id === "nutricion" && v.sem === "rojo") plazo = "con";
+            out.push({ n: p.n, mod: nom, sem: v.sem, titulo: v.titulo, accion: v.accion, dist: p.dist, agua: p.agua, plazo: plazo });
+          }
+        });
+      });
+      modSel = guardMod;
+      escSel = guardEsc;
+      return out;
+    }
+    function pintarInforme() {
+      const campo = store.nombreCampo || DEMO_NOMBRE;
+      const prod = (document.getElementById("fProd").value || store.consulta && store.consulta.prod || "").trim();
+      const tel = (document.getElementById("fTel").value || store.consulta && store.consulta.tel || "").trim();
+      const fecha = new Date().toLocaleDateString("es-AR");
+      const hall = hallarCriticos();
+      const sin = hall.filter((h) => h.plazo === "sin");
+      const con = hall.filter((h) => h.plazo === "con");
+      const item = (h, tag, tagNom) =>
+        "<div class='item'><span class='tag " + tag + "'>" + tagNom + "</span><b>P" + h.n + " · " + h.mod + "</b>" + h.accion + "</div>";
+      const lista = (arr, tag, nom) => arr.length
+        ? arr.map((h) => item(h, tag, nom)).join("")
+        : "<div class='item'>Sin puntos críticos en este grupo en el demostrativo actual.</div>";
+      document.getElementById("cuerpoInforme").innerHTML =
+        "<h1>Informe de puntos críticos</h1>" +
+        "<p class='meta'>Sociedad Rural de San Luis · Gemelo Digital Ganadero<br>" +
+        campo + (prod ? " · " + prod : "") + (tel ? " · " + tel : "") + "<br>" +
+        fecha + " · Diagnóstico Actual (INTA Región III, carta de suelos, OTBN). No es padrón catastral.</p>" +
+        "<h2>Cómo está hoy</h2>" +
+        "<div class='item'>El techo lo marcan el suelo (aptitud VI–VII), el agua de bebida y la Ley 26.331. No se desmonta. No se recorta bebida. Actual: ~12,6 ha/EV, destete ~62 %, 5,9 kg carne/ha (INTA Región III).</div>" +
+        "<h2>Corto plazo · sin inversión inmediata</h2>" +
+        lista(sin, "sin", "Manejo") +
+        "<div class='item'><b>Todos los potreros</b>Estacionar el servicio (sacar el toro a tiempo). Rotar: no dejar cría en loma lejos del agua. Dejar descansar los potreros vacíos. Cumplir OTBN: el monte se usa con ganadería integrada, no se limpia.</div>" +
+        "<h2>Corto plazo · con inversión inmediata</h2>" +
+        lista(con, "con", "Inversión") +
+        "<div class='item'><b>Agua</b>Si hay vientres a más de 400 m (P3 a 600 m en el demostrativo), acercar bebedero o cañería. No recortar bebida. Sal a voluntad. Cobre inyectable al tacto si el agua es sulfatada.</div>" +
+        "<h2>Mediano plazo · con o sin más inversión</h2>" +
+        "<div class='item'><span class='tag med'>Mediano</span><b>Mejorado 1 (manejo)</b>Subir destete hacia 85 % y bajar a ~10 ha/EV con rotación, parición cerca del agua y servicio estacionado. No pide desmonte.</div>" +
+        "<div class='item'><span class='tag med'>Mediano</span><b>Aguadas nuevas</b>Una aguada más en el este recorta los 600 m de P3. Eso sí pide inversión; el techo de kilos no se gana solo con más vacas.</div>" +
+        "<div class='item'><span class='tag med'>Mediano</span><b>Óptimo</b>En loma el techo es Mejorado 1. Buffel ~30 % solo en bajos y si el OTBN lo permite. Soja o campo limpio no es escenario de este territorio.</div>" +
+        "<p class='meta'>Fuente territorial: INTA San Luis, GeoINTA Nodo 15 (suelos), MAyDS OTBN 2016. Acceso público de capas según el modelo de <a href='https://www.idera.gob.ar/' target='_blank' rel='noopener'>IDERA</a>. Este informe es orientación de consulta; no reemplaza análisis de agua ni mensura.</p>";
+      const textoWA = encodeURIComponent(
+        "Informe Gemelo Digital Ganadero · Sociedad Rural de San Luis\n" +
+        campo + "\nCorto plazo sin inversión: rotar, estacionar servicio, no desmontar, no recortar bebida.\nCorto plazo con inversión: acercar agua si hay cría a más de 400 m.\nMediano plazo: Mejorado 1 (destete ~85 %, 10 ha/EV) y aguadas si hace falta."
+      );
+      const wa = document.getElementById("btnWhatsapp");
+      wa.onclick = () => { window.open("https://wa.me/?text=" + textoWA, "_blank"); };
+    }
+    document.getElementById("btnVerDemo").addEventListener("click", () => mostrarVista("visor"));
     document.getElementById("btnIrConsulta").addEventListener("click", irConsulta);
+    document.getElementById("btnCapasOficiales").addEventListener("click", () => {
+      mostrarVista("visor");
+      setCapa("suelos", true);
+      setCapa("otbn", true);
+      setCapa("agua", true);
+    });
+    document.getElementById("btnIrInforme").addEventListener("click", () => mostrarVista("informe"));
+    document.getElementById("btnInformeMenu").addEventListener("click", () => { setPanel(false); mostrarVista("informe"); });
+    document.getElementById("btnImprimir").addEventListener("click", () => window.print());
+    document.getElementById("btnVolverMapa").addEventListener("click", () => mostrarVista("visor"));
+    document.querySelectorAll(".topbar .desk button, .nav-bajo button").forEach((b) => {
+      b.addEventListener("click", () => mostrarVista(b.dataset.vista));
+    });
     document.getElementById("btnPedirConsulta").addEventListener("click", () => {
       const caja = document.getElementById("cajaCampo");
       caja.hidden = false;
