@@ -317,9 +317,9 @@
         </div>
       </article>
       <article class="acordeon" id="accCapas">
-        <button type="button" class="cab" data-acc="accCapas"><div><small>3 · Capas oficiales</small><b>Suelos, bosque y agua</b></div><i>+</i></button>
+        <button type="button" class="cab" data-acc="accCapas"><div><small>3 · Capas oficiales</small><b>Imágenes, suelos y bosque</b></div><i>+</i></button>
         <div class="cuerpo">
-          Carta de suelos INTA, OTBN Ley 26.331 y aguadas. En el mapa se prenden desde el desplegable Capas, para no tapar los potreros.
+          Satélite, IGN/IDERA y Sentinel-2 se piden por recorte (no pesan en el celular). Suelos INTA, OTBN y aguadas se prenden aparte, para no tapar los potreros.
           <button type="button" id="btnCapasOficiales">Ir a Capas</button>
         </div>
       </article>
@@ -331,7 +331,7 @@
         </div>
       </article>
     </div>
-    <p class="nota">Las 500 ha de La Calera son el demostrativo. El servicio es para cualquier campo del productor. Capas: INTA, MAyDS (OTBN).</p>
+    <p class="nota">Las 500 ha de La Calera son el demostrativo. El servicio es para cualquier campo del productor. Capas: IGN/IDERA, Sentinel-2, INTA, MAyDS (OTBN).</p>
   </section>
   <section class="informe" id="informe">
     <article class="papel" id="cuerpoInforme"></article>
@@ -434,10 +434,6 @@
       <details id="dropVista">
         <summary>Vista</summary>
         <div class="cuerpo">
-          <div class="fondos" role="tablist" aria-label="Fondo del mapa">
-            <button type="button" class="on" data-fondo="sat">Satélite</button>
-            <button type="button" data-fondo="relieve">Relieve</button>
-          </div>
           <div class="vista fondos" role="group" aria-label="Encadre">
             <button type="button" id="btnVistaPueblos">Pueblos</button>
             <button type="button" class="on" id="btnVistaCampo">Campo</button>
@@ -448,6 +444,18 @@
       <details id="dropCapas">
         <summary>Capas</summary>
         <div class="cuerpo">
+          <details class="sub" data-capa-drop="imagenes">
+            <summary>Imágenes</summary>
+            <div class="cuerpo">
+              <p class="hint">Una sola foto a la vez. Teselas de IGN/IDERA y Sentinel; no se bajan al teléfono.</p>
+              <div class="fondos" id="fondosImg" role="tablist" aria-label="Imagen de fondo">
+                <button type="button" class="on" data-fondo="sat">Satélite</button>
+                <button type="button" data-fondo="ign">IGN · IDERA</button>
+                <button type="button" data-fondo="sentinel">Sentinel-2</button>
+                <button type="button" data-fondo="relieve">Relieve</button>
+              </div>
+            </div>
+          </details>
           <details class="sub" data-capa-drop="suelos">
             <summary>Suelos</summary>
             <div class="cuerpo">
@@ -463,7 +471,7 @@
             </div>
           </details>
           <details class="sub" data-capa-drop="agua">
-            <summary>Agua</summary>
+            <summary>Aguadas</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="agua">Ver en el mapa</button>
               <div class="ficha-oficial">5 aguadas. Círculo 400 m = alcance de cría. No se recorta bebida.</div>
@@ -472,7 +480,7 @@
           <div class="capas fondos" hidden>
             <button type="button" data-capa="suelos">Suelos</button>
             <button type="button" data-capa="otbn">OTBN</button>
-            <button type="button" data-capa="agua">Agua</button>
+            <button type="button" data-capa="agua">Aguadas</button>
           </div>
           <div class="ficha-oficial" id="fichaOficial" hidden></div>
         </div>
@@ -835,17 +843,26 @@
     const topo = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
       pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 16
     });
+    const ign = L.tileLayer("https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/mapabase_hibrido@EPSG%3A3857@png/{z}/{x}/{-y}.png", {
+      pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 18, attribution: "IGN · IDERA"
+    });
+    const sentinel = L.tileLayer("https://s2maps-tiles.eu/wmts/1.0.0/s2cloudless-2023_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg", {
+      pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 16, attribution: "Sentinel-2 cloudless · EOX · Copernicus"
+    });
+    const fondosLyr = { sat: sat, ign: ign, sentinel: sentinel, relieve: topo };
     let relieveOverlay = null;
     function setFondo(id) {
-      if (map.hasLayer(sat)) map.removeLayer(sat);
-      if (map.hasLayer(topo)) map.removeLayer(topo);
-      if (id === "relieve") topo.addTo(map);
-      else sat.addTo(map);
+      if (!fondosLyr[id]) id = "sat";
+      Object.keys(fondosLyr).forEach((k) => {
+        const lyr = fondosLyr[k];
+        if (k === id) { if (!map.hasLayer(lyr)) lyr.addTo(map); }
+        else if (map.hasLayer(lyr)) map.removeLayer(lyr);
+      });
       if (relieveOverlay) relieveOverlay.setOpacity(id === "relieve" ? 0.46 : 0.12);
-      document.querySelectorAll(".fondos button[data-fondo]").forEach((b) => b.classList.toggle("on", b.dataset.fondo === id));
+      document.querySelectorAll("button[data-fondo]").forEach((b) => b.classList.toggle("on", b.dataset.fondo === id));
     }
     setFondo("sat");
-    document.querySelector(".fondos").addEventListener("click", (ev) => {
+    document.getElementById("desplegables").addEventListener("click", (ev) => {
       const b = ev.target.closest("button[data-fondo]");
       if (b) setFondo(b.dataset.fondo);
     });
@@ -894,7 +911,7 @@
         partes.push("<b>OTBN Ley 26.331</b><br>No se desmonta. El óptimo de monte es bosque con ganadería integrada.");
       }
       if (capaEncendida("agua")) {
-        partes.push("<b>Agua de bebida</b><br>5 aguadas. Círculo lleno = 400 m (alcance de cría). Línea punteada = 800 m. No se recorta bebida. " + TERRITORIO.lluvia);
+        partes.push("<b>Aguadas</b><br>5 aguadas. Círculo lleno = 400 m (alcance de cría). Línea punteada = 800 m. No se recorta bebida. " + TERRITORIO.lluvia);
       }
       ficha.innerHTML = partes.join("<br><br>");
       ficha.hidden = partes.length === 0;
@@ -1260,7 +1277,6 @@
       if (t) t.classList.toggle("on", id === "todo");
     }
     function verTodo() {
-      setFondo("sat");
       setFondo("sat");
       setPanel(false);
       map.fitBounds(group.getBounds(), { padding: [48, 48], maxZoom: 15 });
@@ -1670,6 +1686,10 @@
       if (drop) {
         document.querySelectorAll("#desplegables > details").forEach((o) => { o.open = o === drop; });
         drop.open = true;
+        const img = drop.querySelector("[data-capa-drop='imagenes']");
+        if (img) {
+          drop.querySelectorAll("[data-capa-drop]").forEach((o) => { o.open = o === img; });
+        }
       }
     });
     document.getElementById("btnIrInforme").addEventListener("click", () => mostrarVista("informe"));
