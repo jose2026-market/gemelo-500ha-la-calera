@@ -204,6 +204,7 @@
       color: var(--crema); font-size: 13px; font-weight: 700;
       line-height: 1.2; letter-spacing: .01em;
     }
+    .obs-short { display: none; }
     .topbar .who {
       position: absolute; left: 50%; top: calc(50% + env(safe-area-inset-top, 0px) / 2);
       transform: translate(-50%, -50%);
@@ -349,31 +350,27 @@
         font-size: 10px; max-height: 10em; overflow: auto; margin-top: 4px;
       }
       .desplegables details { margin-bottom: 4px; }
-      :root { --topbar-h: 98px; }
+      :root { --topbar-h: 64px; }
       .topbar {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-rows: auto auto;
+        display: flex;
         align-items: center;
-        column-gap: 8px;
-        row-gap: 2px;
-        padding: env(safe-area-inset-top, 0px) 8px 6px;
+        gap: 6px;
+        padding: env(safe-area-inset-top, 0px) 6px 0;
         height: calc(var(--topbar-h) + env(safe-area-inset-top, 0px));
       }
-      .topbar .logo { height: 36px; width: 36px; }
-      .marca-obs {
-        grid-column: 1; grid-row: 1;
-        gap: 5px; max-width: 100%; min-width: 0;
-      }
-      .marca-obs-txt { font-size: 9px; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; }
-      .topbar-end { grid-column: 2; grid-row: 1; margin-left: 0; }
+      .topbar .logo { height: 34px; width: 34px; }
+      .marca-obs { flex: 0 1 28%; max-width: 32%; gap: 4px; min-width: 0; }
+      .obs-full { display: none; }
+      .obs-short { display: inline; }
+      .marca-obs-txt { font-size: 9px; line-height: 1.1; white-space: nowrap; }
+      .topbar-end { flex: 0 0 auto; margin-left: 0; }
       .topbar .who {
         position: static; left: auto; top: auto; transform: none;
-        grid-column: 1 / -1; grid-row: 2;
-        max-width: 100%; padding: 0 2px; z-index: 2;
+        flex: 1 1 auto; min-width: 0; max-width: none;
+        text-align: center; padding: 0 2px; z-index: 2;
       }
-      .topbar .who small { font-size: 11px; letter-spacing: .04em; }
-      .topbar .who b { font-size: 15px; }
+      .topbar .who small { font-size: 10px; letter-spacing: .03em; }
+      .topbar .who b { font-size: 12.5px; }
     }
   </style>
 </head>
@@ -382,7 +379,7 @@
   <header class="topbar">
     <div class="marca-obs" aria-label="Observatorio de IA de la UCCuyo">
       <img class="logo" src="assets/logo-observatorio-ia.png" alt="" />
-      <span class="marca-obs-txt">Observatorio de IA<br>de la UCCuyo</span>
+      <span class="marca-obs-txt"><span class="obs-full">Observatorio de IA<br>de la UCCuyo</span><span class="obs-short">Observatorio IA</span></span>
     </div>
     <div class="who">
       <small>Sociedad Rural de San Luis</small>
