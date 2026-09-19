@@ -189,10 +189,9 @@
       display: flex; align-items: center; gap: 10px;
       box-shadow: 0 3px 0 var(--oro), 0 1px 8px rgba(0,0,0,.18);
     }
-    .topbar .sello {
-      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-      background: var(--oro); color: var(--verde-oscuro); font-weight: 800; font-size: 11px;
-      display: flex; align-items: center; justify-content: center;
+    .topbar .logo {
+      height: 42px; width: 42px; object-fit: contain; flex-shrink: 0;
+      background: var(--crema); border-radius: 50%;
     }
     .topbar .who { flex: 1; min-width: 0; }
     .topbar .who small { display: block; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--oro-claro); }
@@ -317,17 +316,19 @@
         font-size: 10px; max-height: 4.2em; overflow: auto; margin-top: 4px;
       }
       .desplegables details { margin-bottom: 4px; }
+      .topbar .logo { height: 34px; width: 34px; }
     }
   </style>
 </head>
 <body class="vista-inicio">
 <div class="app">
   <header class="topbar">
-    <div class="sello" aria-hidden="true">SR</div>
+    <img class="logo" src="assets/logo-observatorio-ia.png" alt="Observatorio de Inteligencia Artificial · UCCuyo" />
     <div class="who">
       <small>Sociedad Rural de San Luis</small>
       <b>Gemelo Digital Ganadero</b>
     </div>
+    <img class="logo" src="assets/logo-sociedad-rural-san-luis.png" alt="Sociedad Rural de San Luis" />
     <nav class="desk" aria-label="Servicios">
       <button type="button" class="on" data-vista="inicio">Inicio</button>
       <button type="button" data-vista="visor">Mapa</button>
