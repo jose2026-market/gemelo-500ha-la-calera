@@ -20,7 +20,7 @@
     html, body { margin: 0; height: 100%; height: 100dvh; overflow: hidden; font-family: system-ui, Segoe UI, sans-serif; }
     .app { position: relative; height: 100%; }
     .mapa-wrap { position: absolute; inset: 0; }
-    #map { height: 100%; width: 100%; }
+    #map { height: 100%; width: 100%; background: #1c2b26; }
     .btn-menu {
       position: absolute; z-index: 1400; top: calc(10px + env(safe-area-inset-top, 0px));
       left: calc(10px + env(safe-area-inset-left, 0px));
@@ -305,7 +305,10 @@
     .nav-bajo button.on { color: var(--verde); background: var(--verde-suave); }
     body.vista-inicio .btn-menu, body.vista-informe .btn-menu { display: none; }
     body.vista-visor .bar { padding-top: calc(var(--topbar-h) + 14px + env(safe-area-inset-top, 0px)); }
-    body.vista-inicio .mapa-wrap, body.vista-informe .mapa-wrap { visibility: hidden; pointer-events: none; }
+    body.vista-inicio .mapa-wrap { pointer-events: none; }
+    body.vista-informe .mapa-wrap { visibility: hidden; pointer-events: none; }
+    .leaflet-container { background: #1c2b26; }
+    .leaflet-tile-pane { z-index: 200; }
     body.vista-visor .inicio, body.vista-informe .inicio { display: none; }
     body.vista-visor .informe, body.vista-inicio .informe { display: none; }
     body.vista-visor .btn-menu { top: calc(var(--topbar-h) + 10px + env(safe-area-inset-top, 0px)); }
@@ -483,7 +486,7 @@
       <button type="button" id="btnCargarNombre">Cargar nombre</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
-      <p class="aviso">Un punto abre el satélite. Las esquinas dibujan el límite declarado (no es el padrón). También puede cargar un JPG del plano de mensura. INTA, suelos y OTBN se aplican igual.</p>
+      <p class="aviso">Latitud sur y longitud oeste van con signo menos. No copie el ejemplo si no es su campo: el demostrativo de La Calera es otro lugar. Un punto abre el satélite; las esquinas dibujan el límite declarado (no es el padrón). También puede cargar un JPG del plano de mensura.</p>
       <label for="fProd">Nombre del productor / establecimiento</label>
       <input id="fProd" type="text" placeholder="Ej. Juan Pérez · Los Algarrobos" autocomplete="name" />
       <label for="fTel">Teléfono o WhatsApp</label>
@@ -491,17 +494,17 @@
       <div class="grid2">
         <div>
           <label for="fLat">Latitud</label>
-          <input id="fLat" type="text" inputmode="decimal" placeholder="-32.9110" autocomplete="off" />
+          <input id="fLat" type="text" inputmode="decimal" placeholder="sur, ej. -31.02" autocomplete="off" />
         </div>
         <div>
           <label for="fLon">Longitud</label>
-          <input id="fLon" type="text" inputmode="decimal" placeholder="-66.8816" autocomplete="off" />
+          <input id="fLon" type="text" inputmode="decimal" placeholder="oeste, ej. -63.61" autocomplete="off" />
         </div>
       </div>
       <label for="fHaCampo">Superficie (ha)</label>
       <input id="fHaCampo" type="number" step="1" min="20" max="20000" value="500" />
       <label for="fLimites">Límites opcionales (una esquina por línea: lat, lon)</label>
-      <textarea id="fLimites" placeholder="-32.9200, -66.8950&#10;-32.9200, -66.8682&#10;-32.9020, -66.8682&#10;-32.9020, -66.8950"></textarea>
+      <textarea id="fLimites" placeholder="una esquina por línea&#10;-31.020, -63.610&#10;-31.020, -63.590&#10;-31.005, -63.590&#10;-31.005, -63.610"></textarea>
       <label for="fPlano">Opcional · foto o JPG del plano de mensura</label>
       <input id="fPlano" type="file" accept="image/jpeg,image/png,image/webp,image/jpg" />
       <img id="prevPlano" class="plano-preview" alt="Vista del plano" hidden />
@@ -1050,7 +1053,7 @@
     }
 
     let modSel = "pastoreo", escSel = "actual", pSel = 1;
-    const MAX_Z = 17;
+    const MAX_Z = 18;
     const map = L.map("map", { zoomControl: true, minZoom: 5, maxZoom: MAX_Z }).setView([-32.9110, -66.8816], 14);
     map.zoomControl.setPosition("topright");
     function esMovil() { return window.matchMedia("(max-width: 900px)").matches; }
@@ -1071,17 +1074,31 @@
     map.createPane("agua"); map.getPane("agua").style.zIndex = 400;
     map.createPane("alambrado"); map.getPane("alambrado").style.zIndex = 450;
 
-    const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-      pane: "fondo", attribution: "Esri · SRTM · INTA · FCV UCCuyo", maxZoom: MAX_Z, maxNativeZoom: 17
+    const satUrls = [
+      "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+      "https://s2maps-tiles.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg",
+      "https://s2maps-tiles.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+    ];
+    let satUrlI = 0, satErr = 0;
+    const sat = L.tileLayer(satUrls[0], {
+      attribution: "Imagen satelital", maxZoom: 19, maxNativeZoom: 20
+    });
+    sat.on("tileerror", () => {
+      satErr += 1;
+      if (satErr < 4 || satUrlI >= satUrls.length - 1) return;
+      satErr = 0;
+      satUrlI += 1;
+      sat.setUrl(satUrls[satUrlI]);
     });
     const topo = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
-      pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 16
+      maxZoom: MAX_Z, maxNativeZoom: 16
     });
     const ign = L.tileLayer("https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/mapabase_hibrido@EPSG%3A3857@png/{z}/{x}/{-y}.png", {
-      pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 18, attribution: "IGN"
+      maxZoom: MAX_Z, maxNativeZoom: 18, attribution: "IGN"
     });
-    const sentinel = L.tileLayer("https://s2maps-tiles.eu/wmts/1.0.0/s2cloudless-2023_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg", {
-      pane: "fondo", maxZoom: MAX_Z, maxNativeZoom: 16, attribution: "Sentinel-2 cloudless · EOX · Copernicus"
+    const sentinel = L.tileLayer("https://s2maps-tiles.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg", {
+      maxZoom: 16, maxNativeZoom: 16, attribution: "Sentinel-2 cloudless · EOX · Copernicus"
     });
     const fondosLyr = { sat: sat, ign: ign, sentinel: sentinel, relieve: topo };
     let relieveOverlay = null;
@@ -1262,7 +1279,10 @@
       setPanel(true);
     });
     function parseNum(s) {
-      return Number(String(s || "").trim().replace(",", "."));
+      const t = String(s || "").trim().replace(",", ".");
+      if (!t) return NaN;
+      const n = Number(t);
+      return Number.isFinite(n) ? n : NaN;
     }
     function normalizarPar(lat, lon) {
       if (!isFinite(lat) || !isFinite(lon)) return [lat, lon];
@@ -1478,23 +1498,44 @@
         if (relieveOverlay) relieveOverlay.setOpacity(0);
       }
     }
+    const DEMO_CENTRO = [-32.911017, -66.881623];
+    function avisoCampo(txt) {
+      const el = document.getElementById("msg");
+      el.hidden = false;
+      el.textContent = txt;
+      decirPlano(txt);
+    }
+    function puntoValido(lat, lon) {
+      return isFinite(lat) && isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180 &&
+        !(Math.abs(lat) < 0.2 && Math.abs(lon) < 0.2);
+    }
+    function cuandoMapaListo(fn) {
+      let n = 0;
+      (function tick() {
+        map.invalidateSize();
+        try { sat.redraw(); } catch (e) {}
+        const sz = map.getSize();
+        if ((sz.x > 80 && sz.y > 80) || n > 18) fn();
+        else { n += 1; setTimeout(tick, 80); }
+      })();
+    }
     function cargarCampoProductor() {
       let lat = parseNum(document.getElementById("fLat").value);
       let lon = parseNum(document.getElementById("fLon").value);
       const par = normalizarPar(lat, lon);
       lat = par[0]; lon = par[1];
-      if (isFinite(lat) && isFinite(lon)) {
-        document.getElementById("fLat").value = lat;
-        document.getElementById("fLon").value = lon;
+      if (puntoValido(lat, lon)) {
+        document.getElementById("fLat").value = (+lat).toFixed(6);
+        document.getElementById("fLon").value = (+lon).toFixed(6);
       }
       let ha = parseNum(document.getElementById("fHaCampo").value);
       const ring = parseLimites(document.getElementById("fLimites").value);
       if (ring.length) {
         document.getElementById("fLimites").value = ring.map((p) => p[0] + ", " + p[1]).join("\n");
       }
-      limiteReal.clearLayers();
       let south, west, north, east;
-      if (ring.length >= 3) {
+      const hayAnillo = ring.length >= 3;
+      if (hayAnillo) {
         const lats = ring.map((p) => p[0]), lons = ring.map((p) => p[1]);
         south = Math.min.apply(null, lats); north = Math.max.apply(null, lats);
         west = Math.min.apply(null, lons); east = Math.max.apply(null, lons);
@@ -1503,13 +1544,9 @@
           const mLon = (east - west) * 111320 * Math.cos(((south + north) / 2) * Math.PI / 180);
           ha = Math.max(20, (mLat * mLon) / 10000);
         }
-        L.polygon(ring, {
-          pane: "alambrado", color: "#E4C87A", weight: 4, fill: false, dashArray: "8 6"
-        }).bindPopup("Límite declarado por el productor. No es el padrón catastral.").addTo(limiteReal);
       } else {
-        if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
-          document.getElementById("msg").hidden = false;
-          document.getElementById("msg").textContent = "Faltan coordenadas válidas (latitud, longitud) o las esquinas del límite.";
+        if (!puntoValido(lat, lon) || !enCuyo(lat, lon)) {
+          avisoCampo("Faltan coordenadas de SU campo (latitud sur y longitud oeste, con signo menos) o las esquinas del límite. Sin eso el mapa sigue en el demostrativo de La Calera.");
           return;
         }
         if (!ha || ha < 20) ha = 500;
@@ -1520,6 +1557,13 @@
         const dLon = ancho / (111320 * Math.cos(lat * Math.PI / 180));
         south = lat - dLat / 2; north = lat + dLat / 2;
         west = lon - dLon / 2; east = lon + dLon / 2;
+      }
+      const cx = (south + north) / 2, cy = (west + east) / 2;
+      limiteReal.clearLayers();
+      if (hayAnillo) {
+        L.polygon(ring, {
+          pane: "alambrado", color: "#E4C87A", weight: 4, fill: false, dashArray: "8 6"
+        }).bindPopup("Límite declarado por el productor. No es el padrón catastral.").addTo(limiteReal);
       }
       esDemoCalera = false;
       aplicarSitioGenerico();
@@ -1536,29 +1580,43 @@
       store.campoActivo = snapshotFormCampo();
       store.campoActivo.nombre = store.nombreCampo;
       saveStore(store);
+      L.popup({ maxWidth: 260 })
+        .setLatLng([cx, cy])
+        .setContent("<b>" + escHtml(store.nombreCampo || "Mi campo") + "</b><br>" + cx.toFixed(4) + ", " + cy.toFixed(4))
+        .openOn(map);
+      const cercaDemo = distM([cx, cy], DEMO_CENTRO) < 2500;
       document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = ring.length >= 3
-        ? "Campo cargado en el satélite. El polígono dorado es el límite que usted declaró. No es el padrón catastral."
-        : "Satélite centrado en " + lat.toFixed(5) + ", " + lon.toFixed(5) + " · " + Math.round(ha) + " ha. Si no es el lugar, revise el signo menos de latitud y longitud.";
+      document.getElementById("msg").textContent = cercaDemo
+        ? "Ojo: esas coordenadas caen en el demostrativo de La Calera. Si su campo es otro (p. ej. El Crispín), cargue latitud y longitud propias, con signo menos."
+        : (hayAnillo
+          ? "Campo centrado en " + cx.toFixed(5) + ", " + cy.toFixed(5) + ". El polígono dorado es el límite declarado, no el padrón."
+          : "Satélite centrado en " + lat.toFixed(5) + ", " + lon.toFixed(5) + " · " + Math.round(ha) + " ha. Si no es el lugar, revise el signo menos.");
       if (!cargarCampoProductor.silencio) enfocarCampo();
     }
     cargarCampoProductor.silencio = false;
     function enfocarCampo() {
+      enfocarCampo.activo = true;
+      setPanel(false);
       mostrarVista("visor");
       setFondo("sat");
       const ir = () => {
         map.invalidateSize();
+        try { sat.redraw(); } catch (e) {}
         const capas = [];
-        if (group.getLayers().length) capas.push(group);
-        if (limiteReal.getLayers().length) capas.push(limiteReal);
+        if (typeof group !== "undefined" && group.getLayers().length) capas.push(group);
+        if (typeof limiteReal !== "undefined" && limiteReal.getLayers().length) capas.push(limiteReal);
         if (!capas.length) return;
-        map.fitBounds(L.featureGroup(capas).getBounds(), { padding: [36, 36], maxZoom: 16 });
+        const b = L.featureGroup(capas).getBounds();
+        if (!b.isValid()) return;
+        map.fitBounds(b, { padding: [40, 40], maxZoom: 16, animate: false });
       };
-      ir();
-      setTimeout(ir, 150);
-      setTimeout(ir, 450);
+      cuandoMapaListo(ir);
+      setTimeout(ir, 320);
+      setTimeout(() => { ir(); enfocarCampo.activo = false; }, 700);
     }
+    enfocarCampo.activo = false;
     function volverDemo() {
+      enfocarCampo.activo = false;
       esDemoCalera = true;
       potreros = JSON.parse(JSON.stringify(DEMO_POTREROS));
       aguadas = JSON.parse(JSON.stringify(DEMO_AGUADAS));
@@ -1811,7 +1869,11 @@
     document.getElementById("btnVistaCampo").addEventListener("click", verCampo);
     document.getElementById("btnVerTodo").addEventListener("click", verTodo);
     verTodo();
-    setTimeout(() => { map.invalidateSize(); verTodo(); }, 250);
+    setTimeout(() => {
+      map.invalidateSize();
+      if (esDemoCalera) verTodo();
+      else verCampo();
+    }, 280);
 
     const campos = document.getElementById("campos");
     const pills = document.getElementById("pills");
@@ -2103,7 +2165,12 @@
         b.classList.toggle("on", b.dataset.vista === id);
       });
       if (id === "visor") {
-        setTimeout(() => { map.invalidateSize(); verCampo(); }, 80);
+        setFondo("sat");
+        setTimeout(() => {
+          map.invalidateSize();
+          try { sat.redraw(); } catch (e) {}
+          if (!enfocarCampo.activo) verCampo();
+        }, 280);
       }
       if (id === "informe") pintarInforme();
     }
