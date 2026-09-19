@@ -196,11 +196,19 @@
       background: var(--crema); border-radius: 50%;
       position: relative; z-index: 2;
     }
+    .marca-obs {
+      display: flex; align-items: center; gap: 8px;
+      z-index: 2; flex-shrink: 1; min-width: 0; max-width: 42%;
+    }
+    .marca-obs-txt {
+      color: var(--crema); font-size: 13px; font-weight: 700;
+      line-height: 1.2; letter-spacing: .01em;
+    }
     .topbar .who {
       position: absolute; left: 50%; top: calc(50% + env(safe-area-inset-top, 0px) / 2);
       transform: translate(-50%, -50%);
       text-align: center; z-index: 1; pointer-events: none;
-      max-width: calc(100% - 220px);
+      max-width: calc(100% - 360px);
     }
     .topbar .who small {
       display: block; font-size: 14px; letter-spacing: .06em; text-transform: uppercase;
@@ -290,7 +298,7 @@
     body.vista-visor .desplegables { top: calc(var(--topbar-h) + 54px + env(safe-area-inset-top, 0px)); }
     @media (min-width: 900px) {
       .topbar .desk { display: flex; }
-      .topbar .who { max-width: calc(100% - 380px); }
+      .topbar .who { max-width: calc(100% - 520px); }
       .nav-bajo { display: none; }
     }
     @media print {
@@ -340,7 +348,9 @@
       :root { --topbar-h: 76px; }
       .topbar { padding: env(safe-area-inset-top, 0px) 10px 0; }
       .topbar .logo { height: 42px; width: 42px; }
-      .topbar .who { max-width: calc(100% - 108px); }
+      .marca-obs { gap: 6px; max-width: 46%; }
+      .marca-obs-txt { font-size: 10px; }
+      .topbar .who { max-width: calc(100% - 168px); }
       .topbar .who small { font-size: 12px; }
       .topbar .who b { font-size: 16px; }
     }
@@ -349,7 +359,10 @@
 <body class="vista-inicio">
 <div class="app">
   <header class="topbar">
-    <img class="logo" src="assets/logo-observatorio-ia.png" alt="Observatorio de Inteligencia Artificial · UCCuyo" />
+    <div class="marca-obs" aria-label="Observatorio de IA de la UCCuyo">
+      <img class="logo" src="assets/logo-observatorio-ia.png" alt="" />
+      <span class="marca-obs-txt">Observatorio de IA<br>de la UCCuyo</span>
+    </div>
     <div class="who">
       <small>Sociedad Rural de San Luis</small>
       <b>Gemelo Digital Ganadero</b>
