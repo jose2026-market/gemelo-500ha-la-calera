@@ -159,7 +159,7 @@
     .desplegables .ficha-oficial, .desplegables .leyenda {
       position: static; max-width: none; left: auto; bottom: auto;
       margin-top: 6px; background: #f4f6f5; overflow-wrap: anywhere;
-      font-size: 11px; line-height: 1.35;
+      font-size: 11px; line-height: 1.35; padding: 6px 8px; border-radius: 6px;
     }
     .desplegables details.sub {
       border: 1px solid #e2e8e4; background: #f4f6f5; margin: 0 0 4px;
@@ -272,6 +272,10 @@
     .informe h2 { margin: 16px 0 8px; font-size: 15px; color: var(--verde); border-bottom: 2px solid var(--oro); padding-bottom: 4px; }
     .informe .item { border: 1px solid var(--oro-claro); border-radius: 8px; padding: 8px 10px; margin: 0 0 8px; font-size: 13px; line-height: 1.35; }
     .informe .item b { display: block; color: var(--verde); }
+    .informe .sit { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0 0 12px; }
+    @media (min-width: 640px) { .informe .sit { grid-template-columns: 1fr 1fr 1fr; } }
+    .informe .sit .item { margin: 0; }
+    .informe .num { font-size: 18px; font-weight: 800; color: var(--verde); display: block; }
     .informe .tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin: 0 0 4px; }
     .tag.sin { background: var(--verde-suave); color: var(--verde); }
     .tag.con { background: #FFF6E5; color: #6A4B12; }
@@ -342,7 +346,7 @@
       }
       .desplegables details.sub > summary { font-size: 11px; padding: 5px 20px 5px 7px; }
       .desplegables .ficha-oficial, .desplegables .leyenda {
-        font-size: 10px; max-height: 4.2em; overflow: auto; margin-top: 4px;
+        font-size: 10px; max-height: 10em; overflow: auto; margin-top: 4px;
       }
       .desplegables details { margin-bottom: 4px; }
       :root { --topbar-h: 76px; }
@@ -406,7 +410,7 @@
       <article class="acordeon" id="accInforme">
         <button type="button" class="cab" data-acc="accInforme"><div><small>4 · Entregable</small><b>Informe de puntos críticos</b></div><i>+</i></button>
         <div class="cuerpo">
-          Corto plazo sin inversión, corto plazo con inversión y mediano plazo. Se arma con el diagnóstico Actual de los potreros.
+          El informe final muestra la situación inicial (INTA), la mejorada con lo que usted cargue y la óptima con inversión a corto y mediano plazo.
           <button type="button" id="btnIrInforme">Ir al informe</button>
         </div>
       </article>
@@ -519,6 +523,7 @@
             <button type="button" class="on" id="btnVistaCampo">Campo</button>
             <button type="button" id="btnVerTodo">Todo</button>
           </div>
+          <div class="ficha-oficial" id="fichaVista"></div>
         </div>
       </details>
       <details id="dropCapas">
@@ -537,28 +542,28 @@
                 <button type="button" data-prod="ndvi">Verde NDVI</button>
                 <button type="button" data-prod="cobertura">Uso del suelo</button>
               </div>
-              <div class="ficha-oficial" id="fichaImg">Marrón = poco pasto. Verde = más biomasa. Se ve sobre el campo en el celular.</div>
+              <div class="ficha-oficial" id="fichaImg"></div>
             </div>
           </details>
           <details class="sub" data-capa-drop="suelos">
             <summary>Suelos</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="suelos">Ver en el mapa</button>
-              <div class="ficha-oficial" id="fichaSuelos">INTA · Peña Zubiate 1:500.000 · UCSV 4 Torriortente típico · aptitud VII · pastoreo extensivo.</div>
+              <div class="ficha-oficial" id="fichaSuelos"></div>
             </div>
           </details>
           <details class="sub" data-capa-drop="otbn">
             <summary>OTBN</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="otbn">Ver en el mapa</button>
-              <div class="ficha-oficial">Ley 26.331: no se desmonta. Óptimo de monte = bosque con ganadería integrada.</div>
+              <div class="ficha-oficial" id="fichaOtbn"></div>
             </div>
           </details>
           <details class="sub" data-capa-drop="agua">
             <summary>Aguadas</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="agua">Ver en el mapa</button>
-              <div class="ficha-oficial">5 aguadas. Círculo 400 m = alcance de cría. No se recorta bebida.</div>
+              <div class="ficha-oficial" id="fichaAgua"></div>
             </div>
           </details>
           <div class="capas fondos" hidden>
@@ -574,22 +579,22 @@
       <details id="dropManejo">
         <summary>Manejo</summary>
         <div class="cuerpo">
-          <p class="hint">Toque una solapa. Actual se lee; Mejorado 1 y Óptimo se cargan.</p>
+          <p class="hint">Actual se lee (INTA). Mejorado 1 y Óptimo los carga el productor. El detalle va al informe.</p>
           <details class="sub" data-mod-drop="pastoreo" open>
             <summary>Pastoreo</summary>
-            <div class="cuerpo"><p class="hint">Carga, días de pasto y descanso del potrero.</p></div>
+            <div class="cuerpo"><p class="hint" id="hintPastoreo">Carga, días de pasto y descanso del potrero.</p></div>
           </details>
           <details class="sub" data-mod-drop="nutricion">
             <summary>Nutrición</summary>
-            <div class="cuerpo"><p class="hint">Condición corporal, forraje y distancia al agua.</p></div>
+            <div class="cuerpo"><p class="hint" id="hintNutricion">Condición corporal, forraje y distancia al agua.</p></div>
           </details>
           <details class="sub" data-mod-drop="reproduccion">
             <summary>Reproducción</summary>
-            <div class="cuerpo"><p class="hint">Destete, preñez y parición cerca de la aguada.</p></div>
+            <div class="cuerpo"><p class="hint" id="hintRepro">Destete, preñez y parición cerca de la aguada.</p></div>
           </details>
           <details class="sub" data-mod-drop="agua">
             <summary>Agua</summary>
-            <div class="cuerpo"><p class="hint">Aguada que usa el lote y si alcanza para cría.</p></div>
+            <div class="cuerpo"><p class="hint" id="hintAguaMod">Aguada que usa el lote y si alcanza para cría.</p></div>
           </details>
           <div class="modulos" hidden>
             <button type="button" class="on" data-mod="pastoreo">Pastoreo</button>
@@ -602,6 +607,7 @@
             <button type="button" data-esc="m1">Mejorado 1</button>
             <button type="button" data-esc="optimo">Óptimo</button>
           </div>
+          <div class="ficha-oficial" id="fichaManejo"></div>
           <div class="leyenda" id="leyenda"></div>
         </div>
       </details>
@@ -794,6 +800,109 @@
         suplemento: esc === "actual" ? "Sal a veces" : "Sal + proteína en parición",
         servicio: esc === "actual" ? "Servicio corrido" : "Servicio estacionado nov–ene"
       };
+    }
+    function haTotal() {
+      return potreros.reduce((s, p) => s + p.ha, 0);
+    }
+    function datoEscena(p, esc) {
+      const tipo = store[p.n].tipo || "ganadero";
+      const base = estimar(p, tipo, esc);
+      if (esc === "actual") return base;
+      const extra = {};
+      ["pastoreo", "nutricion", "reproduccion", "agua"].forEach((m) => {
+        Object.assign(extra, (store[p.n][m] || {})[esc] || {});
+      });
+      return Object.assign({}, base, extra);
+    }
+    function resumenEscena(esc) {
+      const ha = haTotal();
+      let ev = 0, kg = 0, dest = 0;
+      const filas = potreros.map((p) => {
+        const d = datoEscena(p, esc);
+        ev += Number(d.ev) || 0;
+        kg += Number(d.kg) || 0;
+        dest += Number(d.destete) || 0;
+        return { n: p.n, ha: p.ha, dist: p.dist, agua: p.agua, sit: SITIO[p.n], d: d };
+      });
+      const n = Math.max(1, potreros.length);
+      return {
+        ha: +ha.toFixed(1),
+        ev: +ev.toFixed(1),
+        haEV: ev ? +(ha / ev).toFixed(1) : 0,
+        kg: Math.round(kg),
+        kgHa: ha ? +(kg / ha).toFixed(1) : 0,
+        destete: Math.round(dest / n),
+        filas: filas
+      };
+    }
+    function productorCargoMejora() {
+      return potreros.some((p) => {
+        const st = store[p.n] || {};
+        return ["pastoreo", "nutricion", "reproduccion", "agua"].some((m) => st[m] && (st[m].m1 || st[m].optimo));
+      });
+    }
+    function setTxt(id, html) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    }
+    function actualizarFichasCampo() {
+      const ha = haTotal();
+      const act = resumenEscena("actual");
+      const m1 = resumenEscena("m1");
+      const op = resumenEscena("optimo");
+      const lejos = potreros.filter((p) => p.dist > 400);
+      const muyLejos = potreros.filter((p) => p.dist > 550);
+      const campo = store.nombreCampo || DEMO_NOMBRE;
+      setTxt("fichaVista",
+        "<b>" + campo + "</b><br>" + ha.toFixed(0) + " ha · " + potreros.length + " potreros. " +
+        (esDemoCalera
+          ? "Demostrativo La Calera (SW Belgrano). No es un padrón nominado."
+          : "Límite declarado por el productor (no es el padrón). INTA y OTBN se leen igual.") +
+        " El informe final detalla inicial / mejorada / óptima."
+      );
+      const ndviOn = capaEncendida("ndvi");
+      const cobOn = capaEncendida("cobertura");
+      setTxt("fichaImg",
+        ndviOn
+          ? "<b>Verde NDVI sobre este campo.</b><br>Marrón = poco pasto o suelo desnudo. Verde = más biomasa. En loma (P1–P5) el verde suele ser menor que en el bajo (P6). El informe usa esto como foto de la situación inicial."
+          : cobOn
+            ? "<b>Uso del suelo (IGN) sobre este campo.</b><br>Monte, pastizal y suelo desnudo. No se desmonta: el monte se lee con OTBN. El detalle de cada potrero va al informe."
+            : "<b>Imagen del campo.</b><br>Satélite o Sentinel para ver potreros. Toque Verde NDVI para el pasto de ahora o Uso del suelo para monte/pastizal. Cifras de kilos y destete: en el informe."
+      );
+      setTxt("fichaSuelos", esDemoCalera
+        ? "<b>Suelo que se ve · carta INTA Peña Zubiate 1:500.000</b><br>" +
+          "UCSV 4 · Torriortente típico. Somero, poca reserva de agua, aptitud VII: pastoreo extensivo, no agrícola. " +
+          "P1–P5 loma/pedimento; P6 bajo más húmedo. Inicial: ~" + act.haEV + " ha/EV y " + act.kgHa + " kg carne/ha. El informe amplía potrero por potrero."
+        : "<b>Suelo · estimación INTA Región III</b><br>" +
+          "Sin carta de este padrón. Se aplica aptitud ganadera VI–VII sobre " + ha.toFixed(0) + " ha. " +
+          "Inicial ~" + act.haEV + " ha/EV. El informe final detalla cada lote, Mejorado 1 y Óptimo."
+      );
+      setTxt("fichaOtbn",
+        "<b>OTBN · Ley 26.331</b><br>No se desmonta. El monte se usa con ganadería integrada (MBGI). " +
+        "Buffel ~30 % solo en bajos y si la categoría OTBN lo permite. Soja o campo limpio no es escenario. El informe deja constancia de esta regla."
+      );
+      setTxt("fichaAgua",
+        "<b>" + aguadas.length + " aguadas · no se recorta bebida</b><br>" +
+        "Círculo 400 m = alcance de cría. " +
+        (muyLejos.length
+          ? "Crítico: " + muyLejos.map((p) => "P" + p.n + " a " + p.dist + " m").join(", ") + "."
+          : lejos.length
+            ? "Vigilar: " + lejos.map((p) => "P" + p.n + " a " + p.dist + " m").join(", ") + " (más de 400 m)."
+            : "Todas las crías están a menos de 400 m.") +
+        " " + TERRITORIO.lluvia + " El informe propone acercar agua a corto/mediano plazo."
+      );
+      const cargo = productorCargoMejora();
+      setTxt("fichaManejo",
+        "<b>Tres situaciones del campo</b><br>" +
+        "Inicial (INTA): " + act.haEV + " ha/EV · destete ~" + act.destete + " % · " + act.kgHa + " kg/ha.<br>" +
+        "Mejorada: " + m1.haEV + " ha/EV · destete ~" + m1.destete + " % · " + m1.kgHa + " kg/ha" +
+        (cargo ? " (incluye lo que usted guardó)." : " (tope INTA; puede cargar sus datos).") + "<br>" +
+        "Óptima: " + op.haEV + " ha/EV · destete ~" + op.destete + " % · " + op.kgHa + " kg/ha, con inversión de agua y, en bajo, M2 solo si OTBN lo permite."
+      );
+      setTxt("hintPastoreo", "Hoy ~" + act.haEV + " ha/EV. Mejorado 1 apunta a 10 ha/EV rotando y descansando. No se gana con más vacas sin pasto.");
+      setTxt("hintNutricion", "CC inicial ~2,7. Agua lejos baja la condición. No recortar bebida. Sal a voluntad.");
+      setTxt("hintRepro", "Destete inicial ~" + act.destete + " %. Mejorado 1 ~85 % con servicio estacionado y parición cerca del agua.");
+      setTxt("hintAguaMod", (muyLejos[0] ? ("P" + muyLejos[0].n + " a " + muyLejos[0].dist + " m: acercar bebedero.") : "Alcance de cría 400 m.") + " Detalle en el informe.");
     }
     function dato(p) {
       const tipo = store[p.n].tipo || "ganadero";
@@ -1016,28 +1125,23 @@
       if (!ficha) return;
       const partes = [];
       if (capaEncendida("suelos")) {
-        partes.push("<b>Carta de suelos INTA · Peña Zubiate 1:500.000</b><br>UCSV 4 · Torriortente típico · aptitud VII · pastoreo extensivo");
+        partes.push("<b>Carta de suelos INTA · Peña Zubiate 1:500.000</b><br>UCSV 4 · Torriortente típico · aptitud VII · pastoreo extensivo. Ver ficha en Suelos.");
       }
       if (capaEncendida("otbn")) {
-        partes.push("<b>OTBN Ley 26.331</b><br>No se desmonta. El óptimo de monte es bosque con ganadería integrada.");
+        partes.push("<b>OTBN Ley 26.331</b><br>No se desmonta. Monte con ganadería integrada.");
       }
       if (capaEncendida("agua")) {
-        partes.push("<b>Aguadas</b><br>5 aguadas. Círculo lleno = 400 m (alcance de cría). Línea punteada = 800 m. No se recorta bebida. " + TERRITORIO.lluvia);
+        partes.push("<b>Aguadas</b><br>Círculo 400 m = cría. No se recorta bebida.");
       }
       if (capaEncendida("ndvi")) {
-        partes.push("<b>Verde NDVI</b><br>NASA MODIS. Marrón = poco pasto. Verde = más biomasa. Cubre San Luis y se ve sobre las 500 ha.");
+        partes.push("<b>Verde NDVI</b><br>Marrón = poco pasto. Verde = más biomasa.");
       }
       if (capaEncendida("cobertura")) {
-        partes.push("<b>Uso del suelo</b><br>IGN. Monte, pastizal y suelo desnudo del territorio. Se ve sobre el campo.");
-      }
-      const fichaImg = document.getElementById("fichaImg");
-      if (fichaImg) {
-        if (capaEncendida("ndvi")) fichaImg.textContent = "Verde NDVI sobre el campo. Marrón = poco pasto. Verde = más biomasa.";
-        else if (capaEncendida("cobertura")) fichaImg.textContent = "Uso del suelo IGN sobre el campo: monte, pastizal y suelo desnudo.";
-        else fichaImg.textContent = "Toque Verde NDVI o Uso del suelo para verlo sobre el lote, también en el celular.";
+        partes.push("<b>Uso del suelo</b><br>IGN: monte, pastizal y suelo desnudo.");
       }
       ficha.innerHTML = partes.join("<br><br>");
       ficha.hidden = partes.length === 0;
+      actualizarFichasCampo();
     }
     function setCapa(id, on, refresh) {
       (capasOff[id] || []).forEach((lyr) => {
@@ -1505,7 +1609,7 @@
         "</b> · " + v.accion;
       const sit = SITIO[p.n];
       document.getElementById("hechos").innerHTML =
-        "<b>P" + p.n + " · 83 ha · " + sit.paisaje + " · " + p.z + " m</b><br>" +
+        "<b>P" + p.n + " · " + p.ha.toFixed(1) + " ha · " + sit.paisaje + " · " + p.z + " m</b><br>" +
         sit.suelo + " · aptitud " + sit.aptitud + ".<br>" +
         p.agua + " a " + p.dist + " m. " + TERRITORIO.lluvia + " " + TERRITORIO.agua + " " + TERRITORIO.otbn;
       const t = techoEscena(p, store[p.n].tipo || "ganadero", escSel);
@@ -1537,10 +1641,19 @@
       const info = document.getElementById("infoLote");
       const sum = document.getElementById("sumLote");
       if (info) {
+        const tAct = techoEscena(p, store[p.n].tipo || "ganadero", "actual");
+        const tM1 = techoEscena(p, store[p.n].tipo || "ganadero", "m1");
+        const tOp = techoEscena(p, store[p.n].tipo || "ganadero", "optimo");
         info.innerHTML = "<b>" + v.titulo + "</b><br>" + v.sub + "<br>" + v.accion + "<br><br>" +
-          sit.suelo + " · " + p.agua + " a " + p.dist + " m.";
+          "<b>Suelo:</b> " + sit.suelo + " · " + sit.paisaje + " · aptitud " + sit.aptitud + ".<br>" +
+          "<b>Agua:</b> " + p.agua + " a " + p.dist + " m.<br>" +
+          "<b>Inicial:</b> " + tAct.haEV + " ha/EV · destete " + tAct.destete + " % · " + tAct.kgHa + " kg/ha.<br>" +
+          "<b>Mejorada:</b> " + tM1.haEV + " ha/EV · destete " + tM1.destete + " % · " + tM1.kgHa + " kg/ha.<br>" +
+          "<b>Óptima:</b> " + tOp.haEV + " ha/EV · destete " + tOp.destete + " % · " + tOp.kgHa + " kg/ha.<br>" +
+          "El informe final amplía estos números para todo el campo.";
       }
       if (sum) sum.textContent = "P" + p.n;
+      actualizarFichasCampo();
     }
     function abrir(n, conPanel) {
       pSel = n;
@@ -1735,6 +1848,9 @@
       escSel = guardEsc;
       return out;
     }
+    function escHtml(s) {
+      return String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
+    }
     function pintarInforme() {
       const campo = store.nombreCampo || DEMO_NOMBRE;
       const prod = (document.getElementById("fProd").value || store.consulta && store.consulta.prod || "").trim();
@@ -1743,32 +1859,69 @@
       const hall = hallarCriticos();
       const sin = hall.filter((h) => h.plazo === "sin");
       const con = hall.filter((h) => h.plazo === "con");
+      const act = resumenEscena("actual");
+      const m1 = resumenEscena("m1");
+      const op = resumenEscena("optimo");
+      const cargo = productorCargoMejora();
       const item = (h, tag, tagNom) =>
-        "<div class='item'><span class='tag " + tag + "'>" + tagNom + "</span><b>P" + h.n + " · " + h.mod + "</b>" + h.accion + "</div>";
+        "<div class='item'><span class='tag " + tag + "'>" + tagNom + "</span><b>P" + h.n + " · " + h.mod + "</b>" + escHtml(h.accion) + "</div>";
       const lista = (arr, tag, nom) => arr.length
         ? arr.map((h) => item(h, tag, nom)).join("")
-        : "<div class='item'>Sin puntos críticos en este grupo en el demostrativo actual.</div>";
+        : "<div class='item'>Sin puntos críticos en este grupo en el diagnóstico actual.</div>";
+      const filas = act.filas.map((f) => {
+        const m = m1.filas.find((x) => x.n === f.n);
+        const o = op.filas.find((x) => x.n === f.n);
+        return "<div class='item'><b>P" + f.n + " · " + f.ha.toFixed(1) + " ha · " + escHtml(f.sit.paisaje) + "</b>" +
+          escHtml(f.sit.suelo) + " · aptitud " + escHtml(f.sit.aptitud) + ".<br>" +
+          escHtml(f.agua) + " a " + f.dist + " m.<br>" +
+          "Inicial: " + f.d.haEV + " ha/EV · destete " + f.d.destete + " % · " + f.d.kg + " kg/año.<br>" +
+          "Mejorada: " + m.d.haEV + " ha/EV · destete " + m.d.destete + " % · " + m.d.kg + " kg/año.<br>" +
+          "Óptima: " + o.d.haEV + " ha/EV · destete " + o.d.destete + " % · " + o.d.kg + " kg/año.</div>";
+      }).join("");
       document.getElementById("cuerpoInforme").innerHTML =
-        "<h1>Informe de puntos críticos</h1>" +
-        "<p class='meta'>Sociedad Rural de San Luis · Gemelo Digital Ganadero<br>" +
-        campo + (prod ? " · " + prod : "") + (tel ? " · " + tel : "") + "<br>" +
-        fecha + " · Diagnóstico Actual (INTA Región III, carta de suelos, OTBN). No es padrón catastral.</p>" +
-        "<h2>Cómo está hoy</h2>" +
-        "<div class='item'>El techo lo marcan el suelo (aptitud VI–VII), el agua de bebida y la Ley 26.331. No se desmonta. No se recorta bebida. Actual: ~12,6 ha/EV, destete ~62 %, 5,9 kg carne/ha (INTA Región III).</div>" +
+        "<h1>Informe al productor</h1>" +
+        "<p class='meta'>Sociedad Rural de San Luis · Gemelo Digital Ganadero · Observatorio de IA UCCuyo<br>" +
+        escHtml(campo) + (prod ? " · " + escHtml(prod) : "") + (tel ? " · " + escHtml(tel) : "") + "<br>" +
+        fecha + " · Entregable de consulta. No es padrón catastral ni análisis de agua de laboratorio.</p>" +
+        "<h2>Las tres situaciones del campo</h2>" +
+        "<div class='sit'>" +
+          "<div class='item'><span class='tag sin'>Inicial</span><b>Cómo está hoy</b>" +
+            "<span class='num'>" + act.haEV + " ha/EV</span>Destete ~" + act.destete + " % · " + act.kgHa + " kg carne/ha · " + act.ev + " EV en " + act.ha.toFixed(0) + " ha. Lectura INTA Región III + carta de suelos. No se edita.</div>" +
+          "<div class='item'><span class='tag con'>Mejorada</span><b>Con lo que usted puede cargar</b>" +
+            "<span class='num'>" + m1.haEV + " ha/EV</span>Destete ~" + m1.destete + " % · " + m1.kgHa + " kg/ha. Tope Mejorado 1 (INTA): 10 ha/EV, 12 kg/ha, destete 85 %. " +
+            (cargo ? "Incluye números que usted guardó en Manejo." : "Todavía no hay carga propia: se muestra el tope INTA. Cárguela en Mejorado 1.") + "</div>" +
+          "<div class='item'><span class='tag med'>Óptima</span><b>Con inversión corto / mediano plazo</b>" +
+            "<span class='num'>" + op.haEV + " ha/EV</span>Destete ~" + op.destete + " % · " + op.kgHa + " kg/ha. En loma el techo sigue siendo Mejorado 1. En bajo, M2 (~5,9 ha/EV) solo si OTBN lo permite. Agua de cría a menos de 400 m.</div>" +
+        "</div>" +
+        "<h2>Suelo, bosque y agua que se ven en el mapa</h2>" +
+        "<div class='item'><b>Suelos</b>" + (esDemoCalera
+          ? "Carta INTA Peña Zubiate 1:500.000 · UCSV 4 Torriortente típico, somero, poca reserva de agua, aptitud VII: pastoreo extensivo, no agrícola. Lomas P1–P5; P6 es el bajo más húmedo."
+          : "Estimación INTA Región III sobre el límite declarado. Sin carta de este padrón. Aptitud ganadera VI–VII.") + "</div>" +
+        "<div class='item'><b>OTBN</b>Ley 26.331: no se desmonta. El monte se usa con ganadería integrada. Buffel ~30 % solo en bajos y con permiso de categoría. Soja o campo limpio no es escenario de este territorio.</div>" +
+        "<div class='item'><b>Aguadas</b>" + aguadas.length + " puntos de bebida. No se recorta agua. Alcance de cría: 400 m. " +
+          (potreros.some((p) => p.dist > 400)
+            ? "Lejos: " + potreros.filter((p) => p.dist > 400).map((p) => "P" + p.n + " a " + p.dist + " m").join("; ") + "."
+            : "Todas las crías están dentro de 400 m.") +
+          " " + TERRITORIO.lluvia + "</div>" +
+        "<h2>Cada potrero · inicial / mejorada / óptima</h2>" +
+        filas +
         "<h2>Corto plazo · sin inversión inmediata</h2>" +
         lista(sin, "sin", "Manejo") +
         "<div class='item'><b>Todos los potreros</b>Estacionar el servicio (sacar el toro a tiempo). Rotar: no dejar cría en loma lejos del agua. Dejar descansar los potreros vacíos. Cumplir OTBN: el monte se usa con ganadería integrada, no se limpia.</div>" +
         "<h2>Corto plazo · con inversión inmediata</h2>" +
         lista(con, "con", "Inversión") +
-        "<div class='item'><b>Agua</b>Si hay vientres a más de 400 m (P3 a 600 m en el demostrativo), acercar bebedero o cañería. No recortar bebida. Sal a voluntad. Cobre inyectable al tacto si el agua es sulfatada.</div>" +
-        "<h2>Mediano plazo · con o sin más inversión</h2>" +
-        "<div class='item'><span class='tag med'>Mediano</span><b>Mejorado 1 (manejo)</b>Subir destete hacia 85 % y bajar a ~10 ha/EV con rotación, parición cerca del agua y servicio estacionado. No pide desmonte.</div>" +
-        "<div class='item'><span class='tag med'>Mediano</span><b>Aguadas nuevas</b>Una aguada más en el este recorta los 600 m de P3. Eso sí pide inversión; el techo de kilos no se gana solo con más vacas.</div>" +
-        "<div class='item'><span class='tag med'>Mediano</span><b>Óptimo</b>En loma el techo es Mejorado 1. Buffel ~30 % solo en bajos y si el OTBN lo permite. Soja o campo limpio no es escenario de este territorio.</div>" +
-        "<p class='meta'>Fuente territorial: INTA San Luis, GeoINTA Nodo 15 (suelos), MAyDS OTBN 2016. Este informe es orientación de consulta; no reemplaza análisis de agua ni mensura.</p>";
+        "<div class='item'><b>Agua</b>Si hay vientres a más de 400 m, acercar bebedero o cañería. No recortar bebida. Sal a voluntad. Cobre inyectable al tacto si el agua es sulfatada.</div>" +
+        "<h2>Mediano plazo · situación óptima con inversión</h2>" +
+        "<div class='item'><span class='tag med'>Mediano</span><b>Mejorado 1 (manejo)</b>Subir destete hacia 85 % y bajar a ~10 ha/EV con rotación, parición cerca del agua y servicio estacionado. No pide desmonte. El productor carga estos números en la solapa Manejo · Mejorado 1.</div>" +
+        "<div class='item'><span class='tag med'>Mediano</span><b>Aguadas nuevas</b>Una aguada más donde hoy hay más de 550 m recorta el caminar de la cría. Eso sí pide inversión; el techo de kilos no se gana solo con más vacas.</div>" +
+        "<div class='item'><span class='tag med'>Mediano</span><b>Óptimo de suelo</b>En loma el techo es Mejorado 1. Buffel ~30 % solo en bajos y si el OTBN lo permite. Soja o campo limpio no es escenario de este territorio.</div>" +
+        "<p class='meta'>Este es el informe que se entrega al productor: situación inicial (lectura INTA), situación mejorada (datos que él puede cargar) y situación óptima (corto y mediano plazo, con o sin inversión). Fuente: INTA San Luis, GeoINTA Nodo 15, MAyDS OTBN 2016. Orientación de consulta; no reemplaza análisis de agua ni mensura.</p>";
       const textoWA = encodeURIComponent(
         "Informe Gemelo Digital Ganadero · Sociedad Rural de San Luis\n" +
-        campo + "\nCorto plazo sin inversión: rotar, estacionar servicio, no desmontar, no recortar bebida.\nCorto plazo con inversión: acercar agua si hay cría a más de 400 m.\nMediano plazo: Mejorado 1 (destete ~85 %, 10 ha/EV) y aguadas si hace falta."
+        campo + "\nInicial: " + act.haEV + " ha/EV · destete " + act.destete + " % · " + act.kgHa + " kg/ha.\n" +
+        "Mejorada: " + m1.haEV + " ha/EV · destete " + m1.destete + " % · " + m1.kgHa + " kg/ha.\n" +
+        "Óptima: " + op.haEV + " ha/EV · destete " + op.destete + " % · " + op.kgHa + " kg/ha.\n" +
+        "Corto plazo: rotar, estacionar servicio, no desmontar, no recortar bebida. Acercar agua si hay cría a más de 400 m."
       );
       const wa = document.getElementById("btnWhatsapp");
       wa.onclick = () => { window.open("https://wa.me/?text=" + textoWA, "_blank"); };
