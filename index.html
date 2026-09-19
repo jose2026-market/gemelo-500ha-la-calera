@@ -1051,7 +1051,7 @@
 
     let modSel = "pastoreo", escSel = "actual", pSel = 1;
     const MAX_Z = 17;
-    const map = L.map("map", { zoomControl: true, minZoom: 8, maxZoom: MAX_Z }).setView([-32.9110, -66.8816], 14);
+    const map = L.map("map", { zoomControl: true, minZoom: 5, maxZoom: MAX_Z }).setView([-32.9110, -66.8816], 14);
     map.zoomControl.setPosition("topright");
     function esMovil() { return window.matchMedia("(max-width: 900px)").matches; }
     function setPanel(abierto) {
@@ -1264,12 +1264,26 @@
     function parseNum(s) {
       return Number(String(s || "").trim().replace(",", "."));
     }
+    function normalizarPar(lat, lon) {
+      if (!isFinite(lat) || !isFinite(lon)) return [lat, lon];
+      if (Math.abs(lat) > 1000 && Math.abs(lon) > 1000) {
+        const wgs = gkAWgs(Math.abs(lat), Math.abs(lon));
+        if (wgs) return wgs;
+      }
+      if (Math.abs(lat) > 45 && Math.abs(lon) < 45) {
+        const t = lat; lat = lon; lon = t;
+      }
+      if (lat > 21 && lat < 56) lat = -lat;
+      if (lon > 52 && lon < 74) lon = -lon;
+      return [lat, lon];
+    }
     function parseLimites(txt) {
       const out = [];
       String(txt || "").split(/\n|;/).forEach((line) => {
         const p = line.trim().replace(/[()]/g, "").split(/[,\s]+/).filter(Boolean);
         if (p.length >= 2) {
-          const lat = parseNum(p[0]), lon = parseNum(p[1]);
+          const par = normalizarPar(parseNum(p[0]), parseNum(p[1]));
+          const lat = par[0], lon = par[1];
           if (isFinite(lat) && isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180) out.push([lat, lon]);
         }
       });
@@ -1303,7 +1317,7 @@
       return candidatos.find((p) => p[0] < -20 && p[0] > -45 && p[1] < -54 && p[1] > -75) || null;
     }
     function enCuyo(lat, lon) {
-      return lat > -36 && lat < -27 && lon > -70 && lon < -62;
+      return lat > -56 && lat < -21 && lon > -74 && lon < -53;
     }
     function extraerPuntosDeTexto(txt) {
       const pts = [];
@@ -1465,10 +1479,19 @@
       }
     }
     function cargarCampoProductor() {
-      const lat = parseNum(document.getElementById("fLat").value);
-      const lon = parseNum(document.getElementById("fLon").value);
+      let lat = parseNum(document.getElementById("fLat").value);
+      let lon = parseNum(document.getElementById("fLon").value);
+      const par = normalizarPar(lat, lon);
+      lat = par[0]; lon = par[1];
+      if (isFinite(lat) && isFinite(lon)) {
+        document.getElementById("fLat").value = lat;
+        document.getElementById("fLon").value = lon;
+      }
       let ha = parseNum(document.getElementById("fHaCampo").value);
       const ring = parseLimites(document.getElementById("fLimites").value);
+      if (ring.length) {
+        document.getElementById("fLimites").value = ring.map((p) => p[0] + ", " + p[1]).join("\n");
+      }
       limiteReal.clearLayers();
       let south, west, north, east;
       if (ring.length >= 3) {
@@ -1506,16 +1529,34 @@
       mostrarRelieveDemo(false);
       dibujarPredio();
       Object.keys(tints).forEach((k) => { tints[k] = []; });
-      verCampo();
       const prodNom = (document.getElementById("fProd").value || "").trim();
       aplicarNombre(prodNom || ((store.nombreCampo && store.nombreCampo.indexOf("demostrativo") === -1 && store.nombreCampo.indexOf("La Calera") === -1)
         ? store.nombreCampo
         : MARCA + " · " + Math.round(ha) + " ha"));
+      store.campoActivo = snapshotFormCampo();
+      store.campoActivo.nombre = store.nombreCampo;
+      saveStore(store);
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = ring.length >= 3
-        ? "Campo cargado. El polígono dorado es el límite que usted declaró. Las solapas y Actual / Mejorado 1 / Óptimo usan INTA Región III. No es el padrón catastral."
-        : "Se ve el satélite en ese punto, con un módulo de " + Math.round(ha) + " ha (6 potreros). Eso no es el alambrado real. Para el límite, pegue las esquinas. INTA ya está aplicado.";
-      saveStore(store);
+        ? "Campo cargado en el satélite. El polígono dorado es el límite que usted declaró. No es el padrón catastral."
+        : "Satélite centrado en " + lat.toFixed(5) + ", " + lon.toFixed(5) + " · " + Math.round(ha) + " ha. Si no es el lugar, revise el signo menos de latitud y longitud.";
+      if (!cargarCampoProductor.silencio) enfocarCampo();
+    }
+    cargarCampoProductor.silencio = false;
+    function enfocarCampo() {
+      mostrarVista("visor");
+      setFondo("sat");
+      const ir = () => {
+        map.invalidateSize();
+        const capas = [];
+        if (group.getLayers().length) capas.push(group);
+        if (limiteReal.getLayers().length) capas.push(limiteReal);
+        if (!capas.length) return;
+        map.fitBounds(L.featureGroup(capas).getBounds(), { padding: [36, 36], maxZoom: 16 });
+      };
+      ir();
+      setTimeout(ir, 150);
+      setTimeout(ir, 450);
     }
     function volverDemo() {
       esDemoCalera = true;
@@ -1526,6 +1567,8 @@
       mostrarRelieveDemo(true);
       dibujarPredio();
       aplicarNombre(DEMO_NOMBRE);
+      store.campoActivo = null;
+      saveStore(store);
       verCampo();
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = "Volvió al demostrativo de Gemelo Digital Ganadero (500 ha).";
@@ -2040,8 +2083,18 @@
 
     pintarCampos();
     aplicarNombre(store.nombreCampo);
-    refrescarMapa();
-    abrir(1);
+    const ultimoCampo = store.campoActivo || ((store.camposGuardados || []).slice(-1)[0]);
+    if (ultimoCampo && (ultimoCampo.lat || ultimoCampo.limites)) {
+      aplicarFormCampo(ultimoCampo);
+      cargarCampoProductor.silencio = true;
+      cargarCampoProductor();
+      cargarCampoProductor.silencio = false;
+      refrescarMapa();
+      abrir(1);
+    } else {
+      refrescarMapa();
+      abrir(1);
+    }
 
     function mostrarVista(id) {
       document.body.classList.remove("vista-inicio", "vista-visor", "vista-informe");
