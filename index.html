@@ -116,6 +116,15 @@
     .caja-nombre { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8e4; }
     .caja-nombre[hidden] { display: none; }
     .caja-nombre button { width: 100%; margin-top: 8px; background: var(--verde); color: #fff; border-color: var(--verde); }
+    .caja-nombre .sec { background: var(--crema); color: var(--verde); }
+    .plano-preview { display: block; max-width: 100%; max-height: 120px; margin-top: 6px; border-radius: 8px; border: 1px solid var(--oro-claro); }
+    .lista-campos { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+    .lista-campos .fila-campo {
+      display: flex; gap: 4px; align-items: center;
+      background: #fff; border: 1px solid var(--oro-claro); border-radius: 8px; padding: 4px 6px;
+    }
+    .lista-campos .fila-campo span { flex: 1; font-size: 11px; color: var(--tierra); min-width: 0; }
+    .lista-campos .fila-campo button { width: auto; margin: 0; padding: 5px 8px; font-size: 11px; }
     .caja-nombre textarea { min-height: 64px; font-size: 12px; }
     .cartel-nombre { display: none; }
     .desplegables {
@@ -413,9 +422,9 @@
         </div>
       </article>
       <article class="acordeon" id="accCampo">
-        <button type="button" class="cab" data-acc="accCampo"><div><small>2 · Mi establecimiento</small><b>Cargar coordenadas</b></div><i>+</i></button>
+        <button type="button" class="cab" data-acc="accCampo"><div><small>2 · Mi establecimiento</small><b>Cargar campo o plano</b></div><i>+</i></button>
         <div class="cuerpo">
-          Un punto abre el satélite. Las esquinas dibujan el límite declarado (no es el padrón). INTA y OTBN se aplican igual.
+          Un punto, las esquinas, o una foto JPG del plano de mensura. Puede guardar más de un campo y cambiar. El límite declarado no es el padrón.
           <button type="button" id="btnIrConsulta">Ir a Mi campo</button>
         </div>
       </article>
@@ -474,7 +483,7 @@
       <button type="button" id="btnCargarNombre">Cargar nombre</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
-      <p class="aviso">Para la consulta: un punto alcanza para ver el satélite. Las esquinas dibujan el límite declarado (no es el padrón). INTA, suelos y OTBN se aplican igual.</p>
+      <p class="aviso">Un punto abre el satélite. Las esquinas dibujan el límite declarado (no es el padrón). También puede cargar un JPG del plano de mensura. INTA, suelos y OTBN se aplican igual.</p>
       <label for="fProd">Nombre del productor / establecimiento</label>
       <input id="fProd" type="text" placeholder="Ej. Juan Pérez · Los Algarrobos" autocomplete="name" />
       <label for="fTel">Teléfono o WhatsApp</label>
@@ -493,8 +502,16 @@
       <input id="fHaCampo" type="number" step="1" min="20" max="20000" value="500" />
       <label for="fLimites">Límites opcionales (una esquina por línea: lat, lon)</label>
       <textarea id="fLimites" placeholder="-32.9200, -66.8950&#10;-32.9200, -66.8682&#10;-32.9020, -66.8682&#10;-32.9020, -66.8950"></textarea>
+      <label for="fPlano">Opcional · foto o JPG del plano de mensura</label>
+      <input id="fPlano" type="file" accept="image/jpeg,image/png,image/webp,image/jpg" />
+      <img id="prevPlano" class="plano-preview" alt="Vista del plano" hidden />
+      <button type="button" id="btnLeerPlano" class="sec">Leer coordenadas del plano</button>
+      <p class="aviso" id="msgPlano" hidden></p>
       <button type="button" id="btnVerCampo">Ver mi campo con INTA</button>
+      <button type="button" id="btnGuardarCampo" class="sec">Guardar este campo</button>
       <button type="button" id="btnDemoCalera" class="sec" style="background:#F7F1E4;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Volver al demostrativo</button>
+      <label>Campos guardados (puede tener más de uno)</label>
+      <div class="lista-campos" id="listaCampos"></div>
     </div>
     <div id="panel" class="panel">
       <div class="pills" id="pills"></div>
@@ -686,10 +703,13 @@
     function loadStore() {
       try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; }
     }
-    function saveStore(s) { localStorage.setItem(KEY, JSON.stringify(s)); }
+    function saveStore(s) {
+      try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* cuota */ }
+    }
     let zmin = 917, zmax = 1023;
     const store = loadStore();
     if (!store.nombreCampo || store.nombreCampo === "Campo gemelo · 500 ha · La Calera") store.nombreCampo = DEMO_NOMBRE;
+    if (!Array.isArray(store.camposGuardados)) store.camposGuardados = [];
     potreros.forEach((p) => { if (!store[p.n]) store[p.n] = { tipo: "ganadero" }; });
 
     function factor(p) {
@@ -1255,6 +1275,136 @@
       });
       return out;
     }
+    function tmInverso(easting, northing, lon0Deg, falseE, falseN, k0) {
+      const a = 6378137, f = 1 / 298.257223563, e2 = f * (2 - f);
+      const e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
+      const x = (easting - falseE) / k0, y = (northing - falseN) / k0;
+      const mu = y / (a * (1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 * e2 * e2 / 256));
+      const phi1 = mu + (3 * e1 / 2 - 27 * e1 * e1 * e1 / 32) * Math.sin(2 * mu)
+        + (21 * e1 * e1 / 16 - 55 * e1 * e1 * e1 * e1 / 32) * Math.sin(4 * mu)
+        + (151 * e1 * e1 * e1 / 96) * Math.sin(6 * mu);
+      const sinP = Math.sin(phi1), cosP = Math.cos(phi1), tanP = Math.tan(phi1);
+      const N1 = a / Math.sqrt(1 - e2 * sinP * sinP);
+      const T1 = tanP * tanP;
+      const C1 = (e2 / (1 - e2)) * cosP * cosP;
+      const R1 = a * (1 - e2) / Math.pow(1 - e2 * sinP * sinP, 1.5);
+      const D = x / N1;
+      const lat = phi1 - (N1 * tanP / R1) * (D * D / 2 - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1) * D * D * D * D / 24);
+      const lon = lon0Deg * Math.PI / 180 + (D - (1 + 2 * T1 + C1) * D * D * D / 6) / cosP;
+      return [lat * 180 / Math.PI, lon * 180 / Math.PI];
+    }
+    function gkAWgs(x, y) {
+      const faja = Math.max(1, Math.min(7, Math.round((x - 500000) / 1000000)));
+      const lon0 = -75 + 3 * faja, fe = faja * 1e6 + 5e5;
+      const candidatos = [
+        tmInverso(x, y, lon0, fe, 0, 1),
+        tmInverso(x, y, lon0, fe, 10000000, 1)
+      ];
+      return candidatos.find((p) => p[0] < -20 && p[0] > -45 && p[1] < -54 && p[1] > -75) || null;
+    }
+    function enCuyo(lat, lon) {
+      return lat > -36 && lat < -27 && lon > -70 && lon < -62;
+    }
+    function extraerPuntosDeTexto(txt) {
+      const pts = [];
+      const visto = {};
+      function add(lat, lon) {
+        if (!isFinite(lat) || !isFinite(lon) || !enCuyo(lat, lon)) return;
+        const k = lat.toFixed(5) + "," + lon.toFixed(5);
+        if (visto[k]) return;
+        visto[k] = 1;
+        pts.push([+lat.toFixed(6), +lon.toFixed(6)]);
+      }
+      const t = String(txt || "").replace(/\u00a0/g, " ");
+      let m, re;
+      re = /(-?3[0-5][.,]\d{3,})\s*[;,\s]\s*(-?6[2-9][.,]\d{3,})/g;
+      while ((m = re.exec(t))) add(parseNum(m[1]), parseNum(m[2]));
+      re = /(\d{1,2})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[\"”″]?\s*([SNsn])\s*[,;\s]+(\d{1,2})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[\"”″]?\s*([WOwoEe])/g;
+      while ((m = re.exec(t))) {
+        let lat = Math.abs(parseNum(m[1])) + parseNum(m[2]) / 60 + parseNum(m[3]) / 3600;
+        let lon = Math.abs(parseNum(m[5])) + parseNum(m[6]) / 60 + parseNum(m[7]) / 3600;
+        if (/[Ss]/.test(m[4])) lat = -lat;
+        if (/[WwOo]/.test(m[8])) lon = -lon;
+        add(lat, lon);
+      }
+      re = /\b([2345][.,]?\d{3}[.,]?\d{3}(?:[.,]\d+)?)\s*[xX;,\s]+\s*([567][.,]?\d{3}[.,]?\d{3}(?:[.,]\d+)?)\b/g;
+      while ((m = re.exec(t))) {
+        const x = parseNum(String(m[1]).replace(/\.(?=\d{3}\b)/g, "").replace(",", "."));
+        const y = parseNum(String(m[2]).replace(/\.(?=\d{3}\b)/g, "").replace(",", "."));
+        if (x > 1500000 && x < 6500000 && y > 3000000 && y < 9000000) {
+          const wgs = gkAWgs(x, y);
+          if (wgs) add(wgs[0], wgs[1]);
+        }
+      }
+      return pts;
+    }
+    function canvasDeArchivo(file, maxLado) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const s = Math.min(1, maxLado / Math.max(img.width, img.height));
+          const c = document.createElement("canvas");
+          c.width = Math.max(1, Math.round(img.width * s));
+          c.height = Math.max(1, Math.round(img.height * s));
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(img.src);
+          resolve(c);
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+    }
+    async function asegurarOcr() {
+      if (window.Tesseract) return window.Tesseract;
+      await new Promise((res, rej) => {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+        s.onload = res;
+        s.onerror = rej;
+        document.head.appendChild(s);
+      });
+      return window.Tesseract;
+    }
+    function decirPlano(msg) {
+      const el = document.getElementById("msgPlano");
+      el.hidden = false;
+      el.textContent = msg;
+    }
+    function pintarListaCampos() {
+      const box = document.getElementById("listaCampos");
+      if (!box) return;
+      const lista = store.camposGuardados || [];
+      if (!lista.length) {
+        box.innerHTML = "<p class='hint' style='margin:4px 0'>Todavía no hay campos guardados en este teléfono.</p>";
+        return;
+      }
+      box.innerHTML = lista.map((c, i) =>
+        "<div class='fila-campo'><span>" + escHtml(c.nombre || ("Campo " + (i + 1))) +
+        (c.ha ? " · " + Math.round(c.ha) + " ha" : "") + "</span>" +
+        "<button type='button' data-usar='" + i + "'>Usar</button>" +
+        "<button type='button' class='sec' data-borrar='" + i + "'>Quitar</button></div>"
+      ).join("");
+    }
+    function snapshotFormCampo() {
+      return {
+        nombre: (document.getElementById("fProd").value || store.nombreCampo || "").trim(),
+        prod: (document.getElementById("fProd").value || "").trim(),
+        tel: (document.getElementById("fTel").value || "").trim(),
+        lat: document.getElementById("fLat").value,
+        lon: document.getElementById("fLon").value,
+        ha: document.getElementById("fHaCampo").value,
+        limites: document.getElementById("fLimites").value,
+        fecha: new Date().toISOString()
+      };
+    }
+    function aplicarFormCampo(c) {
+      document.getElementById("fProd").value = c.prod || c.nombre || "";
+      document.getElementById("fTel").value = c.tel || "";
+      document.getElementById("fLat").value = c.lat || "";
+      document.getElementById("fLon").value = c.lon || "";
+      document.getElementById("fHaCampo").value = c.ha || 500;
+      document.getElementById("fLimites").value = c.limites || "";
+    }
     function aplicarSitioGenerico() {
       for (let n = 1; n <= 6; n++) {
         SITIO[n] = {
@@ -1382,6 +1532,72 @@
     }
     document.getElementById("btnVerCampo").addEventListener("click", cargarCampoProductor);
     document.getElementById("btnDemoCalera").addEventListener("click", volverDemo);
+    document.getElementById("fPlano").addEventListener("change", (ev) => {
+      const f = ev.target.files && ev.target.files[0];
+      const prev = document.getElementById("prevPlano");
+      if (!f) { prev.hidden = true; prev.removeAttribute("src"); return; }
+      prev.src = URL.createObjectURL(f);
+      prev.hidden = false;
+      decirPlano("Plano cargado. Toque «Leer coordenadas del plano» o complete las esquinas a mano.");
+    });
+    document.getElementById("btnLeerPlano").addEventListener("click", async () => {
+      const f = document.getElementById("fPlano").files && document.getElementById("fPlano").files[0];
+      if (!f) { decirPlano("Primero elija una foto o JPG del plano de mensura."); return; }
+      decirPlano("Leyendo el plano (puede tardar unos segundos)...");
+      try {
+        const canvas = await canvasDeArchivo(f, 1600);
+        const T = await asegurarOcr();
+        const worker = await T.createWorker("spa");
+        const { data } = await worker.recognize(canvas);
+        await worker.terminate();
+        const pts = extraerPuntosDeTexto(data && data.text);
+        if (pts.length >= 3) {
+          document.getElementById("fLimites").value = pts.map((p) => p[0] + ", " + p[1]).join("\n");
+          document.getElementById("fLat").value = pts[0][0];
+          document.getElementById("fLon").value = pts[0][1];
+          decirPlano("Se leyeron " + pts.length + " esquinas. Revíselas y toque «Ver mi campo con INTA». No es el padrón catastral.");
+        } else if (pts.length === 1 || pts.length === 2) {
+          document.getElementById("fLat").value = pts[0][0];
+          document.getElementById("fLon").value = pts[0][1];
+          if (pts[1]) document.getElementById("fLimites").value = pts.map((p) => p[0] + ", " + p[1]).join("\n");
+          decirPlano("Se leyó un punto. Si el plano tiene más vértices, péguelos abajo o tome otra foto más nítida.");
+        } else {
+          decirPlano("No se leyeron coordenadas. Use una foto nítida de la tabla de vértices, o péguelas a mano (lat, lon o Gauss-Krüger).");
+        }
+      } catch (e) {
+        decirPlano("No se pudo leer el plano en este teléfono. Péguelas las esquinas a mano o pruebe otra foto.");
+      }
+    });
+    document.getElementById("btnGuardarCampo").addEventListener("click", () => {
+      const snap = snapshotFormCampo();
+      if (!snap.lat && !snap.limites) {
+        decirPlano("Cargue un punto, las esquinas o un plano antes de guardar.");
+        return;
+      }
+      if (!snap.nombre) snap.nombre = "Campo " + (store.camposGuardados.length + 1);
+      store.camposGuardados.push(snap);
+      if (store.camposGuardados.length > 8) store.camposGuardados = store.camposGuardados.slice(-8);
+      saveStore(store);
+      pintarListaCampos();
+      decirPlano("Campo guardado. Puede cargar otro y cambiar con Usar.");
+    });
+    document.getElementById("listaCampos").addEventListener("click", (ev) => {
+      const usar = ev.target.closest("[data-usar]");
+      const borrar = ev.target.closest("[data-borrar]");
+      if (usar) {
+        const c = store.camposGuardados[Number(usar.dataset.usar)];
+        if (!c) return;
+        aplicarFormCampo(c);
+        cargarCampoProductor();
+        decirPlano("Campo activo: " + (c.nombre || "sin nombre") + ".");
+      }
+      if (borrar) {
+        store.camposGuardados.splice(Number(borrar.dataset.borrar), 1);
+        saveStore(store);
+        pintarListaCampos();
+      }
+    });
+    pintarListaCampos();
 
     const capaRelieveLocal = L.featureGroup();
     const tints = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
