@@ -52,16 +52,20 @@
     }
     .mapa-tools {
       display: flex; position: absolute; z-index: 1100;
-      top: calc(var(--topbar-h) + 10px + env(safe-area-inset-top, 0px));
+      top: calc(var(--topbar-h) + 8px + env(safe-area-inset-top, 0px));
       right: calc(52px + env(safe-area-inset-right, 0px));
-      gap: 4px;
+      gap: 6px;
     }
     .mapa-tools button {
-      border: 1px solid var(--oro); background: rgba(247,241,228,.94); color: var(--verde);
-      border-radius: 8px; font-weight: 700; font-size: 11px; padding: 6px 9px;
-      box-shadow: 0 1px 8px rgba(0,0,0,.16);
+      border: 1px solid #8a6a2a; background: linear-gradient(#fff8ea, #e4d4b0);
+      color: var(--verde); border-radius: 8px 8px 6px 6px;
+      font-weight: 800; font-size: 11px; padding: 7px 11px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 3px 0 #8a6a2a, 0 6px 10px rgba(0,0,0,.22);
     }
-    .mapa-tools button.on { background: var(--verde); color: #fff; border-color: var(--verde); }
+    .mapa-tools button.on {
+      background: linear-gradient(#1a7340, #0D5C2C); color: #fff; border-color: #08441f;
+      box-shadow: inset 0 2px 3px rgba(0,0,0,.28), 0 2px 0 #08441f;
+    }
     @media (min-width: 900px) {
       .velo { display: none !important; }
       body.panel-abierto .desplegables { left: 372px; }
@@ -119,9 +123,15 @@
       border: 1px solid #c5cdc8; border-radius: 6px; padding: 2px 7px;
       font-size: 11px; font-weight: 700; white-space: nowrap;
     }
-    .drop i { display: block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; }
+    .drop i { display: block; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,.45); }
     .leaflet-popup-content { margin: 10px 12px; font-size: 14px; }
     .leaflet-popup-content b { color: var(--verde); }
+    .btn-quitar-aguada, .lista-aguadas button {
+      margin-top: 8px; width: 100%; cursor: pointer;
+      border: 1px solid #8a1f1f; background: #fff; color: #8a1f1f;
+      font-weight: 700; border-radius: 6px; padding: 7px 8px;
+    }
+    .lista-aguadas { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
     .nombres-fila { margin-top: 8px; display: flex; gap: 6px; }
     .nombres-fila button { flex: 1; width: auto; }
     .caja-nombre { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8e4; }
@@ -166,27 +176,49 @@
     body.marcando-esquinas #map { cursor: crosshair; }
     .desplegables {
       position: absolute; z-index: 1100;
-      top: calc(var(--topbar-h) + 12px + env(safe-area-inset-top, 0px));
+      top: calc(var(--topbar-h) + 8px + env(safe-area-inset-top, 0px));
       left: calc(10px + env(safe-area-inset-left, 0px));
-      width: min(168px, 42vw);
-      max-height: calc(100dvh - 170px);
-      overflow: auto;
+      display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-start;
+      gap: 6px; width: auto; max-width: calc(100vw - 170px);
+      overflow: visible; pointer-events: none;
     }
-    .desplegables details {
-      background: rgba(247,241,228,.96); border: 1px solid var(--oro);
-      border-radius: 8px; margin-bottom: 5px; overflow: hidden;
+    .desplegables > details {
+      pointer-events: auto; position: relative; margin: 0; overflow: visible;
+      background: linear-gradient(#fff8ea, #e4d4b0);
+      border: 1px solid #8a6a2a; border-radius: 10px 10px 6px 6px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 3px 0 #8a6a2a, 0 7px 12px rgba(0,0,0,.24);
+    }
+    .desplegables > details[open] {
+      z-index: 20;
+      background: linear-gradient(#f3e6c4, #d9c496);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,.18), 0 2px 0 #8a6a2a, 0 8px 16px rgba(0,0,0,.22);
     }
     .desplegables summary {
-      list-style: none; cursor: pointer; font-weight: 700; font-size: 12px;
-      color: var(--verde); padding: 7px 26px 7px 9px; position: relative;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
+      list-style: none; cursor: pointer; font-weight: 800; font-size: 12px;
+      color: var(--verde); padding: 8px 28px 8px 12px; position: relative;
+      white-space: nowrap; line-height: 1.2;
     }
     .desplegables summary::-webkit-details-marker { display: none; }
     .desplegables summary::after {
-      content: "+"; position: absolute; right: 10px; top: 8px; font-weight: 800;
+      content: "▾"; position: absolute; right: 8px; top: 8px; font-weight: 800; font-size: 11px;
     }
-    .desplegables details[open] > summary::after { content: "–"; }
-    .desplegables .cuerpo { padding: 0 8px 8px; overflow: visible; }
+    .desplegables details[open] > summary::after { content: "▴"; }
+    .desplegables > details > .cuerpo {
+      position: absolute; top: calc(100% + 6px); left: 0;
+      min-width: 228px; width: max(228px, 100%);
+      max-width: min(280px, 78vw);
+      max-height: min(58dvh, calc(100dvh - 160px));
+      overflow: auto; padding: 8px;
+      background: linear-gradient(#fffdf8, #f4eee0);
+      border: 1px solid #8a6a2a; border-radius: 0 10px 10px 10px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.28);
+    }
+    .desplegables > details:nth-child(n+2) > .cuerpo { left: auto; right: 0; border-radius: 10px 0 10px 10px; }
+    .desplegables details.sub > .cuerpo {
+      position: static; max-width: none; max-height: none; min-width: 0;
+      width: auto; overflow: visible; padding: 0 8px 8px;
+      background: transparent; border: 0; border-radius: 0; box-shadow: none;
+    }
     .desplegables .hint { margin: 0 0 6px; font-size: 10px; color: #5C564F; line-height: 1.3; }
     .desplegables .fondos,
     .desplegables .modulos,
@@ -348,8 +380,11 @@
     .leaflet-tile-pane { z-index: 200; }
     body.vista-visor .inicio, body.vista-informe .inicio { display: none; }
     body.vista-visor .informe, body.vista-inicio .informe { display: none; }
-    body.vista-visor .btn-menu { top: calc(var(--topbar-h) + 10px + env(safe-area-inset-top, 0px)); }
-    body.vista-visor .desplegables { top: calc(var(--topbar-h) + 10px + env(safe-area-inset-top, 0px)); }
+    body.vista-visor .btn-menu { top: calc(var(--topbar-h) + 8px + env(safe-area-inset-top, 0px)); }
+    body.vista-visor .desplegables {
+      top: calc(var(--topbar-h) + 8px + env(safe-area-inset-top, 0px));
+      left: calc(76px + env(safe-area-inset-left, 0px));
+    }
     #dropLote[hidden] { display: none; }
     @media (min-width: 900px) {
       .topbar .desk { display: flex; }
@@ -372,18 +407,17 @@
     .consulta .ok { background: #fff; border: 1px solid var(--oro-claro); padding: 6px 8px; border-radius: 8px; }
     @media (min-width: 900px) {
       body.panel-abierto .desplegables { left: 372px; }
-      .desplegables { width: 168px; }
     }
     @media (max-width: 899px) {
       .desplegables {
-        width: min(148px, 40vw);
-        max-height: min(38dvh, calc(100dvh - 168px));
+        max-width: calc(100vw - 86px);
       }
       .desplegables summary {
-        font-size: 11px; padding: 5px 20px 5px 7px;
+        font-size: 11px; padding: 7px 22px 7px 9px;
       }
-      .desplegables summary::after { right: 6px; top: 5px; }
-      .desplegables .cuerpo { padding: 0 5px 5px; }
+      .desplegables summary::after { right: 6px; top: 7px; }
+      .desplegables > details > .cuerpo { min-width: 200px; padding: 7px; }
+      .desplegables details.sub > .cuerpo { padding: 0 5px 5px; }
       .desplegables .hint { display: none; }
       .desplegables .fondos {
         display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
@@ -399,7 +433,6 @@
       .desplegables .ficha-oficial, .desplegables .leyenda {
         font-size: 10px; max-height: 10em; overflow: auto; margin-top: 4px;
       }
-      .desplegables details { margin-bottom: 4px; }
       :root { --topbar-h: 64px; }
       .topbar {
         display: grid;
@@ -1015,9 +1048,15 @@
                 ? "Vigilar: " + lejos.map((p) => "P" + p.n + " a " + p.dist + " m").join(", ") + " (más de 400 m)."
                 : "Todas las crías están a menos de 400 m."))
           : (aguadas.length
-            ? ("Marcó " + aguadas.length + " punto(s) de bebida en el satélite. Alcance de cría: 400 m. " +
-              (potreros[0] && potreros[0].dist != null ? ("El lote está a " + potreros[0].dist + " m del agua más cercana.") : ""))
+            ? ("Marcó " + aguadas.length + " punto(s) de bebida. Alcance de cría: 400 m. " +
+              (potreros[0] && potreros[0].dist != null ? ("El lote está a " + potreros[0].dist + " m del agua más cercana. ") : "") +
+              "Toque la gota o Quitar si quiere moverla.")
             : "Toque el satélite en cada represa, molino o bebedero. Hasta que no marque agua, el diagnóstico no usa distancia.")) +
+        (esDemoCalera ? "" : (aguadas.length
+          ? "<div class='lista-aguadas'>" + aguadas.map((a) =>
+              "<button type='button' data-quitar-aguada='" + a.id + "'>Quitar " + escHtml(a.name) + "</button>"
+            ).join("") + "</div>"
+          : "")) +
         " " + textoLluvia() + " A futuro se podrá cargar red de San Luis Agua y análisis de bebida."
       );
       const cargo = productorCargoMejora();
@@ -2006,7 +2045,7 @@
       el.hidden = false;
       document.body.classList.add("marcando-esquinas");
       el.textContent = aguadas.length
-        ? (aguadas.length + " aguada(s) marcada(s). Toque otra en el satélite. La situación actual ya lee suelo INTA y relieve; Mejorado 1 se carga después.")
+        ? (aguadas.length + " aguada(s) marcada(s). Toque otra en el satélite. Si se equivocó, toque la gota azul y elija Quitar; después márquela de nuevo.")
         : "Alambrado cerrado. Toque cada aguada (represa, molino, bebedero). Eso entra al diagnóstico actual de este lote.";
     }
     async function consultarSueloInta(lat, lon) {
@@ -2081,28 +2120,77 @@
       pintarAvisoSat(ring.length);
       return diagnosticoLote;
     }
+    function htmlAguada(a, extra) {
+      let h = "<b>" + escHtml(a.name) + "</b><br>No se recorta bebida.";
+      if (extra) h += extra;
+      if (!esDemoCalera) {
+        h += "<br><button type='button' class='btn-quitar-aguada' data-quitar-aguada='" + escHtml(a.id) + "'>Quitar esta aguada</button>";
+      }
+      return h;
+    }
+    function persistirAguadas() {
+      if (!store.campoActivo) return;
+      store.campoActivo.aguadas = aguadas.map((a) => ({ name: a.name, lat: a.lat, lon: a.lon }));
+      saveStore(store);
+    }
+    function quitarAguada(id) {
+      if (esDemoCalera || !id) return;
+      const i = aguadas.findIndex((a) => a.id === id || a.name === id);
+      if (i < 0) return;
+      aguadas.splice(i, 1);
+      aguadas.forEach((a, n) => {
+        a.id = "A" + (n + 1);
+        a.name = "Aguada " + (n + 1);
+        a.color = "#1E6BB8";
+        a.productor = true;
+      });
+      asignarAgua();
+      persistirAguadas();
+      if (typeof dibujarPredio === "function") dibujarPredio();
+      const ring = parseLimites(document.getElementById("fLimites").value);
+      pintarAvisoSat(Math.max(4, ring.length));
+      if (typeof actualizarFichasCampo === "function") actualizarFichasCampo();
+      if (typeof llenar === "function") llenar();
+      map.closePopup();
+    }
+    function ponerMarcaAguada(a) {
+      const mk = L.marker([a.lat, a.lon], {
+        icon: L.divIcon({
+          className: "drop",
+          html: "<i style='background:" + a.color + "'></i>",
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        }),
+        zIndexOffset: 800
+      }).bindPopup(htmlAguada(a), { maxWidth: 260 }).addTo(group);
+      mk.on("click", (ev) => {
+        if (ev.originalEvent) L.DomEvent.stop(ev.originalEvent);
+      });
+      return mk;
+    }
     function agregarAguadaSat(latlng) {
       if (esDemoCalera) return false;
       const ring = parseLimites(document.getElementById("fLimites").value);
       if (ring.length < 3) return false;
       const lat = latlng.lat, lon = latlng.lng;
       if (!enCuyo(lat, lon)) return false;
-      if (aguadas.some((a) => distM([a.lat, a.lon], [lat, lon]) < 30)) return false;
+      const cerca = aguadas.find((a) => distM([a.lat, a.lon], [lat, lon]) < 40);
+      if (cerca) {
+        L.popup({ maxWidth: 260 }).setLatLng([cerca.lat, cerca.lon]).setContent(htmlAguada(cerca)).openOn(map);
+        return true;
+      }
       const n = aguadas.length + 1;
-      aguadas.push({ id: "A" + n, name: "Aguada " + n, lat: lat, lon: lon, color: "#1E6BB8", productor: true });
+      const nueva = { id: "A" + n, name: "Aguada " + n, lat: lat, lon: lon, color: "#1E6BB8", productor: true };
+      aguadas.push(nueva);
       asignarAgua();
       if (typeof dibujarPredio === "function") dibujarPredio();
       try { setCapa("agua", true, false); } catch (e) {}
-      if (store.campoActivo) {
-        store.campoActivo.aguadas = aguadas.map((a) => ({ name: a.name, lat: a.lat, lon: a.lon }));
-        saveStore(store);
-      }
+      persistirAguadas();
       pintarAvisoSat(Math.max(4, ring.length));
       if (typeof actualizarFichasCampo === "function") actualizarFichasCampo();
       L.popup({ maxWidth: 260 })
         .setLatLng([lat, lon])
-        .setContent("<b>Aguada " + n + "</b><br>No se recorta bebida." +
-          (potreros[0] && potreros[0].dist != null ? "<br>El lote queda a " + potreros[0].dist + " m." : ""))
+        .setContent(htmlAguada(nueva, potreros[0] && potreros[0].dist != null ? "<br>El lote queda a " + potreros[0].dist + " m." : ""))
         .openOn(map);
       return true;
     }
@@ -2333,11 +2421,7 @@
         if (!esDemoCalera) dropLote.open = false;
       }
       if (!esDemoCalera) {
-        aguadas.forEach((a) => {
-          L.marker([a.lat, a.lon], {
-            icon: L.divIcon({ className: "drop", html: "<i style='background:" + a.color + "'></i>", iconSize: [14, 14], iconAnchor: [7, 7] })
-          }).bindPopup("<b>" + a.name + "</b><br>No se recorta bebida.").addTo(group);
-        });
+        aguadas.forEach(ponerMarcaAguada);
         dibujarAgua();
         return;
       }
@@ -2352,11 +2436,7 @@
         poly.on("click", () => abrir(p.n, false));
         lab.on("click", () => abrir(p.n, false));
       });
-      aguadas.forEach((a) => {
-        L.marker([a.lat, a.lon], {
-          icon: L.divIcon({ className: "drop", html: "<i style='background:" + a.color + "'></i>", iconSize: [14, 14], iconAnchor: [7, 7] })
-        }).bindPopup("<b>" + a.name + "</b><br>No se recorta bebida.").addTo(group);
-      });
+      aguadas.forEach(ponerMarcaAguada);
       dibujarAgua();
     }
     function dibujarAgua() {
@@ -2368,15 +2448,17 @@
           color: a.color,
           weight: 2,
           fillColor: a.color,
-          fillOpacity: 0.16
-        }).bindPopup("<b>" + a.name + "</b><br>Alcance de cría: 400 m. No se recorta bebida.").addTo(capaAgua);
+          fillOpacity: 0.16,
+          interactive: false
+        }).addTo(capaAgua);
         L.circle([a.lat, a.lon], {
           pane: "agua",
           radius: 800,
           color: a.color,
           weight: 1.5,
           dashArray: "5 7",
-          fill: false
+          fill: false,
+          interactive: false
         }).addTo(capaAgua);
       });
     }
@@ -2890,6 +2972,13 @@
           if (i) i.textContent = "–";
         }
       });
+    });
+    document.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-quitar-aguada]");
+      if (!b) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      quitarAguada(b.getAttribute("data-quitar-aguada"));
     });
     document.querySelectorAll("#desplegables > details").forEach((d) => {
       d.addEventListener("toggle", () => {
