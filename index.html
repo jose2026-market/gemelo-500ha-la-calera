@@ -1646,6 +1646,11 @@
     function textoGps(lat, lon) {
       return Math.abs(lat).toFixed(4).replace(".", ",") + " Sur · " + Math.abs(lon).toFixed(4).replace(".", ",") + " Oeste";
     }
+    function fmtHa(n) {
+      if (!isFinite(n) || n <= 0) return "—";
+      const t = n >= 20 ? String(Math.round(n)) : (Math.round(n * 10) / 10).toFixed(1);
+      return t.replace(".", ",") + " ha";
+    }
     function pintarConvSat(lat, lon) {
       const el = document.getElementById("convSat");
       if (!el || !puntoValido(lat, lon)) return;
@@ -1814,10 +1819,9 @@
         south = Math.min.apply(null, lats); north = Math.max.apply(null, lats);
         west = Math.min.apply(null, lons); east = Math.max.apply(null, lons);
         const haPoly = haDeAnillo(ring);
-        if (!ha || ha < 5) ha = Math.max(5, haPoly || 0);
-        if (haPoly >= 5) {
-          document.getElementById("fHaCampo").value = Math.round(haPoly);
+        if (haPoly > 0.1) {
           ha = haPoly;
+          document.getElementById("fHaCampo").value = Math.round(haPoly * 10) / 10;
         }
         lat = (south + north) / 2; lon = (west + east) / 2;
       } else {
@@ -1832,7 +1836,7 @@
       if (hayAnillo) {
         L.polygon(ring, {
           pane: "alambrado", color: "#E4C87A", weight: 4, fill: false, dashArray: "8 6"
-        }).bindPopup("Límite declarado · " + Math.round(ha) + " ha. No es el padrón catastral.").addTo(limiteReal);
+        }).bindPopup("Alambrado cerrado · " + fmtHa(ha) + " (según las esquinas del plano, no es el padrón).").addTo(limiteReal);
         ring.forEach((p, i) => {
           L.circleMarker(p, {
             pane: "alambrado", radius: 6, color: "#C4A35A", weight: 2,
@@ -1862,21 +1866,21 @@
       const prodNom = (document.getElementById("fProd").value || "").trim();
       aplicarNombre(prodNom || ((store.nombreCampo && store.nombreCampo.indexOf("demostrativo") === -1 && store.nombreCampo.indexOf("La Calera") === -1)
         ? store.nombreCampo
-        : (hayAnillo ? (MARCA + " · " + Math.round(ha) + " ha") : MARCA)));
+        : (hayAnillo ? (MARCA + " · " + fmtHa(ha)) : MARCA)));
       store.campoActivo = snapshotFormCampo();
       store.campoActivo.nombre = store.nombreCampo;
       saveStore(store);
       L.popup({ maxWidth: 280 })
         .setLatLng([cx, cy])
         .setContent("<b>" + escHtml(store.nombreCampo || "Mi campo") + "</b><br>" +
-          (hayAnillo ? (Math.round(ha) + " ha según el plano") : ("Se marcó " + (ring.length || 1) + " esquina(s). Pegue las 4 para ver el lote.")) +
+          (hayAnillo ? ("Superficie: <b>" + fmtHa(ha) + "</b> según el alambrado") : ("Se marcó " + (ring.length || 1) + " esquina(s). Pegue las 4 para ver el lote.")) +
           "<br>" + textoGps(cx, cy))
         .openOn(map);
       pintarConvSat(cx, cy);
       const cercaDemo = distM([cx, cy], DEMO_CENTRO) < 2500;
       let aviso = "Campo en " + textoGps(cx, cy) + ".";
       if (cercaDemo) aviso = "Esas coordenadas caen en el demostrativo de La Calera. Pegue latitud Sur y longitud Oeste de SU plano.";
-      else if (hayAnillo) aviso = "Se leyeron " + ring.length + " esquinas · " + Math.round(ha) + " ha. En el satélite: " + textoGps(cx, cy) + ".";
+      else if (hayAnillo) aviso = "Alambrado cerrado: " + fmtHa(ha) + " (" + ring.length + " esquinas). En el satélite: " + textoGps(cx, cy) + ".";
       else if (ring.length) aviso = "Bien: esa esquina es de su campo. Con " + ring.length + " línea(s) solo se marca el punto. Pegue las 4 esquinas (4 líneas) para dibujar el lote.";
       else aviso = "Esa esquina está en " + textoGps(cx, cy) + ". Pegue las 4 esquinas para ver el lote.";
       document.getElementById("msg").hidden = false;
