@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Instructivo · Gemelo Digital Ganadero</title>
+  <style>
+    :root {
+      --verde: #0D5C2C;
+      --oro: #C4A35A;
+      --crema: #F7F1E4;
+      --tierra: #2D2016;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--crema); color: var(--tierra);
+      font-family: system-ui, Segoe UI, sans-serif; line-height: 1.45;
+    }
+    header {
+      background: var(--verde); color: var(--crema);
+      padding: 18px 20px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 3px 0 var(--oro);
+    }
+    header img { height: 48px; width: 48px; object-fit: contain; background: var(--crema); border-radius: 50%; }
+    header small { display: block; color: #E4C87A; letter-spacing: .08em; text-transform: uppercase; font-size: 11px; font-weight: 700; }
+    header b { font-size: 18px; }
+    main { max-width: 720px; margin: 0 auto; padding: 22px 18px 48px; }
+    h1 { font-size: 26px; color: var(--verde); margin: 0 0 8px; }
+    .lead { font-size: 16px; margin: 0 0 22px; }
+    .paso {
+      background: #fff; border: 1px solid var(--oro); border-radius: 12px;
+      padding: 14px 16px; margin: 0 0 12px;
+    }
+    .paso h2 {
+      margin: 0 0 6px; font-size: 16px; color: var(--verde);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nro {
+      display: inline-grid; place-items: center;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--verde); color: #fff; font-size: 12px;
+    }
+    p { margin: 0 0 6px; font-size: 14px; }
+    .aviso { background: #FFF6E5; border: 1px solid #E6C989; color: #6A4B12; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+    .ok { background: #E8F0E4; border: 1px solid var(--oro); color: var(--verde); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+    a.btn {
+      display: inline-block; margin: 8px 8px 0 0; background: var(--verde); color: #fff;
+      text-decoration: none; font-weight: 700; border-radius: 8px; padding: 10px 14px;
+    }
+    a.sec { background: #fff; color: var(--verde); border: 1px solid var(--oro); }
+    ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
+    @media print {
+      header { box-shadow: none; }
+      a.btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/logo-sociedad-rural-san-luis.png?v=oficial" alt="Sociedad Rural de San Luis" />
+    <div>
+      <small>Sociedad Rural de San Luis</small>
+      <b>Instructivo del gemelo</b>
+    </div>
+  </header>
+  <main>
+    <h1>Cómo se usa, en una visita</h1>
+    <p class="lead">Es una copia de su campo en el satélite para decidir. Suelo INTA, relieve y aguadas. No se recorta el agua de bebida. No se desmonta.</p>
+
+    <article class="paso">
+      <h2><span class="nro">1</span> Abrir</h2>
+      <p>En la computadora o el celular:</p>
+      <p><b>jose2026-market.github.io/gemelo-500ha-la-calera/</b></p>
+      <p>Toque <b>Ir al mapa</b>. Primero se ve el demostrativo de 500 ha (La Calera).</p>
+    </article>
+
+    <article class="paso">
+      <h2><span class="nro">2</span> Cargar su campo</h2>
+      <p>Menú → <b>Mi campo</b>.</p>
+      <p>En el plano de mensura use la tabla de <b>coordenadas geográficas</b> (latitud y longitud, o φ y λ). Ejemplo: <b>33°15'20" S</b> y <b>66°48'10" O</b>.</p>
+      <p class="aviso">No use las columnas X e Y (números grandes de 7 cifras). Eso es otro sistema.</p>
+      <p>Pegue las 4 esquinas y toque <b>Ver mi campo en el satélite</b>.</p>
+      <p>Si el plano trae solo 2 vértices, péguelos igual: las otras esquinas se marcan tocando el alambrado en el satélite.</p>
+    </article>
+
+    <article class="paso">
+      <h2><span class="nro">3</span> Marcar las aguadas</h2>
+      <p>Cuando cierra el alambrado, toque cada represa, molino o bebedero.</p>
+      <ul>
+        <li><b>Círculo continuo:</b> 400 m. Alcance de cría (vaca con ternero).</li>
+        <li><b>Círculo de puntos:</b> 800 m. Hacienda adulta.</li>
+      </ul>
+      <p>Si se equivocó: toque la gota azul y <b>Quitar esta aguada</b>. Después márquela de nuevo.</p>
+    </article>
+
+    <article class="paso">
+      <h2><span class="nro">4</span> Leer el campo</h2>
+      <p><b>Capas:</b> satélite, suelos INTA, OTBN (bosque), aguadas.</p>
+      <p><b>Manejo:</b> Actual (lo que lee INTA en ese lote), Mejorado 1 y Óptimo (lo que se puede hacer).</p>
+      <p><b>Campo / Pueblos:</b> encuadre del lote o de la zona.</p>
+    </article>
+
+    <article class="paso">
+      <h2><span class="nro">5</span> Salir con el informe</h2>
+      <p>El informe muestra puntos críticos: corto plazo (sin plata) y mediano plazo (con inversión de agua). Buffel solo si OTBN lo permite.</p>
+    </article>
+
+    <p class="ok"><b>En el celular</b> funciona igual para una vista rápida. Al cerrar o recargar, el campo no queda guardado. En la computadora sí se puede guardar.</p>
+
+    <p>
+      <a class="btn" href="index.html">Abrir el mapa</a>
+      <a class="btn sec" href="presentacion.html">Presentación (3 diapositivas)</a>
+    </p>
+  </main>
+</body>
+</html>
