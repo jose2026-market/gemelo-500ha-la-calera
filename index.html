@@ -499,57 +499,41 @@
       <button type="button" id="btnCargarNombre">Cargar nombre</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
+      <p class="aviso">En San Luis el plano de mensura trae <b>latitud Sur y longitud Oeste</b>. Puede pegarlas con o sin signo menos, o en grados (33°15'20" S). No se dibuja un campo de 500 ha: el mapa muestra las esquinas que usted cargue.</p>
       <label for="fProd">Nombre del campo</label>
       <input id="fProd" type="text" placeholder="Ej. El Crispín" autocomplete="name" />
       <label for="fTel">Teléfono o WhatsApp (opcional)</label>
       <input id="fTel" type="tel" placeholder="2664..." autocomplete="tel" />
 
       <div class="paso">
-        <p><b class="nro">1</b> <b>Busque en el plano la tabla de vértices</b></p>
-        <small>Son dos columnas de números grandes, sin signo menos. No use grados ni latitud. Copie tal cual está en el plano.</small>
-        <small>ESTE (a veces dice Y): empieza con 2, 3, 4 o 5 · ejemplo 3.456.789</small>
-        <small>NORTE (a veces dice X): empieza con 6 · ejemplo 6.351.234</small>
-        <small>El satélite usa GPS (33 Sur, 66 Oeste). Eso no se pega acá: la app lo calcula sola.</small>
-      </div>
-
-      <div class="paso">
-        <p><b class="nro">2</b> <b>Pegue un vértice</b> para marcar el punto exacto. Eso no dibuja el campo: solo la esquina.</p>
+        <p><b class="nro">1</b> <b>Una esquina</b> (para ubicar el punto). Latitud Sur y longitud Oeste, como en el plano.</p>
         <div class="grid2">
           <div>
-            <label for="fLat">Pegar ESTE acá</label>
-            <input id="fLat" type="text" inputmode="decimal" placeholder="3.456.789" autocomplete="off" />
+            <label for="fLat">Latitud Sur</label>
+            <input id="fLat" type="text" inputmode="decimal" placeholder="33°15'20&quot; S" autocomplete="off" />
           </div>
           <div>
-            <label for="fLon">Pegar NORTE acá</label>
-            <input id="fLon" type="text" inputmode="decimal" placeholder="6.351.234" autocomplete="off" />
+            <label for="fLon">Longitud Oeste</label>
+            <input id="fLon" type="text" inputmode="decimal" placeholder="66°48'10&quot; O" autocomplete="off" />
           </div>
         </div>
-        <label for="fFaja">Provincia / faja del plano</label>
-        <select id="fFaja">
-          <option value="auto">Que lo calcule el número de ESTE (recomendado)</option>
-          <option value="3">San Luis (faja 3)</option>
-          <option value="4">Córdoba / El Crispín (faja 4)</option>
-          <option value="2">Oeste de San Luis (faja 2)</option>
-          <option value="5">Faja 5</option>
-        </select>
-        <label for="fHaCampo">Hectáreas reales (no deje 500 si el campo es más chico)</label>
+        <label for="fHaCampo">Hectáreas (opcional; si pega las 4 esquinas se calculan solas)</label>
         <input id="fHaCampo" type="number" step="1" min="5" max="20000" value="" placeholder="ej. 80" />
-        <label class="chk-plano"><input type="checkbox" id="fInchauspe" /> Plano viejo (Campo Inchauspe, anterior a POSGAR)</label>
         <p class="ok" id="convSat" hidden></p>
       </div>
 
       <div class="paso">
-        <p><b class="nro">3</b> <b>Para ver el campo verdadero</b> pegue <u>toda</u> la tabla de vértices (todas las esquinas). Con un solo número el mapa queda cerca, pero no calza el alambrado.</p>
-        <label for="fLimites">Tabla completa: una fila por vértice (ESTE NORTE)</label>
-        <textarea id="fLimites" placeholder="Este Norte&#10;3456789 6351234&#10;3456900 6351234&#10;3456900 6351400&#10;3456789 6351400"></textarea>
-        <label for="fPlano">O saque foto a esa tabla del plano</label>
+        <p><b class="nro">2</b> <b>Para ver el campo real</b> pegue las 4 esquinas (o más), una por línea: latitud y longitud.</p>
+        <label for="fLimites">Esquinas del plano</label>
+        <textarea id="fLimites" placeholder="33°15'20&quot; S  66°48'10&quot; O&#10;33°15'20&quot; S  66°47'40&quot; O&#10;33°14'50&quot; S  66°47'40&quot; O&#10;33°14'50&quot; S  66°48'10&quot; O"></textarea>
+        <label for="fPlano">O foto nítida de esa tabla del plano</label>
         <input id="fPlano" type="file" accept="image/jpeg,image/png,image/webp,image/jpg" />
         <img id="prevPlano" class="plano-preview" alt="Vista del plano" hidden />
         <button type="button" id="btnLeerPlano" class="sec">Leer la foto del plano</button>
         <p class="aviso" id="msgPlano" hidden></p>
       </div>
 
-      <button type="button" id="btnVerCampo">4 · Ver mi campo en el satélite</button>
+      <button type="button" id="btnVerCampo">3 · Ver mi campo en el satélite</button>
       <button type="button" id="btnGuardarCampo" class="sec">Guardar este campo</button>
       <button type="button" id="btnDemoCalera" class="sec" style="background:#F7F1E4;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Volver al demostrativo</button>
       <label>Campos guardados</label>
@@ -1350,7 +1334,44 @@
       const dLon = (-dx * sinLon + dy * cosLon) / (N * cosLat);
       return [lat + dLat * 180 / Math.PI, lon + dLon * 180 / Math.PI];
     }
-    function normalizarPar(a, b) {
+    function parseAngulo(s, eje) {
+      const t = String(s || "").trim();
+      if (!t) return NaN;
+      const dms = t.match(/(\d{1,3})\s*[°º]?\s+(\d{1,2})(?:\s*[\'’′]?\s*(\d{1,2}(?:[.,]\d+)?)?)?/)
+        || t.match(/(\d{1,3})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)?/);
+      let n;
+      if (dms) n = Math.abs(parseNum(dms[1])) + Math.abs(parseNum(dms[2] || 0)) / 60 + Math.abs(parseNum(dms[3] || 0)) / 3600;
+      else n = parseNum(t);
+      if (!isFinite(n)) return NaN;
+      if (Math.abs(n) > 1000) return n;
+      n = Math.abs(n);
+      if (eje === "lat") {
+        if (/[Nn]/.test(t) && !/[Ss]/.test(t)) return n;
+        return -n;
+      }
+      if (/[Ee]/.test(t) && !/[WwOo]/.test(t)) return n;
+      return -n;
+    }
+    function extraerParGeo(line) {
+      const t = String(line || "").trim();
+      if (!t) return null;
+      const dms = t.match(/(\d{1,3})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[\"”″]?\s*([SNsn])?[\s,;]+(\d{1,3})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[\"”″]?\s*([WOwoEe])?/);
+      if (dms) {
+        let lat = Math.abs(parseNum(dms[1])) + parseNum(dms[2]) / 60 + parseNum(dms[3]) / 3600;
+        let lon = Math.abs(parseNum(dms[5])) + parseNum(dms[6]) / 60 + parseNum(dms[7]) / 3600;
+        if (!dms[4] || /[Ss]/.test(dms[4])) lat = -lat;
+        if (!dms[8] || /[WwOo]/.test(dms[8])) lon = -lon;
+        return [lat, lon];
+      }
+      const dec = t.match(/(-?\d{1,3}[.,]\d+)\s*([SNsn])?[\s,;]+(-?\d{1,3}[.,]\d+)\s*([WOwoEe])?/);
+      if (dec) {
+        let lat = parseNum(dec[1]), lon = parseNum(dec[3]);
+        if (dec[2] ? /[Ss]/.test(dec[2]) : (lat > 0 && lat < 56)) lat = -Math.abs(lat);
+        if (dec[4] ? /[WwOo]/.test(dec[4]) : (Math.abs(lon) > 40 && Math.abs(lon) < 75)) lon = -Math.abs(lon);
+        return [lat, lon];
+      }
+      return null;
+    }
       if (!isFinite(a) || !isFinite(b)) return [a, b];
       if (Math.abs(a) > 1000 && Math.abs(b) > 1000) {
         const wgs = gkAWgs(Math.abs(a), Math.abs(b), fajaElegida());
@@ -1388,9 +1409,11 @@
         out.push([lat, lon]);
       }
       String(txt || "").split(/\n|;/).forEach((line) => {
-        const tokens = line.trim().replace(/[()]/g, "").split(/[\s;xX]+/).map((s) => s.replace(/,$/, "")).filter(Boolean);
+        const geo = extraerParGeo(line);
+        if (geo) { add(geo[0], geo[1]); return; }
+        const tokens = line.trim().replace(/[()]/g, "").split(/[\s,;]+/).filter(Boolean);
         if (tokens.length >= 2) {
-          const par = normalizarPar(parseNum(tokens[0]), parseNum(tokens[1]));
+          const par = normalizarPar(parseAngulo(tokens[0], "lat"), parseAngulo(tokens[1], "lon"));
           add(par[0], par[1]);
         }
       });
@@ -1505,15 +1528,22 @@
         }
       }
       const t = String(txt || "").replace(/\u00a0/g, " ");
+      String(t).split(/\n/).forEach((line) => {
+        const geo = extraerParGeo(line);
+        if (geo) add(geo[0], geo[1]);
+      });
       let m, re;
       re = /(-?3[0-5][.,]\d{3,})\s*[;,\s]\s*(-?6[2-9][.,]\d{3,})/g;
-      while ((m = re.exec(t))) add(parseNum(m[1]), parseNum(m[2]));
-      re = /(\d{1,2})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[\"”″]?\s*([SNsn])\s*[,;\s]+(\d{1,2})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[\"”″]?\s*([WOwoEe])/g;
+      while ((m = re.exec(t))) {
+        const par = normalizarPar(parseNum(m[1]), parseNum(m[2]));
+        add(par[0], par[1]);
+      }
+      re = /(\d{1,2})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[\"”″]?\s*([SNsn])?\s*[,;\s]+(\d{1,2})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[\"”″]?\s*([WOwoEe])?/g;
       while ((m = re.exec(t))) {
         let lat = Math.abs(parseNum(m[1])) + parseNum(m[2]) / 60 + parseNum(m[3]) / 3600;
         let lon = Math.abs(parseNum(m[5])) + parseNum(m[6]) / 60 + parseNum(m[7]) / 3600;
-        if (/[Ss]/.test(m[4])) lat = -lat;
-        if (/[WwOo]/.test(m[8])) lon = -lon;
+        if (!m[4] || /[Ss]/.test(m[4])) lat = -lat;
+        if (!m[8] || /[WwOo]/.test(m[8])) lon = -lon;
         add(lat, lon);
       }
       const gkNums = [];
@@ -1568,13 +1598,15 @@
       const el = document.getElementById("convSat");
       if (!el || !puntoValido(lat, lon)) return;
       el.hidden = false;
-      el.textContent = "En el satélite queda: " + textoGps(lat, lon) + ". Eso es GPS. El plano sigue en Gauss-Krüger, sin signo menos.";
+      el.textContent = "Ubicación: " + textoGps(lat, lon) + ".";
     }
-    function llenarFormGK(pares) {
-      if (!pares || !pares.length) return;
-      document.getElementById("fLat").value = fmtGK(pares[0][0]);
-      document.getElementById("fLon").value = fmtGK(pares[0][1]);
-      document.getElementById("fLimites").value = pares.map((p) => fmtGK(p[0]) + " " + fmtGK(p[1])).join("\n");
+    function llenarFormGeo(pts) {
+      if (!pts || !pts.length) return;
+      document.getElementById("fLat").value = Math.abs(pts[0][0]).toFixed(5).replace(".", ",") + " S";
+      document.getElementById("fLon").value = Math.abs(pts[0][1]).toFixed(5).replace(".", ",") + " O";
+      document.getElementById("fLimites").value = pts.map((p) =>
+        Math.abs(p[0]).toFixed(5).replace(".", ",") + " S  " + Math.abs(p[1]).toFixed(5).replace(".", ",") + " O"
+      ).join("\n");
     }
     function decirPlano(msg) {
       const el = document.getElementById("msgPlano");
@@ -1613,24 +1645,16 @@
     function aplicarFormCampo(c) {
       document.getElementById("fProd").value = c.prod || c.nombre || "";
       document.getElementById("fTel").value = c.tel || "";
-      let este = c.lat || "", norte = c.lon || "";
-      const a = parseNum(c.lat), b = parseNum(c.lon);
-      if (isFinite(a) && isFinite(b) && Math.abs(a) <= 90 && Math.abs(b) <= 180 && Math.abs(a) > 0.2) {
-        const gk = wgsAGk(a > 0 ? -a : a, b > 0 ? -b : b);
-        este = fmtGK(gk[0]);
-        norte = fmtGK(gk[1]);
+      let latTxt = c.lat || "", lonTxt = c.lon || "";
+      const a = parseAngulo(c.lat, "lat"), b = parseAngulo(c.lon, "lon");
+      if (puntoValido(a, b)) {
+        latTxt = Math.abs(a).toFixed(5).replace(".", ",") + " S";
+        lonTxt = Math.abs(b).toFixed(5).replace(".", ",") + " O";
       }
-      document.getElementById("fLat").value = este;
-      document.getElementById("fLon").value = norte;
-      if (document.getElementById("fFaja")) document.getElementById("fFaja").value = c.faja || "auto";
-      if (document.getElementById("fInchauspe")) document.getElementById("fInchauspe").checked = !!c.inchauspe;
+      document.getElementById("fLat").value = latTxt;
+      document.getElementById("fLon").value = lonTxt;
       document.getElementById("fHaCampo").value = c.ha || "";
-      let lim = c.limites || "";
-      if (lim && !/\d{6,}/.test(lim.replace(/[.\s]/g, ""))) {
-        const ring = parseLimites(lim);
-        if (ring.length) lim = ring.map((p) => { const g = wgsAGk(p[0], p[1]); return fmtGK(g[0]) + " " + fmtGK(g[1]); }).join("\n");
-      }
-      document.getElementById("fLimites").value = lim;
+      document.getElementById("fLimites").value = c.limites || "";
     }
     function aplicarSitioGenerico() {
       for (let n = 1; n <= 6; n++) {
@@ -1713,14 +1737,14 @@
       })();
     }
     function cargarCampoProductor() {
-      let lat = parseNum(document.getElementById("fLat").value);
-      let lon = parseNum(document.getElementById("fLon").value);
-      const eraGK = Math.abs(lat) > 1000 && Math.abs(lon) > 1000;
-      const par = normalizarPar(lat, lon);
-      lat = par[0]; lon = par[1];
+      let lat = parseAngulo(document.getElementById("fLat").value, "lat");
+      let lon = parseAngulo(document.getElementById("fLon").value, "lon");
+      if (Math.abs(lat) > 1000 && Math.abs(lon) > 1000) {
+        const par = normalizarPar(lat, lon);
+        lat = par[0]; lon = par[1];
+      }
       let ha = parseNum(document.getElementById("fHaCampo").value);
       const textoLim = document.getElementById("fLimites").value;
-      const limitesEranGK = /\d{6,}/.test(String(textoLim).replace(/[.\s]/g, ""));
       const ring = parseLimites(textoLim);
       let south, west, north, east;
       const hayAnillo = ring.length >= 3;
@@ -1737,15 +1761,9 @@
         lat = (south + north) / 2; lon = (west + east) / 2;
       } else {
         if (!puntoValido(lat, lon) || !enCuyo(lat, lon)) {
-          avisoCampo("Pegue ESTE y NORTE de un vértice, o toda la tabla de esquinas. Sin eso el mapa sigue en el demostrativo.");
+          avisoCampo("Pegue latitud Sur y longitud Oeste (como en el plano de mensura), o las 4 esquinas. Sin eso no se dibuja el campo.");
           return;
         }
-        if (!ha || ha < 5) ha = 10;
-        const lado = Math.sqrt(ha * 10000);
-        const dLat = lado / 111320;
-        const dLon = lado / (111320 * Math.cos(lat * Math.PI / 180));
-        south = lat; north = lat + dLat;
-        west = lon; east = lon + dLon;
       }
       const cx = hayAnillo ? (south + north) / 2 : lat;
       const cy = hayAnillo ? (west + east) / 2 : lon;
@@ -1758,26 +1776,29 @@
           L.circleMarker(p, {
             pane: "alambrado", radius: 6, color: "#C4A35A", weight: 2,
             fillColor: "#fff", fillOpacity: 1
-          }).bindPopup("Vértice " + (i + 1) + " del plano").addTo(limiteReal);
+          }).bindPopup("Vértice " + (i + 1)).addTo(limiteReal);
         });
+        esDemoCalera = false;
+        aplicarSitioGenerico();
+        potreros = armarPotreros(south, west, north, east, ha);
+        aguadas = armarAguadas(south, west, north, east);
+        asignarAgua();
       } else {
         L.circleMarker([lat, lon], {
           pane: "alambrado", radius: 8, color: "#C4A35A", weight: 3,
           fillColor: "#fff", fillOpacity: 1
-        }).bindPopup("Punto exacto de ese vértice. Para el campo real pegue todas las esquinas y las hectáreas.").addTo(limiteReal);
+        }).bindPopup("Punto de esa esquina. Para ver el campo, pegue las 4 esquinas del plano.").addTo(limiteReal);
+        esDemoCalera = false;
+        potreros = [];
+        aguadas = [];
       }
-      esDemoCalera = false;
-      aplicarSitioGenerico();
-      potreros = armarPotreros(south, west, north, east, ha);
-      aguadas = armarAguadas(south, west, north, east);
-      asignarAgua();
       mostrarRelieveDemo(false);
       dibujarPredio();
       Object.keys(tints).forEach((k) => { tints[k] = []; });
       const prodNom = (document.getElementById("fProd").value || "").trim();
       aplicarNombre(prodNom || ((store.nombreCampo && store.nombreCampo.indexOf("demostrativo") === -1 && store.nombreCampo.indexOf("La Calera") === -1)
         ? store.nombreCampo
-        : MARCA + " · " + Math.round(ha) + " ha"));
+        : (hayAnillo ? (MARCA + " · " + Math.round(ha) + " ha") : MARCA)));
       store.campoActivo = snapshotFormCampo();
       store.campoActivo.nombre = store.nombreCampo;
       saveStore(store);
@@ -1791,10 +1812,10 @@
       const cercaDemo = distM([cx, cy], DEMO_CENTRO) < 2500;
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = cercaDemo
-        ? "Ojo: esas coordenadas caen en el demostrativo de La Calera. Pegue ESTE y NORTE del plano, no las del ejemplo."
+        ? "Esas coordenadas caen en el demostrativo de La Calera. Pegue latitud Sur y longitud Oeste de SU plano."
         : (hayAnillo
-          ? "Campo de " + Math.round(ha) + " ha. En el satélite: " + textoGps(cx, cy) + ". El plano sigue en Gauss-Krüger (sin menos)."
-          : "El punto es esa esquina del plano. En el satélite: " + textoGps(cx, cy) + ". Para el campo real pegue toda la tabla y las hectáreas.");
+          ? "Campo de " + Math.round(ha) + " ha según las esquinas. En el satélite: " + textoGps(cx, cy) + "."
+          : "Esa esquina está en " + textoGps(cx, cy) + ". No se dibuja un campo de 500 ha. Pegue las 4 esquinas para ver el lote real.");
       if (!cargarCampoProductor.silencio) enfocarCampo();
     }
     cargarCampoProductor.silencio = false;
@@ -1856,14 +1877,13 @@
         const { data } = await worker.recognize(canvas);
         await worker.terminate();
         const pts = extraerPuntosDeTexto(data && data.text);
-        const gk = pts.gkPares || [];
-        if (gk.length) llenarFormGK(gk);
+        if (pts.length) llenarFormGeo(pts);
         if (pts.length >= 3) {
-          decirPlano("Se leyeron " + pts.length + " vértices. Quedaron en Este/Norte, como el plano (sin signo menos). Toque «Ver mi campo en el satélite».");
+          decirPlano("Se leyeron " + pts.length + " esquinas (latitud Sur y longitud Oeste). Toque «Ver mi campo en el satélite».");
         } else if (pts.length === 1 || pts.length === 2) {
-          decirPlano("Se leyó un vértice en Gauss-Krüger. Si hay más esquinas, péguelas en la tabla (Este Norte) y toque Ver mi campo.");
+          decirPlano("Se leyó un punto. Para dibujar el campo pegue las 4 esquinas: latitud Sur y longitud Oeste.");
         } else {
-          decirPlano("No se leyeron vértices. Foto nítida de la tabla Este/Norte, o péguelos a mano (ej. 3.456.789 y 6.351.234), sin signo menos.");
+          decirPlano("No se leyeron coordenadas. Pegue las esquinas a mano, por ejemplo 33°15'20\" S y 66°48'10\" O.");
         }
       } catch (e) {
         decirPlano("No se pudo leer el plano en este teléfono. Péguelas las esquinas a mano o pruebe otra foto.");
@@ -2053,7 +2073,12 @@
     function verTodo() {
       setFondo("sat");
       setPanel(false);
-      map.fitBounds(group.getBounds(), { padding: [48, 48], maxZoom: 15 });
+      const capas = [];
+      if (group.getLayers().length) capas.push(group);
+      if (typeof limiteReal !== "undefined" && limiteReal.getLayers().length) capas.push(limiteReal);
+      if (!capas.length) return;
+      const b = L.featureGroup(capas).getBounds();
+      if (b.isValid()) map.fitBounds(b, { padding: [48, 48], maxZoom: 15 });
       marcarVista("todo");
       if (typeof llenar === "function") llenar();
     }
@@ -2062,7 +2087,12 @@
       marcarVista("pueblos");
     }
     function verCampo() {
-      map.fitBounds(group.getBounds(), { padding: [48, 48], maxZoom: 15 });
+      const capas = [];
+      if (group.getLayers().length) capas.push(group);
+      if (typeof limiteReal !== "undefined" && limiteReal.getLayers().length) capas.push(limiteReal);
+      if (!capas.length) return;
+      const b = L.featureGroup(capas).getBounds();
+      if (b.isValid()) map.fitBounds(b, { padding: [48, 48], maxZoom: 17 });
       marcarVista("campo");
     }
     document.getElementById("btnVistaPueblos").addEventListener("click", verPueblos);
@@ -2123,6 +2153,7 @@
     }
     function llenar() {
       const p = potreros.find((x) => x.n === pSel);
+      if (!p) return;
       const d = dato(p);
       const v = decision(p);
       document.getElementById("fTipo").value = store[p.n].tipo || "ganadero";
@@ -2196,6 +2227,7 @@
       actualizarFichasCampo();
     }
     function abrir(n, conPanel) {
+      if (!potreros.some((x) => x.n === n)) return;
       pSel = n;
       document.querySelectorAll(".pills button").forEach((b) => b.classList.toggle("on", Number(b.dataset.n) === n));
       llenar();
