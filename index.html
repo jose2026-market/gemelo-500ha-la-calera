@@ -398,8 +398,8 @@
     }
     .solo-celular { display: none; }
     @media (max-width: 899px) {
-      #btnMiCampo, #cajaCampo, #btnIrConsulta, #accCampo, #btnPedirConsulta { display: none !important; }
       .solo-celular { display: block !important; }
+      .solo-escritorio, #btnGuardarCampo, #listaCampos { display: none !important; }
     }
     .consulta { margin-top: 10px; border: 1px solid var(--oro); background: var(--verde-suave); border-radius: 8px; padding: 8px; }
     .consulta b { color: var(--verde); font-size: 12px; }
@@ -496,14 +496,14 @@
       <article class="acordeon" id="accVista">
         <button type="button" class="cab" data-acc="accVista"><div><small>1 · Visualizador</small><b>Ver el campo</b></div><i>+</i></button>
         <div class="cuerpo">
-          Satélite y potreros del demostrativo 500 ha (La Calera, SW Belgrano). En el celular es solo esta vista rápida. El campo real se carga en la computadora.
+          Satélite y potreros del demostrativo 500 ha, o de su establecimiento si carga coordenadas. Capas y manejo quedan cerrados para no tapar el mapa.
           <button type="button" id="btnVerDemo">Ir al mapa</button>
         </div>
       </article>
       <article class="acordeon" id="accCampo">
         <button type="button" class="cab" data-acc="accCampo"><div><small>2 · Mi establecimiento</small><b>Cargar campo o plano</b></div><i>+</i></button>
         <div class="cuerpo">
-          Un punto, las esquinas, o una foto JPG del plano de mensura. Puede guardar más de un campo y cambiar. El límite declarado no es el padrón.
+          Un punto, las esquinas, o una foto JPG del plano de mensura. <span class="solo-escritorio">Puede guardar más de un campo y cambiar.</span> El límite declarado no es el padrón.
           <button type="button" id="btnIrConsulta">Ir a Mi campo</button>
         </div>
       </article>
@@ -548,7 +548,7 @@
     <div class="consulta">
       <b>Servicio de consulta</b>
       <p>Se carga su establecimiento, se leen suelos + OTBN + INTA, y se entrega el informe de puntos críticos (corto y mediano plazo).</p>
-      <p class="aviso solo-celular">En el celular se muestra el demostrativo 500 ha (La Calera). No se guarda ningún campo. El establecimiento real se carga en la computadora.</p>
+      <p class="aviso solo-celular">En el celular funciona igual: puede cargar un campo para verlo. Al cerrar o recargar no queda guardado.</p>
       <button type="button" id="btnPedirConsulta">Pedir consulta</button>
       <button type="button" id="btnInformeMenu" class="sec" style="background:#fff;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Ver informe ahora</button>
       <p class="aviso" id="msgConsulta" hidden></p>
@@ -564,6 +564,7 @@
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
       <p class="aviso">En el plano busque la tabla de <b>coordenadas geográficas</b> (dice latitud y longitud, o φ y λ). Cada vértice trae grados, minutos y segundos, por ejemplo <b>33°15'20" S</b> y <b>66°48'10" O</b>. No use las columnas X e Y (números grandes de 7 cifras: eso es Gauss-Krüger). Si el plano solo trae <b>2 vértices</b> (suelen ser los mojones), péguelos igual: las otras esquinas se marcan tocando el alambrado en el satélite. Con el lote cerrado se lee la <b>carta de suelos INTA</b> y el relieve de ese polígono; después marque las aguadas. Eso es la situación actual. Mejorado 1 y Óptimo se cargan luego.</p>
+      <p class="aviso solo-celular">Vista rápida: el campo se ve en esta sesión y no queda guardado en el teléfono.</p>
       <label for="fProd">Nombre del campo</label>
       <input id="fProd" type="text" placeholder="Ej. El Crispín" autocomplete="name" />
       <label for="fTel">Teléfono o WhatsApp (opcional)</label>
@@ -602,7 +603,7 @@
       <button type="button" id="btnVerCampo">3 · Ver mi campo en el satélite</button>
       <button type="button" id="btnGuardarCampo" class="sec">Guardar este campo</button>
       <button type="button" id="btnDemoCalera" class="sec" style="background:#F7F1E4;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Volver al demostrativo</button>
-      <label>Campos guardados</label>
+      <label class="solo-escritorio">Campos guardados</label>
       <div class="lista-campos" id="listaCampos"></div>
     </div>
     <div id="panel" class="panel">
