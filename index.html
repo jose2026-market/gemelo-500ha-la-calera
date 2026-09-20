@@ -415,13 +415,29 @@
     }
     @media (max-width: 899px) {
       .desplegables {
-        max-width: calc(100vw - 86px);
+        max-width: calc(100vw - 16px);
+        gap: 4px;
+      }
+      body.vista-visor .desplegables {
+        left: calc(64px + env(safe-area-inset-left, 0px));
+        right: auto;
+        max-width: calc(100vw - 72px);
+      }
+      body.vista-visor .btn-menu {
+        padding: 7px 10px;
+        font-size: 12px;
       }
       .desplegables summary {
-        font-size: 11px; padding: 7px 22px 7px 9px;
+        font-size: 11px; padding: 7px 20px 7px 8px;
       }
-      .desplegables summary::after { right: 6px; top: 7px; }
-      .desplegables > details > .cuerpo { min-width: 200px; padding: 7px; }
+      .desplegables summary::after { right: 5px; top: 7px; }
+      .desplegables > details > .cuerpo {
+        min-width: 0;
+        width: min(220px, 62vw);
+        max-width: 62vw;
+        max-height: min(34dvh, 280px);
+        padding: 6px;
+      }
       .desplegables details.sub > .cuerpo { padding: 0 5px 5px; }
       .desplegables .hint { display: none; }
       .desplegables .fondos {
@@ -436,7 +452,44 @@
       }
       .desplegables details.sub > summary { font-size: 11px; padding: 5px 20px 5px 7px; }
       .desplegables .ficha-oficial, .desplegables .leyenda {
-        font-size: 10px; max-height: 10em; overflow: auto; margin-top: 4px;
+        font-size: 10px; max-height: 5.5em; overflow: auto; margin-top: 4px;
+      }
+      .mapa-tools {
+        top: auto;
+        right: auto;
+        left: calc(8px + env(safe-area-inset-left, 0px));
+        bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+        z-index: 1100;
+      }
+      body.vista-visor.panel-abierto .mapa-tools { visibility: hidden; }
+      .leaflet-bottom.leaflet-right {
+        bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+        right: 8px;
+      }
+      .leaflet-control-attribution {
+        max-width: 42vw;
+        font-size: 9px;
+      }
+      body.vista-visor .bar {
+        top: auto;
+        bottom: calc(50px + env(safe-area-inset-bottom, 0px));
+        left: 8px;
+        right: 8px;
+        width: auto;
+        max-height: min(46dvh, 380px);
+        padding-top: 10px;
+        transform: translateY(120%);
+        border-radius: 14px 14px 8px 8px;
+        border: 1px solid var(--oro);
+        box-shadow: 0 -8px 24px rgba(0,0,0,.28);
+      }
+      body.vista-visor.panel-abierto .bar { transform: none; }
+      body.vista-visor .velo { background: rgba(10, 18, 16, .18); }
+      body.vista-visor .aviso-sat {
+        bottom: calc(102px + env(safe-area-inset-bottom, 0px));
+        max-width: min(340px, 72vw);
+        font-size: 12px;
+        padding: 8px 10px;
       }
       :root { --topbar-h: 64px; }
       .topbar {
@@ -1195,8 +1248,8 @@
     let modSel = "pastoreo", escSel = "actual", pSel = 1;
     const MAX_Z = 18;
     const map = L.map("map", { zoomControl: true, minZoom: 5, maxZoom: MAX_Z }).setView([-32.9110, -66.8816], 14);
-    map.zoomControl.setPosition("topright");
     function esMovil() { return window.matchMedia("(max-width: 900px)").matches; }
+    map.zoomControl.setPosition(esMovil() ? "bottomright" : "topright");
     function setPanel(abierto) {
       document.body.classList.toggle("panel-abierto", abierto);
       document.getElementById("btnMenu").setAttribute("aria-expanded", abierto ? "true" : "false");
