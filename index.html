@@ -137,6 +137,8 @@
     }
     .paso p { margin: 4px 0 6px; font-size: 12px; color: #1C2B26; line-height: 1.35; }
     .paso small { display: block; font-size: 11px; color: #5C564F; margin: 2px 0 6px; line-height: 1.3; }
+    .chk-plano { font-size: 12px; color: #1C2B26; margin: 8px 0 0; }
+    .chk-plano input { width: auto; margin-right: 6px; }
     .cartel-nombre { display: none; }
     .desplegables {
       position: absolute; z-index: 1100;
@@ -510,7 +512,7 @@
       </div>
 
       <div class="paso">
-        <p><b class="nro">2</b> <b>Pegue acá un vértice</b> (el primero de la tabla alcanza para abrir el satélite)</p>
+        <p><b class="nro">2</b> <b>Pegue un vértice</b> para marcar el punto exacto. Eso no dibuja el campo: solo la esquina.</p>
         <div class="grid2">
           <div>
             <label for="fLat">Pegar ESTE acá</label>
@@ -529,13 +531,14 @@
           <option value="2">Oeste de San Luis (faja 2)</option>
           <option value="5">Faja 5</option>
         </select>
-        <label for="fHaCampo">Hectáreas (si no las sabe, deje 500)</label>
-        <input id="fHaCampo" type="number" step="1" min="20" max="20000" value="500" />
+        <label for="fHaCampo">Hectáreas reales (no deje 500 si el campo es más chico)</label>
+        <input id="fHaCampo" type="number" step="1" min="5" max="20000" value="" placeholder="ej. 80" />
+        <label class="chk-plano"><input type="checkbox" id="fInchauspe" /> Plano viejo (Campo Inchauspe, anterior a POSGAR)</label>
       </div>
 
       <div class="paso">
-        <p><b class="nro">3</b> <b>Si quiere el alambrado completo</b>, pegue toda la tabla abajo (una fila por vértice: ESTE espacio NORTE). Si no, salte al botón verde.</p>
-        <label for="fLimites">Tabla de vértices (opcional)</label>
+        <p><b class="nro">3</b> <b>Para ver el campo verdadero</b> pegue <u>toda</u> la tabla de vértices (todas las esquinas). Con un solo número el mapa queda cerca, pero no calza el alambrado.</p>
+        <label for="fLimites">Tabla completa: una fila por vértice (ESTE NORTE)</label>
         <textarea id="fLimites" placeholder="Este Norte&#10;3456789 6351234&#10;3456900 6351234&#10;3456900 6351400&#10;3456789 6351400"></textarea>
         <label for="fPlano">O saque foto a esa tabla del plano</label>
         <input id="fPlano" type="file" accept="image/jpeg,image/png,image/webp,image/jpg" />
@@ -1330,11 +1333,26 @@
       const n = Number(v);
       return (n >= 1 && n <= 7) ? n : 0;
     }
+    function usaInchauspe() {
+      const el = document.getElementById("fInchauspe");
+      return !!(el && el.checked);
+    }
+    function inchauspeAWgs(lat, lon) {
+      const dx = -148, dy = 136, dz = 90;
+      const a = 6378388, f = 1 / 297, e2 = f * (2 - f);
+      const latR = lat * Math.PI / 180, lonR = lon * Math.PI / 180;
+      const sinLat = Math.sin(latR), cosLat = Math.cos(latR);
+      const sinLon = Math.sin(lonR), cosLon = Math.cos(lonR);
+      const N = a / Math.sqrt(1 - e2 * sinLat * sinLat);
+      const dLat = (-dx * sinLat * cosLon - dy * sinLat * sinLon + dz * cosLat) / (N * (1 - e2));
+      const dLon = (-dx * sinLon + dy * cosLon) / (N * cosLat);
+      return [lat + dLat * 180 / Math.PI, lon + dLon * 180 / Math.PI];
+    }
     function normalizarPar(a, b) {
       if (!isFinite(a) || !isFinite(b)) return [a, b];
       if (Math.abs(a) > 1000 && Math.abs(b) > 1000) {
         const wgs = gkAWgs(Math.abs(a), Math.abs(b), fajaElegida());
-        if (wgs) return wgs;
+        if (wgs) return usaInchauspe() ? inchauspeAWgs(wgs[0], wgs[1]) : wgs;
       }
       let lat = a, lon = b;
       if (Math.abs(lat) > 45 && Math.abs(lon) < 45) {
@@ -1343,6 +1361,19 @@
       if (lat > 21 && lat < 56) lat = -lat;
       if (lon > 52 && lon < 74) lon = -lon;
       return [lat, lon];
+    }
+    function haDeAnillo(ring) {
+      if (!ring || ring.length < 3) return 0;
+      const mLat = 111320;
+      const mLon = 111320 * Math.cos(ring[0][0] * Math.PI / 180);
+      let a = 0;
+      for (let i = 0; i < ring.length; i++) {
+        const j = (i + 1) % ring.length;
+        const x1 = (ring[i][1] - ring[0][1]) * mLon, y1 = (ring[i][0] - ring[0][0]) * mLat;
+        const x2 = (ring[j][1] - ring[0][1]) * mLon, y2 = (ring[j][0] - ring[0][0]) * mLat;
+        a += x1 * y2 - x2 * y1;
+      }
+      return Math.abs(a) / 2 / 10000;
     }
     function parseLimites(txt) {
       const out = [];
@@ -1532,6 +1563,7 @@
         lat: document.getElementById("fLat").value,
         lon: document.getElementById("fLon").value,
         faja: (document.getElementById("fFaja") || {}).value || "auto",
+        inchauspe: usaInchauspe(),
         ha: document.getElementById("fHaCampo").value,
         limites: document.getElementById("fLimites").value,
         fecha: new Date().toISOString()
@@ -1543,7 +1575,8 @@
       document.getElementById("fLat").value = c.lat || "";
       document.getElementById("fLon").value = c.lon || "";
       if (document.getElementById("fFaja")) document.getElementById("fFaja").value = c.faja || "auto";
-      document.getElementById("fHaCampo").value = c.ha || 500;
+      if (document.getElementById("fInchauspe")) document.getElementById("fInchauspe").checked = !!c.inchauspe;
+      document.getElementById("fHaCampo").value = c.ha || "";
       document.getElementById("fLimites").value = c.limites || "";
     }
     function aplicarSitioGenerico() {
@@ -1632,48 +1665,53 @@
       const eraGK = Math.abs(lat) > 1000 && Math.abs(lon) > 1000;
       const par = normalizarPar(lat, lon);
       lat = par[0]; lon = par[1];
-      if (puntoValido(lat, lon)) {
-        document.getElementById("fLat").value = (+lat).toFixed(6);
-        document.getElementById("fLon").value = (+lon).toFixed(6);
-      }
       let ha = parseNum(document.getElementById("fHaCampo").value);
       const textoLim = document.getElementById("fLimites").value;
       const limitesEranGK = /\d{6,}/.test(String(textoLim).replace(/[.\s]/g, ""));
       const ring = parseLimites(textoLim);
-      if (ring.length) {
-        document.getElementById("fLimites").value = ring.map((p) => p[0] + ", " + p[1]).join("\n");
-      }
       let south, west, north, east;
       const hayAnillo = ring.length >= 3;
       if (hayAnillo) {
         const lats = ring.map((p) => p[0]), lons = ring.map((p) => p[1]);
         south = Math.min.apply(null, lats); north = Math.max.apply(null, lats);
         west = Math.min.apply(null, lons); east = Math.max.apply(null, lons);
-        if (!ha) {
-          const mLat = (north - south) * 111320;
-          const mLon = (east - west) * 111320 * Math.cos(((south + north) / 2) * Math.PI / 180);
-          ha = Math.max(20, (mLat * mLon) / 10000);
+        const haPoly = haDeAnillo(ring);
+        if (!ha || ha < 5) ha = Math.max(5, haPoly || 0);
+        if (haPoly >= 5) {
+          document.getElementById("fHaCampo").value = Math.round(haPoly);
+          ha = haPoly;
         }
+        lat = (south + north) / 2; lon = (west + east) / 2;
       } else {
         if (!puntoValido(lat, lon) || !enCuyo(lat, lon)) {
-          avisoCampo("Faltan el Este y el Norte del plano (Gauss-Krüger, sin signo menos) o las esquinas de la tabla de vértices. Sin eso el mapa sigue en el demostrativo de La Calera.");
+          avisoCampo("Pegue ESTE y NORTE de un vértice, o toda la tabla de esquinas. Sin eso el mapa sigue en el demostrativo.");
           return;
         }
-        if (!ha || ha < 20) ha = 500;
-        const ratio = 1.25;
-        const alto = Math.sqrt((ha * 10000) / ratio);
-        const ancho = ratio * alto;
-        const dLat = alto / 111320;
-        const dLon = ancho / (111320 * Math.cos(lat * Math.PI / 180));
-        south = lat - dLat / 2; north = lat + dLat / 2;
-        west = lon - dLon / 2; east = lon + dLon / 2;
+        if (!ha || ha < 5) ha = 10;
+        const lado = Math.sqrt(ha * 10000);
+        const dLat = lado / 111320;
+        const dLon = lado / (111320 * Math.cos(lat * Math.PI / 180));
+        south = lat; north = lat + dLat;
+        west = lon; east = lon + dLon;
       }
-      const cx = (south + north) / 2, cy = (west + east) / 2;
+      const cx = hayAnillo ? (south + north) / 2 : lat;
+      const cy = hayAnillo ? (west + east) / 2 : lon;
       limiteReal.clearLayers();
       if (hayAnillo) {
         L.polygon(ring, {
           pane: "alambrado", color: "#E4C87A", weight: 4, fill: false, dashArray: "8 6"
-        }).bindPopup("Límite declarado por el productor. No es el padrón catastral.").addTo(limiteReal);
+        }).bindPopup("Límite declarado · " + Math.round(ha) + " ha. No es el padrón catastral.").addTo(limiteReal);
+        ring.forEach((p, i) => {
+          L.circleMarker(p, {
+            pane: "alambrado", radius: 6, color: "#C4A35A", weight: 2,
+            fillColor: "#fff", fillOpacity: 1
+          }).bindPopup("Vértice " + (i + 1) + " del plano").addTo(limiteReal);
+        });
+      } else {
+        L.circleMarker([lat, lon], {
+          pane: "alambrado", radius: 8, color: "#C4A35A", weight: 3,
+          fillColor: "#fff", fillOpacity: 1
+        }).bindPopup("Punto exacto de ese vértice. Para el campo real pegue todas las esquinas y las hectáreas.").addTo(limiteReal);
       }
       esDemoCalera = false;
       aplicarSitioGenerico();
@@ -1690,22 +1728,19 @@
       store.campoActivo = snapshotFormCampo();
       store.campoActivo.nombre = store.nombreCampo;
       saveStore(store);
-      L.popup({ maxWidth: 260 })
+      L.popup({ maxWidth: 280 })
         .setLatLng([cx, cy])
-        .setContent("<b>" + escHtml(store.nombreCampo || "Mi campo") + "</b><br>" + cx.toFixed(4) + ", " + cy.toFixed(4))
+        .setContent("<b>" + escHtml(store.nombreCampo || "Mi campo") + "</b><br>" +
+          (hayAnillo ? (Math.round(ha) + " ha según el plano") : "Vértice del plano (punto exacto)") +
+          "<br>" + cx.toFixed(5) + ", " + cy.toFixed(5))
         .openOn(map);
       const cercaDemo = distM([cx, cy], DEMO_CENTRO) < 2500;
-      const comoGK = eraGK || limitesEranGK;
-      const u = gkAWgs.ultimo;
-      const fajaTxt = u && u.faja ? (" faja " + u.faja) : "";
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = cercaDemo
         ? "Ojo: esas coordenadas caen en el demostrativo de La Calera. Pegue ESTE y NORTE del plano, no las del ejemplo."
-        : (comoGK
-          ? "Gauss-Krüger" + fajaTxt + " → " + cx.toFixed(5) + ", " + cy.toFixed(5) + (u ? (" (Este " + Math.round(u.este) + " / Norte " + Math.round(u.norte) + ")") : "") + ". Si no es su campo, elija la otra provincia y vuelva a tocar el botón."
-          : (hayAnillo
-            ? "Campo centrado en " + cx.toFixed(5) + ", " + cy.toFixed(5) + ". El polígono dorado es el límite declarado, no el padrón."
-            : "Satélite centrado en " + lat.toFixed(5) + ", " + lon.toFixed(5) + " · " + Math.round(ha) + " ha."));
+        : (hayAnillo
+          ? "Campo de " + Math.round(ha) + " ha con el alambrado de las esquinas del plano. El polígono dorado es el límite declarado, no el padrón."
+          : "El punto dorado es ESA esquina del plano (lugar correcto). El cuadro de potreros no es su campo: escriba las hectáreas reales y pegue TODA la tabla de vértices.");
       if (!cargarCampoProductor.silencio) enfocarCampo();
     }
     cargarCampoProductor.silencio = false;
@@ -1723,7 +1758,7 @@
         if (!capas.length) return;
         const b = L.featureGroup(capas).getBounds();
         if (!b.isValid()) return;
-        map.fitBounds(b, { padding: [40, 40], maxZoom: 16, animate: false });
+        map.fitBounds(b, { padding: [40, 40], maxZoom: 17, animate: false });
       };
       cuandoMapaListo(ir);
       setTimeout(ir, 320);
