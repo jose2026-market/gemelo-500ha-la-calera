@@ -50,7 +50,18 @@
       border: 1px solid var(--oro); background: var(--crema); color: var(--verde);
       font-size: 18px; font-weight: 700; line-height: 1;
     }
-    .mapa-tools { display: none; }
+    .mapa-tools {
+      display: flex; position: absolute; z-index: 1100;
+      top: calc(var(--topbar-h) + 10px + env(safe-area-inset-top, 0px));
+      right: calc(52px + env(safe-area-inset-right, 0px));
+      gap: 4px;
+    }
+    .mapa-tools button {
+      border: 1px solid var(--oro); background: rgba(247,241,228,.94); color: var(--verde);
+      border-radius: 8px; font-weight: 700; font-size: 11px; padding: 6px 9px;
+      box-shadow: 0 1px 8px rgba(0,0,0,.16);
+    }
+    .mapa-tools button.on { background: var(--verde); color: #fff; border-color: var(--verde); }
     @media (min-width: 900px) {
       .velo { display: none !important; }
       body.panel-abierto .desplegables { left: 372px; }
@@ -157,18 +168,18 @@
       position: absolute; z-index: 1100;
       top: calc(var(--topbar-h) + 12px + env(safe-area-inset-top, 0px));
       left: calc(10px + env(safe-area-inset-left, 0px));
-      width: min(230px, 52vw);
-      max-height: calc(100dvh - 160px);
+      width: min(168px, 42vw);
+      max-height: calc(100dvh - 170px);
       overflow: auto;
     }
     .desplegables details {
       background: rgba(247,241,228,.96); border: 1px solid var(--oro);
-      border-radius: 8px; margin-bottom: 6px; overflow: hidden;
+      border-radius: 8px; margin-bottom: 5px; overflow: hidden;
     }
     .desplegables summary {
       list-style: none; cursor: pointer; font-weight: 700; font-size: 12px;
-      color: var(--verde); padding: 8px 28px 8px 10px; position: relative;
-      white-space: normal; overflow-wrap: anywhere; line-height: 1.25;
+      color: var(--verde); padding: 7px 26px 7px 9px; position: relative;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
     }
     .desplegables summary::-webkit-details-marker { display: none; }
     .desplegables summary::after {
@@ -338,7 +349,8 @@
     body.vista-visor .inicio, body.vista-informe .inicio { display: none; }
     body.vista-visor .informe, body.vista-inicio .informe { display: none; }
     body.vista-visor .btn-menu { top: calc(var(--topbar-h) + 10px + env(safe-area-inset-top, 0px)); }
-    body.vista-visor .desplegables { top: calc(var(--topbar-h) + 54px + env(safe-area-inset-top, 0px)); }
+    body.vista-visor .desplegables { top: calc(var(--topbar-h) + 10px + env(safe-area-inset-top, 0px)); }
+    #dropLote[hidden] { display: none; }
     @media (min-width: 900px) {
       .topbar .desk { display: flex; }
       .topbar .who { max-width: calc(100% - 520px); }
@@ -360,7 +372,7 @@
     .consulta .ok { background: #fff; border: 1px solid var(--oro-claro); padding: 6px 8px; border-radius: 8px; }
     @media (min-width: 900px) {
       body.panel-abierto .desplegables { left: 372px; }
-      .desplegables { width: 230px; }
+      .desplegables { width: 168px; }
     }
     @media (max-width: 899px) {
       .desplegables {
@@ -446,7 +458,7 @@
       <article class="acordeon" id="accVista">
         <button type="button" class="cab" data-acc="accVista"><div><small>1 · Visualizador</small><b>Ver el campo</b></div><i>+</i></button>
         <div class="cuerpo">
-          Satélite y potreros del demostrativo 500 ha (o de su establecimiento si ya cargó coordenadas). Sin carteles encima: la información se abre en desplegables.
+          Satélite y potreros del demostrativo 500 ha (o de su establecimiento si ya cargó coordenadas). Capas y manejo quedan cerrados para no tapar el mapa.
           <button type="button" id="btnVerDemo">Ir al mapa</button>
         </div>
       </article>
@@ -541,9 +553,9 @@
         <small>También mire en el plano rumbo y distancia de cada lado; a veces están los 4 vértices en un cuadro chico.</small>
         <label for="fLimites">Esquinas (latitud Sur y longitud Oeste)</label>
         <textarea id="fLimites" placeholder="33°15'20&quot; S  66°48'10&quot; O&#10;33°15'20&quot; S  66°47'40&quot; O&#10;33°14'50&quot; S  66°47'40&quot; O&#10;33°14'50&quot; S  66°48'10&quot; O"></textarea>
-        <label for="fPlano">O foto nítida de esa tabla del plano</label>
+        <label for="fPlano">Foto opcional de la tabla (solo si quiere que se lean solas)</label>
         <input id="fPlano" type="file" accept="image/jpeg,image/png,image/webp,image/jpg" />
-        <img id="prevPlano" class="plano-preview" alt="Vista del plano" hidden />
+        <img id="prevPlano" class="plano-preview" alt="Foto de la tabla del plano" hidden />
         <button type="button" id="btnLeerPlano" class="sec">Leer la foto del plano</button>
         <p class="aviso" id="msgPlano" hidden></p>
       </div>
@@ -591,21 +603,15 @@
   </aside>
   <div class="mapa-wrap">
     <div class="cartel-nombre" id="cartelNombre">Gemelo Digital Ganadero</div>
+    <div class="mapa-tools" id="mapaTools">
+      <button type="button" class="on" id="btnVistaCampo">Campo</button>
+      <button type="button" id="btnVistaPueblos">Pueblos</button>
+    </div>
     <div class="desplegables" id="desplegables">
-      <details id="dropVista">
-        <summary>Vista</summary>
-        <div class="cuerpo">
-          <div class="vista fondos" role="group" aria-label="Encadre">
-            <button type="button" id="btnVistaPueblos">Pueblos</button>
-            <button type="button" class="on" id="btnVistaCampo">Campo</button>
-            <button type="button" id="btnVerTodo">Todo</button>
-          </div>
-          <div class="ficha-oficial" id="fichaVista"></div>
-        </div>
-      </details>
       <details id="dropCapas">
         <summary>Capas</summary>
         <div class="cuerpo">
+          <div class="ficha-oficial" id="fichaVista" hidden></div>
           <details class="sub" data-capa-drop="imagenes">
             <summary>Imágenes</summary>
             <div class="cuerpo">
@@ -657,7 +663,7 @@
         <summary>Manejo</summary>
         <div class="cuerpo">
           <p class="hint">Actual se lee (INTA). Mejorado 1 y Óptimo los carga el productor. El detalle va al informe.</p>
-          <details class="sub" data-mod-drop="pastoreo" open>
+          <details class="sub" data-mod-drop="pastoreo">
             <summary>Pastoreo</summary>
             <div class="cuerpo"><p class="hint" id="hintPastoreo">Carga, días de pasto y descanso del potrero.</p></div>
           </details>
@@ -688,7 +694,7 @@
           <div class="leyenda" id="leyenda"></div>
         </div>
       </details>
-      <details id="dropLote">
+      <details id="dropLote" hidden>
         <summary id="sumLote">Potrero</summary>
         <div class="cuerpo info-lote" id="infoLote">Toque un potrero en el mapa.</div>
       </details>
@@ -2118,8 +2124,12 @@
       cargarCampoProductor.silencio = false;
       return true;
     }
+    function cerrarSolapasMapa() {
+      document.querySelectorAll("#desplegables details").forEach((d) => { d.open = false; });
+    }
     map.on("click", (ev) => {
       if (document.body.classList.contains("vista-inicio") || document.body.classList.contains("vista-informe")) return;
+      cerrarSolapasMapa();
       if (agregarEsquinaSat(ev.latlng)) return;
       agregarAguadaSat(ev.latlng);
     });
@@ -2317,6 +2327,11 @@
       Object.keys(labByN).forEach((k) => { delete labByN[k]; });
       const pillsEl = document.getElementById("pills");
       if (pillsEl) pillsEl.hidden = !esDemoCalera;
+      const dropLote = document.getElementById("dropLote");
+      if (dropLote) {
+        dropLote.hidden = !esDemoCalera;
+        if (!esDemoCalera) dropLote.open = false;
+      }
       if (!esDemoCalera) {
         aguadas.forEach((a) => {
           L.marker([a.lat, a.lon], {
@@ -2417,7 +2432,6 @@
     }
     document.getElementById("btnVistaPueblos").addEventListener("click", verPueblos);
     document.getElementById("btnVistaCampo").addEventListener("click", verCampo);
-    document.getElementById("btnVerTodo").addEventListener("click", verTodo);
     verTodo();
     setTimeout(() => {
       map.invalidateSize();
@@ -2554,7 +2568,7 @@
       document.querySelectorAll(".pills button").forEach((b) => b.classList.toggle("on", Number(b.dataset.n) === n));
       llenar();
       const drop = document.getElementById("dropLote");
-      if (drop && document.body.classList.contains("vista-visor")) {
+      if (drop && esDemoCalera && document.body.classList.contains("vista-visor")) {
         document.querySelectorAll("#desplegables > details").forEach((o) => { o.open = o === drop; });
         drop.open = true;
       }
@@ -2570,8 +2584,6 @@
         document.querySelectorAll(".modulos button").forEach((x) => x.classList.toggle("on", x.dataset.mod === modSel));
         pintarCampos();
         refrescarMapa();
-        const drop = document.getElementById("dropManejo");
-        if (drop) drop.open = true;
       });
     });
     document.querySelectorAll(".escenas").forEach((el) => {
