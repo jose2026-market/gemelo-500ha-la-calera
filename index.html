@@ -213,7 +213,6 @@
       border: 1px solid #8a6a2a; border-radius: 0 10px 10px 10px;
       box-shadow: 0 10px 22px rgba(0,0,0,.28);
     }
-    .desplegables > details:nth-child(n+2) > .cuerpo { left: auto; right: 0; border-radius: 10px 0 10px 10px; }
     .desplegables details.sub > .cuerpo {
       position: static; max-width: none; max-height: none; min-width: 0;
       width: auto; overflow: visible; padding: 0 8px 8px;
@@ -432,13 +431,22 @@
       }
       .desplegables summary::after { right: 5px; top: 7px; }
       .desplegables > details > .cuerpo {
+        position: fixed;
+        left: 50%;
+        top: calc(var(--topbar-h) + 50px + env(safe-area-inset-top, 0px));
+        transform: translateX(-50%);
         min-width: 0;
-        width: min(220px, 62vw);
-        max-width: 62vw;
-        max-height: min(34dvh, 280px);
+        width: min(240px, 72vw);
+        max-width: 72vw;
+        max-height: min(32dvh, 240px);
         padding: 6px;
+        border-radius: 10px;
       }
-      .desplegables details.sub > .cuerpo { padding: 0 5px 5px; }
+      .desplegables details.sub > .cuerpo {
+        position: static; transform: none; left: auto; top: auto;
+        width: auto; max-width: none; max-height: none;
+        padding: 0 5px 5px; border-radius: 0;
+      }
       .desplegables .hint { display: none; }
       .desplegables .fondos {
         display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
@@ -461,7 +469,7 @@
         bottom: calc(58px + env(safe-area-inset-bottom, 0px));
         z-index: 1100;
       }
-      body.vista-visor.panel-abierto .mapa-tools { visibility: hidden; }
+      body.vista-visor.panel-abierto .mapa-tools { visibility: visible; }
       .leaflet-bottom.leaflet-right {
         bottom: calc(58px + env(safe-area-inset-bottom, 0px));
         right: 8px;
@@ -471,20 +479,33 @@
         font-size: 9px;
       }
       body.vista-visor .bar {
-        top: auto;
-        bottom: calc(50px + env(safe-area-inset-bottom, 0px));
-        left: 8px;
-        right: 8px;
-        width: auto;
-        max-height: min(46dvh, 380px);
-        padding-top: 10px;
-        transform: translateY(120%);
-        border-radius: 14px 14px 8px 8px;
-        border: 1px solid var(--oro);
-        box-shadow: 0 -8px 24px rgba(0,0,0,.28);
+        top: calc(var(--topbar-h) + 50px + env(safe-area-inset-top, 0px));
+        left: 50%;
+        right: auto;
+        bottom: auto;
+        width: min(240px, 72vw);
+        max-height: min(32dvh, 240px);
+        padding-top: 8px;
+        padding-bottom: 10px;
+        transform: translate(-50%, 0);
+        border-radius: 10px;
+        border: 1px solid #8a6a2a;
+        background: linear-gradient(#fffdf8, #f4eee0);
+        box-shadow: 0 10px 22px rgba(0,0,0,.28);
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 1450;
       }
-      body.vista-visor.panel-abierto .bar { transform: none; }
-      body.vista-visor .velo { background: rgba(10, 18, 16, .18); }
+      body.vista-visor.panel-abierto .bar {
+        transform: translate(-50%, 0);
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+      }
+      body.vista-visor .bar .lead,
+      body.vista-visor .consulta p { display: none; }
+      body.vista-visor.panel-abierto .velo { display: none !important; }
       body.vista-visor .aviso-sat {
         bottom: calc(102px + env(safe-area-inset-bottom, 0px));
         max-width: min(340px, 72vw);
@@ -1253,9 +1274,12 @@
     function setPanel(abierto) {
       document.body.classList.toggle("panel-abierto", abierto);
       document.getElementById("btnMenu").setAttribute("aria-expanded", abierto ? "true" : "false");
+      if (abierto && typeof cerrarSolapasMapa === "function") cerrarSolapasMapa();
       setTimeout(() => map.invalidateSize(), 240);
     }
-    document.getElementById("btnMenu").addEventListener("click", () => setPanel(true));
+    document.getElementById("btnMenu").addEventListener("click", () => {
+      setPanel(!document.body.classList.contains("panel-abierto"));
+    });
     document.getElementById("btnCerrar").addEventListener("click", () => setPanel(false));
     document.getElementById("velo").addEventListener("click", () => setPanel(false));
     setPanel(false);
@@ -2285,6 +2309,7 @@
     map.on("click", (ev) => {
       if (document.body.classList.contains("vista-inicio") || document.body.classList.contains("vista-informe")) return;
       cerrarSolapasMapa();
+      setPanel(false);
       if (agregarEsquinaSat(ev.latlng)) return;
       agregarAguadaSat(ev.latlng);
     });
@@ -3051,6 +3076,7 @@
       d.addEventListener("toggle", () => {
         if (!d.open) return;
         document.querySelectorAll("#desplegables > details").forEach((o) => { if (o !== d) o.open = false; });
+        setPanel(false);
       });
     });
     document.querySelectorAll("[data-capa-drop]").forEach((d) => {
