@@ -1372,6 +1372,7 @@
       }
       return null;
     }
+    function normalizarPar(a, b) {
       if (!isFinite(a) || !isFinite(b)) return [a, b];
       if (Math.abs(a) > 1000 && Math.abs(b) > 1000) {
         const wgs = gkAWgs(Math.abs(a), Math.abs(b), fajaElegida());
@@ -1737,6 +1738,7 @@
       })();
     }
     function cargarCampoProductor() {
+      try {
       let lat = parseAngulo(document.getElementById("fLat").value, "lat");
       let lon = parseAngulo(document.getElementById("fLon").value, "lon");
       if (Math.abs(lat) > 1000 && Math.abs(lon) > 1000) {
@@ -1817,6 +1819,10 @@
           ? "Campo de " + Math.round(ha) + " ha según las esquinas. En el satélite: " + textoGps(cx, cy) + "."
           : "Esa esquina está en " + textoGps(cx, cy) + ". No se dibuja un campo de 500 ha. Pegue las 4 esquinas para ver el lote real.");
       if (!cargarCampoProductor.silencio) enfocarCampo();
+      } catch (err) {
+        console.error(err);
+        avisoCampo("No se pudo abrir el campo. Revise latitud Sur y longitud Oeste (ej. 33,15 S y 66,80 O) o las 4 esquinas.");
+      }
     }
     cargarCampoProductor.silencio = false;
     function enfocarCampo() {
