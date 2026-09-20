@@ -1845,10 +1845,13 @@
         aguadas = armarAguadas(south, west, north, east);
         asignarAgua();
       } else {
-        L.circleMarker([lat, lon], {
-          pane: "alambrado", radius: 8, color: "#C4A35A", weight: 3,
-          fillColor: "#fff", fillOpacity: 1
-        }).bindPopup("Punto de esa esquina. Para ver el campo, pegue las 4 esquinas del plano.").addTo(limiteReal);
+        const pines = ring.length ? ring : [[lat, lon]];
+        pines.forEach((p, i) => {
+          L.circleMarker(p, {
+            pane: "alambrado", radius: 8, color: "#C4A35A", weight: 3,
+            fillColor: "#fff", fillOpacity: 1
+          }).bindPopup("Esquina " + (i + 1) + " del plano. Faltan " + Math.max(0, 4 - pines.length) + " para dibujar el campo.").addTo(limiteReal);
+        });
         esDemoCalera = false;
         potreros = [];
         aguadas = [];
@@ -1866,7 +1869,7 @@
       L.popup({ maxWidth: 280 })
         .setLatLng([cx, cy])
         .setContent("<b>" + escHtml(store.nombreCampo || "Mi campo") + "</b><br>" +
-          (hayAnillo ? (Math.round(ha) + " ha según el plano") : "Vértice del plano") +
+          (hayAnillo ? (Math.round(ha) + " ha según el plano") : ("Se marcó " + (ring.length || 1) + " esquina(s). Pegue las 4 para ver el lote.")) +
           "<br>" + textoGps(cx, cy))
         .openOn(map);
       pintarConvSat(cx, cy);
@@ -1874,7 +1877,7 @@
       let aviso = "Campo en " + textoGps(cx, cy) + ".";
       if (cercaDemo) aviso = "Esas coordenadas caen en el demostrativo de La Calera. Pegue latitud Sur y longitud Oeste de SU plano.";
       else if (hayAnillo) aviso = "Se leyeron " + ring.length + " esquinas · " + Math.round(ha) + " ha. En el satélite: " + textoGps(cx, cy) + ".";
-      else if (ring.length) aviso = "Se leyeron " + ring.length + " esquina(s). Hacen falta 4. Ejemplo: 33°15'20\" S  66°48'10\" O";
+      else if (ring.length) aviso = "Bien: esa esquina es de su campo. Con " + ring.length + " línea(s) solo se marca el punto. Pegue las 4 esquinas (4 líneas) para dibujar el lote.";
       else aviso = "Esa esquina está en " + textoGps(cx, cy) + ". Pegue las 4 esquinas para ver el lote.";
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = aviso;
