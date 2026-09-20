@@ -1860,9 +1860,15 @@
         });
         esDemoCalera = false;
         aplicarSitioGenerico();
-        potreros = armarPotreros(south, west, north, east, ha);
-        aguadas = armarAguadas(south, west, north, east);
-        asignarAgua();
+        potreros = [{
+          n: 1,
+          ha: +(ha || 0).toFixed(1),
+          z: 1000,
+          dist: 400,
+          agua: "Aguada del campo",
+          ring: ring.slice()
+        }];
+        aguadas = [];
       } else {
         const pines = ring.length ? ring : [[lat, lon]];
         pines.forEach((p, i) => {
@@ -2135,7 +2141,7 @@
       const pillsEl = document.getElementById("pills");
       if (pillsEl) pillsEl.hidden = !esDemoCalera;
       if (!esDemoCalera) {
-        dibujarAgua();
+        if (typeof capaAgua !== "undefined") capaAgua.clearLayers();
         return;
       }
       potreros.forEach((p) => {
@@ -2158,6 +2164,7 @@
     }
     function dibujarAgua() {
       capaAgua.clearLayers();
+      if (!esDemoCalera) return;
       aguadas.forEach((a) => {
         L.circle([a.lat, a.lon], {
           pane: "agua",
