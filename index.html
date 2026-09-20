@@ -2080,6 +2080,12 @@
       group.clearLayers();
       Object.keys(polyByN).forEach((k) => { delete polyByN[k]; });
       Object.keys(labByN).forEach((k) => { delete labByN[k]; });
+      const pillsEl = document.getElementById("pills");
+      if (pillsEl) pillsEl.hidden = !esDemoCalera;
+      if (!esDemoCalera) {
+        dibujarAgua();
+        return;
+      }
       potreros.forEach((p) => {
         const poly = L.polygon(p.ring, {
           pane: "alambrado", color: "#fff", weight: 3, fillColor: SEM.verde, fillOpacity: 0.22
