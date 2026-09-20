@@ -499,7 +499,7 @@
       <button type="button" id="btnCargarNombre">Cargar nombre</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
-      <p class="aviso">En San Luis el plano de mensura trae <b>latitud Sur y longitud Oeste</b>. Puede pegarlas con o sin signo menos, o en grados (33°15'20" S). No se dibuja un campo de 500 ha: el mapa muestra las esquinas que usted cargue.</p>
+      <p class="aviso">En el plano busque la tabla de <b>coordenadas geográficas</b> (dice latitud y longitud, o φ y λ). Cada vértice trae grados, minutos y segundos, por ejemplo <b>33°15'20" S</b> y <b>66°48'10" O</b>. No use las columnas X e Y (números grandes de 7 cifras: eso es Gauss-Krüger).</p>
       <label for="fProd">Nombre del campo</label>
       <input id="fProd" type="text" placeholder="Ej. El Crispín" autocomplete="name" />
       <label for="fTel">Teléfono o WhatsApp (opcional)</label>
@@ -523,8 +523,10 @@
       </div>
 
       <div class="paso">
-        <p><b class="nro">2</b> <b>Para ver el campo real</b> pegue las 4 esquinas (o más), una por línea: latitud y longitud.</p>
-        <label for="fLimites">Esquinas del plano</label>
+        <p><b class="nro">2</b> <b>Pegue las 4 esquinas</b>, una por línea, tal cual salen en esa tabla:</p>
+        <small>33°15'20" S &nbsp; 66°48'10" O</small>
+        <small>33 15 20 S &nbsp; 66 48 10 O &nbsp; también vale</small>
+        <label for="fLimites">Esquinas (latitud Sur y longitud Oeste)</label>
         <textarea id="fLimites" placeholder="33°15'20&quot; S  66°48'10&quot; O&#10;33°15'20&quot; S  66°47'40&quot; O&#10;33°14'50&quot; S  66°47'40&quot; O&#10;33°14'50&quot; S  66°48'10&quot; O"></textarea>
         <label for="fPlano">O foto nítida de esa tabla del plano</label>
         <input id="fPlano" type="file" accept="image/jpeg,image/png,image/webp,image/jpg" />
@@ -1334,38 +1336,53 @@
       const dLon = (-dx * sinLon + dy * cosLon) / (N * cosLat);
       return [lat + dLat * 180 / Math.PI, lon + dLon * 180 / Math.PI];
     }
+    function dmsADec(g, m, s, hem, eje) {
+      let n = Math.abs(parseNum(g) || 0) + Math.abs(parseNum(m) || 0) / 60 + Math.abs(parseNum(s) || 0) / 3600;
+      const h = String(hem || "").toUpperCase();
+      if (eje === "lat") return (h === "N") ? n : -n;
+      return (h === "E") ? n : -n;
+    }
+    function extraerDMSLista(txt) {
+      const t = String(txt || "").replace(/´/g, "'").replace(/″|”|''/g, '"');
+      const re = /(\d{1,3})\s*[°º]\s*(\d{1,2})\s*[\'’′]?\s*(\d{1,2}(?:[.,]\d+)?)?\s*[\"”″]?\s*([SNsnOoWwEe])?/g;
+      const out = [];
+      let m;
+      while ((m = re.exec(t))) out.push({ g: m[1], min: m[2], s: m[3], hem: m[4] });
+      if (out.length) return out;
+      const reSp = /(\d{1,3})\s+(\d{1,2})\s+(\d{1,2}(?:[.,]\d+)?)\s*([SNsnOoWwEe])?/g;
+      while ((m = reSp.exec(t))) out.push({ g: m[1], min: m[2], s: m[3], hem: m[4] });
+      return out;
+    }
     function parseAngulo(s, eje) {
       const t = String(s || "").trim();
       if (!t) return NaN;
-      const dms = t.match(/(\d{1,3})\s*[°º]?\s+(\d{1,2})(?:\s*[\'’′]?\s*(\d{1,2}(?:[.,]\d+)?)?)?/)
-        || t.match(/(\d{1,3})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)?/);
-      let n;
-      if (dms) n = Math.abs(parseNum(dms[1])) + Math.abs(parseNum(dms[2] || 0)) / 60 + Math.abs(parseNum(dms[3] || 0)) / 3600;
-      else n = parseNum(t);
+      const lista = extraerDMSLista(t);
+      if (lista.length) {
+        const d = lista[0];
+        const ejeD = /[OoWwEe]/.test(d.hem || "") ? "lon" : (/[NnSs]/.test(d.hem || "") ? "lat" : eje);
+        return dmsADec(d.g, d.min, d.s, d.hem, ejeD || eje);
+      }
+      let n = parseNum(t);
       if (!isFinite(n)) return NaN;
       if (Math.abs(n) > 1000) return n;
       n = Math.abs(n);
-      if (eje === "lat") {
-        if (/[Nn]/.test(t) && !/[Ss]/.test(t)) return n;
-        return -n;
-      }
-      if (/[Ee]/.test(t) && !/[WwOo]/.test(t)) return n;
-      return -n;
+      if (eje === "lat") return /[Nn]/.test(t) && !/[Ss]/.test(t) ? n : -n;
+      return /[Ee]/.test(t) && !/[WwOo]/.test(t) ? n : -n;
     }
     function extraerParGeo(line) {
       const t = String(line || "").trim();
       if (!t) return null;
-      const dms = t.match(/(\d{1,3})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[\"”″]?\s*([SNsn])?[\s,;]+(\d{1,3})\s*[°º]\s*(\d{1,2})\s*[\'’′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[\"”″]?\s*([WOwoEe])?/);
-      if (dms) {
-        let lat = Math.abs(parseNum(dms[1])) + parseNum(dms[2]) / 60 + parseNum(dms[3]) / 3600;
-        let lon = Math.abs(parseNum(dms[5])) + parseNum(dms[6]) / 60 + parseNum(dms[7]) / 3600;
-        if (!dms[4] || /[Ss]/.test(dms[4])) lat = -lat;
-        if (!dms[8] || /[WwOo]/.test(dms[8])) lon = -lon;
+      const lista = extraerDMSLista(t);
+      if (lista.length >= 2) {
+        const a = lista[0], b = lista[1];
+        const lat = dmsADec(a.g, a.min, a.s, a.hem, "lat");
+        const lon = dmsADec(b.g, b.min, b.s, b.hem, "lon");
         return [lat, lon];
       }
-      const dec = t.match(/(-?\d{1,3}[.,]\d+)\s*([SNsn])?[\s,;]+(-?\d{1,3}[.,]\d+)\s*([WOwoEe])?/);
+      const dec = t.match(/(-?\d{1,3}(?:[.,]\d+)?)\s*([SNsn])?[\s,;]+(-?\d{1,3}(?:[.,]\d+)?)\s*([WOwoEe])?/);
       if (dec) {
         let lat = parseNum(dec[1]), lon = parseNum(dec[3]);
+        if (Math.abs(lat) > 80 || Math.abs(lon) > 180 || Math.abs(lat) > 1000) return null;
         if (dec[2] ? /[Ss]/.test(dec[2]) : (lat > 0 && lat < 56)) lat = -Math.abs(lat);
         if (dec[4] ? /[WwOo]/.test(dec[4]) : (Math.abs(lon) > 40 && Math.abs(lon) < 75)) lon = -Math.abs(lon);
         return [lat, lon];
@@ -1413,11 +1430,20 @@
         const geo = extraerParGeo(line);
         if (geo) { add(geo[0], geo[1]); return; }
         const tokens = line.trim().replace(/[()]/g, "").split(/[\s,;]+/).filter(Boolean);
-        if (tokens.length >= 2) {
+        if (tokens.length >= 2 && !/^[SNsnOoWwEe]$/.test(tokens[0]) && !/^[SNsnOoWwEe]$/.test(tokens[1])) {
           const par = normalizarPar(parseAngulo(tokens[0], "lat"), parseAngulo(tokens[1], "lon"));
           add(par[0], par[1]);
         }
       });
+      const todos = extraerDMSLista(txt);
+      if (todos.length >= 2) {
+        for (let i = 0; i + 1 < todos.length; i += 2) {
+          add(
+            dmsADec(todos[i].g, todos[i].min, todos[i].s, todos[i].hem, "lat"),
+            dmsADec(todos[i + 1].g, todos[i + 1].min, todos[i + 1].s, todos[i + 1].hem, "lon")
+          );
+        }
+      }
       extraerPuntosDeTexto(txt).forEach((p) => add(p[0], p[1]));
       return out;
     }
@@ -1750,6 +1776,10 @@
       const ring = parseLimites(textoLim);
       let south, west, north, east;
       const hayAnillo = ring.length >= 3;
+      if (!hayAnillo && ring.length > 0) {
+        lat = ring[0][0];
+        lon = ring[0][1];
+      }
       if (hayAnillo) {
         const lats = ring.map((p) => p[0]), lons = ring.map((p) => p[1]);
         south = Math.min.apply(null, lats); north = Math.max.apply(null, lats);
@@ -1763,7 +1793,7 @@
         lat = (south + north) / 2; lon = (west + east) / 2;
       } else {
         if (!puntoValido(lat, lon) || !enCuyo(lat, lon)) {
-          avisoCampo("Pegue latitud Sur y longitud Oeste (como en el plano de mensura), o las 4 esquinas. Sin eso no se dibuja el campo.");
+          avisoCampo("No se reconocieron las coordenadas. En el plano copie la tabla de LATITUD y LONGITUD, así: 33°15'20\" S  66°48'10\" O (una esquina por línea). No use X e Y de 7 cifras.");
           return;
         }
       }
@@ -1817,7 +1847,9 @@
         ? "Esas coordenadas caen en el demostrativo de La Calera. Pegue latitud Sur y longitud Oeste de SU plano."
         : (hayAnillo
           ? "Campo de " + Math.round(ha) + " ha según las esquinas. En el satélite: " + textoGps(cx, cy) + "."
-          : "Esa esquina está en " + textoGps(cx, cy) + ". No se dibuja un campo de 500 ha. Pegue las 4 esquinas para ver el lote real.");
+          : (ring.length
+            ? "Se leyeron " + ring.length + " esquina(s); hacen falta 4. En el plano: LATITUD y LONGITUD, ej. 33°15'20\" S  66°48'10\" O. No use X e Y."
+            : "Esa esquina está en " + textoGps(cx, cy) + ". Pegue las 4 esquinas (grados, minutos y segundos) para ver el lote.");
       if (!cargarCampoProductor.silencio) enfocarCampo();
       } catch (err) {
         console.error(err);
