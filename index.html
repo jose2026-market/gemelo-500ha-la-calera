@@ -126,6 +126,17 @@
     .lista-campos .fila-campo span { flex: 1; font-size: 11px; color: var(--tierra); min-width: 0; }
     .lista-campos .fila-campo button { width: auto; margin: 0; padding: 5px 8px; font-size: 11px; }
     .caja-nombre textarea { min-height: 64px; font-size: 12px; }
+    .paso {
+      margin: 10px 0 0; padding: 8px;
+      background: #fff; border: 1px solid var(--oro-claro); border-radius: 8px;
+    }
+    .paso b.nro {
+      display: inline-block; min-width: 18px; height: 18px; line-height: 18px;
+      text-align: center; border-radius: 50%;
+      background: var(--verde); color: #fff; font-size: 11px; margin-right: 4px;
+    }
+    .paso p { margin: 4px 0 6px; font-size: 12px; color: #1C2B26; line-height: 1.35; }
+    .paso small { display: block; font-size: 11px; color: #5C564F; margin: 2px 0 6px; line-height: 1.3; }
     .cartel-nombre { display: none; }
     .desplegables {
       position: absolute; z-index: 1100;
@@ -486,42 +497,57 @@
       <button type="button" id="btnCargarNombre">Cargar nombre</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
-      <p class="aviso">En el plano de mensura no va el signo menos: esas cifras son Gauss-Krüger (Este y Norte, en metros). Péguelas tal cual, con o sin puntos (ej. 3.456.789 y 6.351.234). La app las pasa a latitud/longitud para el satélite. San Luis suele ser faja 3; Córdoba (El Crispín) faja 4.</p>
-      <label for="fProd">Nombre del productor / establecimiento</label>
-      <input id="fProd" type="text" placeholder="Ej. Juan Pérez · Los Algarrobos" autocomplete="name" />
-      <label for="fTel">Teléfono o WhatsApp</label>
+      <label for="fProd">Nombre del campo</label>
+      <input id="fProd" type="text" placeholder="Ej. El Crispín" autocomplete="name" />
+      <label for="fTel">Teléfono o WhatsApp (opcional)</label>
       <input id="fTel" type="tel" placeholder="2664..." autocomplete="tel" />
-      <div class="grid2">
-        <div>
-          <label for="fLat">Este (Y) o latitud</label>
-          <input id="fLat" type="text" inputmode="decimal" placeholder="ej. 3.456.789" autocomplete="off" />
-        </div>
-        <div>
-          <label for="fLon">Norte (X) o longitud</label>
-          <input id="fLon" type="text" inputmode="decimal" placeholder="ej. 6.351.234" autocomplete="off" />
-        </div>
+
+      <div class="paso">
+        <p><b class="nro">1</b> <b>Busque en el plano la tabla de vértices</b></p>
+        <small>Son dos columnas de números grandes, sin signo menos. No use grados ni latitud. Copie tal cual está en el plano.</small>
+        <small>ESTE (a veces dice Y): empieza con 2, 3, 4 o 5 · ejemplo 3.456.789</small>
+        <small>NORTE (a veces dice X): empieza con 6 · ejemplo 6.351.234</small>
       </div>
-      <label for="fFaja">Faja Gauss-Krüger del plano</label>
-      <select id="fFaja">
-        <option value="auto">Automática (si el Este empieza con 2, 3, 4 o 5)</option>
-        <option value="2">Faja 2 · meridiano 69° (oeste de San Luis)</option>
-        <option value="3">Faja 3 · meridiano 66° (San Luis / La Calera)</option>
-        <option value="4">Faja 4 · meridiano 63° (Córdoba / El Crispín)</option>
-        <option value="5">Faja 5 · meridiano 60°</option>
-      </select>
-      <label for="fHaCampo">Superficie (ha)</label>
-      <input id="fHaCampo" type="number" step="1" min="20" max="20000" value="500" />
-      <label for="fLimites">Esquinas del plano (una por línea: Este Norte)</label>
-      <textarea id="fLimites" placeholder="como en la tabla de vértices, sin signo menos&#10;3456789 6351234&#10;3456900 6351234&#10;3456900 6351400&#10;3456789 6351400"></textarea>
-      <label for="fPlano">Opcional · foto o JPG del plano de mensura</label>
-      <input id="fPlano" type="file" accept="image/jpeg,image/png,image/webp,image/jpg" />
-      <img id="prevPlano" class="plano-preview" alt="Vista del plano" hidden />
-      <button type="button" id="btnLeerPlano" class="sec">Leer coordenadas del plano</button>
-      <p class="aviso" id="msgPlano" hidden></p>
-      <button type="button" id="btnVerCampo">Ver mi campo con INTA</button>
+
+      <div class="paso">
+        <p><b class="nro">2</b> <b>Pegue acá un vértice</b> (el primero de la tabla alcanza para abrir el satélite)</p>
+        <div class="grid2">
+          <div>
+            <label for="fLat">Pegar ESTE acá</label>
+            <input id="fLat" type="text" inputmode="decimal" placeholder="3.456.789" autocomplete="off" />
+          </div>
+          <div>
+            <label for="fLon">Pegar NORTE acá</label>
+            <input id="fLon" type="text" inputmode="decimal" placeholder="6.351.234" autocomplete="off" />
+          </div>
+        </div>
+        <label for="fFaja">¿Dónde está el campo?</label>
+        <select id="fFaja">
+          <option value="3">San Luis (faja 3)</option>
+          <option value="4">Córdoba / El Crispín (faja 4)</option>
+          <option value="2">Oeste de San Luis (faja 2)</option>
+          <option value="5">Más al este, faja 5</option>
+          <option value="auto">No sé / automática</option>
+        </select>
+        <label for="fHaCampo">Hectáreas (si no las sabe, deje 500)</label>
+        <input id="fHaCampo" type="number" step="1" min="20" max="20000" value="500" />
+      </div>
+
+      <div class="paso">
+        <p><b class="nro">3</b> <b>Si quiere el alambrado completo</b>, pegue toda la tabla abajo (una fila por vértice: ESTE espacio NORTE). Si no, salte al botón verde.</p>
+        <label for="fLimites">Tabla de vértices (opcional)</label>
+        <textarea id="fLimites" placeholder="Este Norte&#10;3456789 6351234&#10;3456900 6351234&#10;3456900 6351400&#10;3456789 6351400"></textarea>
+        <label for="fPlano">O saque foto a esa tabla del plano</label>
+        <input id="fPlano" type="file" accept="image/jpeg,image/png,image/webp,image/jpg" />
+        <img id="prevPlano" class="plano-preview" alt="Vista del plano" hidden />
+        <button type="button" id="btnLeerPlano" class="sec">Leer la foto del plano</button>
+        <p class="aviso" id="msgPlano" hidden></p>
+      </div>
+
+      <button type="button" id="btnVerCampo">4 · Ver mi campo en el satélite</button>
       <button type="button" id="btnGuardarCampo" class="sec">Guardar este campo</button>
       <button type="button" id="btnDemoCalera" class="sec" style="background:#F7F1E4;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Volver al demostrativo</button>
-      <label>Campos guardados (puede tener más de uno)</label>
+      <label>Campos guardados</label>
       <div class="lista-campos" id="listaCampos"></div>
     </div>
     <div id="panel" class="panel">
