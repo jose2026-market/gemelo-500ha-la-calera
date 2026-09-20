@@ -140,6 +140,19 @@
     .chk-plano { font-size: 12px; color: #1C2B26; margin: 8px 0 0; }
     .chk-plano input { width: auto; margin-right: 6px; }
     .cartel-nombre { display: none; }
+    .aviso-sat {
+      position: absolute; z-index: 500;
+      left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      max-width: min(440px, 92vw);
+      background: rgba(13, 92, 44, .94); color: var(--crema);
+      border: 1px solid var(--oro); border-radius: 10px;
+      padding: 10px 14px; font-size: 13px; line-height: 1.35; font-weight: 600;
+      text-align: center; pointer-events: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,.28);
+    }
+    body.vista-inicio .aviso-sat, body.vista-informe .aviso-sat { display: none !important; }
+    body.marcando-esquinas #map { cursor: crosshair; }
     .desplegables {
       position: absolute; z-index: 1100;
       top: calc(var(--topbar-h) + 12px + env(safe-area-inset-top, 0px));
@@ -499,7 +512,7 @@
       <button type="button" id="btnCargarNombre">Cargar nombre</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
-      <p class="aviso">En el plano busque la tabla de <b>coordenadas geográficas</b> (dice latitud y longitud, o φ y λ). Cada vértice trae grados, minutos y segundos, por ejemplo <b>33°15'20" S</b> y <b>66°48'10" O</b>. No use las columnas X e Y (números grandes de 7 cifras: eso es Gauss-Krüger).</p>
+      <p class="aviso">En el plano busque la tabla de <b>coordenadas geográficas</b> (dice latitud y longitud, o φ y λ). Cada vértice trae grados, minutos y segundos, por ejemplo <b>33°15'20" S</b> y <b>66°48'10" O</b>. No use las columnas X e Y (números grandes de 7 cifras: eso es Gauss-Krüger). Si el plano solo trae <b>2 vértices</b> (suelen ser los mojones), péguelos igual: las otras esquinas se marcan tocando el alambrado en el satélite.</p>
       <label for="fProd">Nombre del campo</label>
       <input id="fProd" type="text" placeholder="Ej. El Crispín" autocomplete="name" />
       <label for="fTel">Teléfono o WhatsApp (opcional)</label>
@@ -523,9 +536,9 @@
       </div>
 
       <div class="paso">
-        <p><b class="nro">2</b> <b>Pegue las 4 esquinas</b>, una por línea, tal cual salen en esa tabla:</p>
+        <p><b class="nro">2</b> <b>Esquinas del lote</b>. Si el plano trae 4, péguelas una por línea. Si solo trae 2, péguelas y complete las otras en el satélite.</p>
         <small>33°15'20" S &nbsp; 66°48'10" O</small>
-        <small>33 15 20 S &nbsp; 66 48 10 O &nbsp; también vale</small>
+        <small>También mire en el plano rumbo y distancia de cada lado; a veces están los 4 vértices en un cuadro chico.</small>
         <label for="fLimites">Esquinas (latitud Sur y longitud Oeste)</label>
         <textarea id="fLimites" placeholder="33°15'20&quot; S  66°48'10&quot; O&#10;33°15'20&quot; S  66°47'40&quot; O&#10;33°14'50&quot; S  66°47'40&quot; O&#10;33°14'50&quot; S  66°48'10&quot; O"></textarea>
         <label for="fPlano">O foto nítida de esa tabla del plano</label>
@@ -680,6 +693,7 @@
         <div class="cuerpo info-lote" id="infoLote">Toque un potrero en el mapa.</div>
       </details>
     </div>
+    <div class="aviso-sat" id="avisoSat" hidden></div>
     <div id="map"></div>
   </div>
 </div>
@@ -1646,6 +1660,9 @@
     function textoGps(lat, lon) {
       return Math.abs(lat).toFixed(4).replace(".", ",") + " Sur · " + Math.abs(lon).toFixed(4).replace(".", ",") + " Oeste";
     }
+    function lineaGeo(lat, lon) {
+      return Math.abs(lat).toFixed(5).replace(".", ",") + " S  " + Math.abs(lon).toFixed(5).replace(".", ",") + " O";
+    }
     function fmtHa(n) {
       if (!isFinite(n) || n <= 0) return "—";
       const t = n >= 20 ? String(Math.round(n)) : (Math.round(n * 10) / 10).toFixed(1);
@@ -1661,9 +1678,7 @@
       if (!pts || !pts.length) return;
       document.getElementById("fLat").value = Math.abs(pts[0][0]).toFixed(5).replace(".", ",") + " S";
       document.getElementById("fLon").value = Math.abs(pts[0][1]).toFixed(5).replace(".", ",") + " O";
-      document.getElementById("fLimites").value = pts.map((p) =>
-        Math.abs(p[0]).toFixed(5).replace(".", ",") + " S  " + Math.abs(p[1]).toFixed(5).replace(".", ",") + " O"
-      ).join("\n");
+      document.getElementById("fLimites").value = pts.map((p) => lineaGeo(p[0], p[1])).join("\n");
     }
     function decirPlano(msg) {
       const el = document.getElementById("msgPlano");
@@ -1873,7 +1888,7 @@
       L.popup({ maxWidth: 280 })
         .setLatLng([cx, cy])
         .setContent("<b>" + escHtml(store.nombreCampo || "Mi campo") + "</b><br>" +
-          (hayAnillo ? ("Superficie: <b>" + fmtHa(ha) + "</b> según el alambrado") : ("Se marcó " + (ring.length || 1) + " esquina(s). Pegue las 4 para ver el lote.")) +
+          (hayAnillo ? ("Superficie: <b>" + fmtHa(ha) + "</b> según el alambrado") : ("Hay " + (ring.length || 1) + " vértice(s) del plano. Toque el satélite para completar el alambrado.")) +
           "<br>" + textoGps(cx, cy))
         .openOn(map);
       pintarConvSat(cx, cy);
@@ -1881,11 +1896,12 @@
       let aviso = "Campo en " + textoGps(cx, cy) + ".";
       if (cercaDemo) aviso = "Esas coordenadas caen en el demostrativo de La Calera. Pegue latitud Sur y longitud Oeste de SU plano.";
       else if (hayAnillo) aviso = "Alambrado cerrado: " + fmtHa(ha) + " (" + ring.length + " esquinas). En el satélite: " + textoGps(cx, cy) + ".";
-      else if (ring.length) aviso = "Bien: esa esquina es de su campo. Con " + ring.length + " línea(s) solo se marca el punto. Pegue las 4 esquinas (4 líneas) para dibujar el lote.";
-      else aviso = "Esa esquina está en " + textoGps(cx, cy) + ". Pegue las 4 esquinas para ver el lote.";
+      else if (ring.length) aviso = "El plano trajo " + ring.length + " vértice(s). Toque en el satélite las esquinas que faltan, donde se ve el alambrado.";
+      else aviso = "Esa esquina está en " + textoGps(cx, cy) + ". Toque el satélite para marcar las otras esquinas.";
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = aviso;
       decirPlano(aviso);
+      pintarAvisoSat(ring.length || (puntoValido(lat, lon) ? 1 : 0));
       if (!cargarCampoProductor.silencio) enfocarCampo();
       } catch (err) {
         console.error(err);
@@ -1893,6 +1909,40 @@
       }
     }
     cargarCampoProductor.silencio = false;
+    function pintarAvisoSat(n) {
+      const el = document.getElementById("avisoSat");
+      if (!el) return;
+      const falta = Math.max(0, 4 - (n || 0));
+      const mostrar = !esDemoCalera && falta > 0;
+      el.hidden = !mostrar;
+      document.body.classList.toggle("marcando-esquinas", mostrar);
+      if (!mostrar) return;
+      el.textContent = (n || 0)
+        ? "Hay " + n + " vértice(s) del plano. Toque en el satélite las " + falta + " esquina(s) que faltan, donde se ve el alambrado."
+        : "Toque en el satélite cada esquina del campo, donde se ve el alambrado.";
+    }
+    function agregarEsquinaSat(latlng) {
+      if (esDemoCalera) return false;
+      const lat = latlng.lat, lon = latlng.lng;
+      if (!enCuyo(lat, lon)) return false;
+      const ta = document.getElementById("fLimites");
+      const ya = parseLimites(ta.value);
+      if (ya.length >= 4) return false;
+      if (ya.some((p) => distM(p, [lat, lon]) < 25)) return false;
+      ta.value = (ta.value.trim() ? ta.value.trim() + "\n" : "") + lineaGeo(lat, lon);
+      if (!(document.getElementById("fLat").value || "").trim()) {
+        document.getElementById("fLat").value = Math.abs(lat).toFixed(5).replace(".", ",") + " S";
+        document.getElementById("fLon").value = Math.abs(lon).toFixed(5).replace(".", ",") + " O";
+      }
+      cargarCampoProductor.silencio = true;
+      cargarCampoProductor();
+      cargarCampoProductor.silencio = false;
+      return true;
+    }
+    map.on("click", (ev) => {
+      if (document.body.classList.contains("vista-inicio") || document.body.classList.contains("vista-informe")) return;
+      agregarEsquinaSat(ev.latlng);
+    });
     function enfocarCampo() {
       enfocarCampo.activo = true;
       setPanel(false);
@@ -1907,7 +1957,8 @@
         if (!capas.length) return;
         const b = L.featureGroup(capas).getBounds();
         if (!b.isValid()) return;
-        map.fitBounds(b, { padding: [40, 40], maxZoom: 17, animate: false });
+        const maxZ = document.body.classList.contains("marcando-esquinas") ? 15 : 17;
+        map.fitBounds(b, { padding: [48, 48], maxZoom: maxZ, animate: false });
       };
       cuandoMapaListo(ir);
       setTimeout(ir, 320);
@@ -1926,6 +1977,7 @@
       aplicarNombre(DEMO_NOMBRE);
       store.campoActivo = null;
       saveStore(store);
+      pintarAvisoSat(0);
       verCampo();
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = "Volvió al demostrativo de Gemelo Digital Ganadero (500 ha).";
