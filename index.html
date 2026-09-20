@@ -396,6 +396,11 @@
       .informe { position: static; padding: 0; background: #fff; display: block !important; }
       .informe .papel { border: 0; }
     }
+    .solo-celular { display: none; }
+    @media (max-width: 899px) {
+      #btnMiCampo, #cajaCampo, #btnIrConsulta, #accCampo, #btnPedirConsulta { display: none !important; }
+      .solo-celular { display: block !important; }
+    }
     .consulta { margin-top: 10px; border: 1px solid var(--oro); background: var(--verde-suave); border-radius: 8px; padding: 8px; }
     .consulta b { color: var(--verde); font-size: 12px; }
     .consulta p { margin: 4px 0 0; font-size: 11px; color: #1C2B26; line-height: 1.35; }
@@ -491,7 +496,7 @@
       <article class="acordeon" id="accVista">
         <button type="button" class="cab" data-acc="accVista"><div><small>1 · Visualizador</small><b>Ver el campo</b></div><i>+</i></button>
         <div class="cuerpo">
-          Satélite y potreros del demostrativo 500 ha (o de su establecimiento si ya cargó coordenadas). Capas y manejo quedan cerrados para no tapar el mapa.
+          Satélite y potreros del demostrativo 500 ha (La Calera, SW Belgrano). En el celular es solo esta vista rápida. El campo real se carga en la computadora.
           <button type="button" id="btnVerDemo">Ir al mapa</button>
         </div>
       </article>
@@ -543,6 +548,7 @@
     <div class="consulta">
       <b>Servicio de consulta</b>
       <p>Se carga su establecimiento, se leen suelos + OTBN + INTA, y se entrega el informe de puntos críticos (corto y mediano plazo).</p>
+      <p class="aviso solo-celular">En el celular se muestra el demostrativo 500 ha (La Calera). No se guarda ningún campo. El establecimiento real se carga en la computadora.</p>
       <button type="button" id="btnPedirConsulta">Pedir consulta</button>
       <button type="button" id="btnInformeMenu" class="sec" style="background:#fff;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Ver informe ahora</button>
       <p class="aviso" id="msgConsulta" hidden></p>
@@ -783,9 +789,16 @@
     let diagnosticoLote = null;
 
     function loadStore() {
-      try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; }
+      try {
+        if (esMovil()) {
+          try { localStorage.removeItem(KEY); } catch (e) {}
+          return {};
+        }
+        return JSON.parse(localStorage.getItem(KEY) || "{}");
+      } catch (e) { return {}; }
     }
     function saveStore(s) {
+      if (esMovil()) return;
       try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* cuota */ }
     }
     let zmin = 917, zmax = 1023;
@@ -2793,7 +2806,7 @@
 
     pintarCampos();
     aplicarNombre(store.nombreCampo);
-    const ultimoCampo = store.campoActivo || ((store.camposGuardados || []).slice(-1)[0]);
+    const ultimoCampo = esMovil() ? null : (store.campoActivo || ((store.camposGuardados || []).slice(-1)[0]));
     if (ultimoCampo && (ultimoCampo.lat || ultimoCampo.limites)) {
       aplicarFormCampo(ultimoCampo);
       cargarCampoProductor.silencio = true;
