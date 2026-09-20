@@ -1338,19 +1338,36 @@
     }
     function dmsADec(g, m, s, hem, eje) {
       let n = Math.abs(parseNum(g) || 0) + Math.abs(parseNum(m) || 0) / 60 + Math.abs(parseNum(s) || 0) / 3600;
+      if (!isFinite(n) || n === 0) return NaN;
       const h = String(hem || "").toUpperCase();
       if (eje === "lat") return (h === "N") ? n : -n;
       return (h === "E") ? n : -n;
     }
+    function limpiarAngulos(txt) {
+      return String(txt || "")
+        .replace(/\u00a0/g, " ")
+        .replace(/[´`′’]/g, "'")
+        .replace(/[″”¨]/g, '"')
+        .replace(/''/g, '"')
+        .replace(/[º˚]/g, "°");
+    }
     function extraerDMSLista(txt) {
-      const t = String(txt || "").replace(/´/g, "'").replace(/″|”|''/g, '"');
-      const re = /(\d{1,3})\s*[°º]\s*(\d{1,2})\s*[\'’′]?\s*(\d{1,2}(?:[.,]\d+)?)?\s*[\"”″]?\s*([SNsnOoWwEe])?/g;
+      const t = limpiarAngulos(txt);
       const out = [];
-      let m;
-      while ((m = re.exec(t))) out.push({ g: m[1], min: m[2], s: m[3], hem: m[4] });
-      if (out.length) return out;
-      const reSp = /(\d{1,3})\s+(\d{1,2})\s+(\d{1,2}(?:[.,]\d+)?)\s*([SNsnOoWwEe])?/g;
-      while ((m = reSp.exec(t))) out.push({ g: m[1], min: m[2], s: m[3], hem: m[4] });
+      function push(g, min, s, hem) {
+        const gg = Math.abs(parseNum(g) || 0);
+        const mm = Math.abs(parseNum(min) || 0);
+        const ss = Math.abs(parseNum(s) || 0);
+        if (!gg || gg > 80 || mm >= 60 || ss >= 60) return;
+        out.push({ g: String(gg), min: String(mm), s: String(ss), hem: hem || "" });
+      }
+      let m, re;
+      re = /([1-7]?\d)\s*°\s*([0-5]?\d)(?:\s*'?\s*([0-5]?\d(?:[.,]\d+)?)?\s*"?)?\s*([SNsnOoWwEe])?/g;
+      while ((m = re.exec(t))) push(m[1], m[2], m[3], m[4]);
+      if (!out.length) {
+        re = /([2-7]\d)[-\s]+([0-5]?\d)[-\s]+([0-5]?\d(?:[.,]\d+)?)\s*([SNsnOoWwEe])?/g;
+        while ((m = re.exec(t))) push(m[1], m[2], m[3], m[4]);
+      }
       return out;
     }
     function parseAngulo(s, eje) {
@@ -1416,11 +1433,20 @@
       }
       return Math.abs(a) / 2 / 10000;
     }
+    function esLonGeo(g, hem) {
+      const h = String(hem || "").toUpperCase();
+      if (/[EWO]/.test(h) && h !== "S" && h !== "N") return true;
+      return Math.abs(g) >= 50 && Math.abs(g) <= 80;
+    }
     function parseLimites(txt) {
       const out = [];
       const visto = {};
       function add(lat, lon) {
+        if (!isFinite(lat) || !isFinite(lon)) return;
+        const par = normalizarPar(lat, lon);
+        lat = par[0]; lon = par[1];
         if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
+        if (!enCuyo(lat, lon)) return;
         const k = lat.toFixed(5) + "," + lon.toFixed(5);
         if (visto[k]) return;
         visto[k] = 1;
@@ -1431,19 +1457,18 @@
         if (geo) { add(geo[0], geo[1]); return; }
         const tokens = line.trim().replace(/[()]/g, "").split(/[\s,;]+/).filter(Boolean);
         if (tokens.length >= 2 && !/^[SNsnOoWwEe]$/.test(tokens[0]) && !/^[SNsnOoWwEe]$/.test(tokens[1])) {
-          const par = normalizarPar(parseAngulo(tokens[0], "lat"), parseAngulo(tokens[1], "lon"));
-          add(par[0], par[1]);
+          add(parseAngulo(tokens[0], "lat"), parseAngulo(tokens[1], "lon"));
         }
       });
       const todos = extraerDMSLista(txt);
-      if (todos.length >= 2) {
-        for (let i = 0; i + 1 < todos.length; i += 2) {
-          add(
-            dmsADec(todos[i].g, todos[i].min, todos[i].s, todos[i].hem, "lat"),
-            dmsADec(todos[i + 1].g, todos[i + 1].min, todos[i + 1].s, todos[i + 1].hem, "lon")
-          );
-        }
-      }
+      const lats = [], lons = [];
+      todos.forEach((d) => {
+        const g = Math.abs(parseNum(d.g) || 0);
+        if (esLonGeo(g, d.hem)) lons.push(dmsADec(d.g, d.min, d.s, d.hem || "O", "lon"));
+        else lats.push(dmsADec(d.g, d.min, d.s, d.hem || "S", "lat"));
+      });
+      const nPar = Math.min(lats.length, lons.length);
+      for (let i = 0; i < nPar; i++) add(lats[i], lons[i]);
       extraerPuntosDeTexto(txt).forEach((p) => add(p[0], p[1]));
       return out;
     }
@@ -1772,7 +1797,11 @@
         lat = par[0]; lon = par[1];
       }
       let ha = parseNum(document.getElementById("fHaCampo").value);
-      const textoLim = document.getElementById("fLimites").value;
+      const textoLim = [
+        document.getElementById("fLat").value,
+        document.getElementById("fLon").value,
+        document.getElementById("fLimites").value
+      ].filter(Boolean).join("\n");
       const ring = parseLimites(textoLim);
       let south, west, north, east;
       const hayAnillo = ring.length >= 3;
@@ -1842,14 +1871,14 @@
         .openOn(map);
       pintarConvSat(cx, cy);
       const cercaDemo = distM([cx, cy], DEMO_CENTRO) < 2500;
+      let aviso = "Campo en " + textoGps(cx, cy) + ".";
+      if (cercaDemo) aviso = "Esas coordenadas caen en el demostrativo de La Calera. Pegue latitud Sur y longitud Oeste de SU plano.";
+      else if (hayAnillo) aviso = "Se leyeron " + ring.length + " esquinas · " + Math.round(ha) + " ha. En el satélite: " + textoGps(cx, cy) + ".";
+      else if (ring.length) aviso = "Se leyeron " + ring.length + " esquina(s). Hacen falta 4. Ejemplo: 33°15'20\" S  66°48'10\" O";
+      else aviso = "Esa esquina está en " + textoGps(cx, cy) + ". Pegue las 4 esquinas para ver el lote.";
       document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = cercaDemo
-        ? "Esas coordenadas caen en el demostrativo de La Calera. Pegue latitud Sur y longitud Oeste de SU plano."
-        : (hayAnillo
-          ? "Campo de " + Math.round(ha) + " ha según las esquinas. En el satélite: " + textoGps(cx, cy) + "."
-          : (ring.length
-            ? "Se leyeron " + ring.length + " esquina(s); hacen falta 4. En el plano: LATITUD y LONGITUD, ej. 33°15'20\" S  66°48'10\" O. No use X e Y."
-            : "Esa esquina está en " + textoGps(cx, cy) + ". Pegue las 4 esquinas (grados, minutos y segundos) para ver el lote.");
+      document.getElementById("msg").textContent = aviso;
+      decirPlano(aviso);
       if (!cargarCampoProductor.silencio) enfocarCampo();
       } catch (err) {
         console.error(err);
