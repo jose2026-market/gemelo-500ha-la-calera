@@ -509,6 +509,7 @@
         <small>Son dos columnas de números grandes, sin signo menos. No use grados ni latitud. Copie tal cual está en el plano.</small>
         <small>ESTE (a veces dice Y): empieza con 2, 3, 4 o 5 · ejemplo 3.456.789</small>
         <small>NORTE (a veces dice X): empieza con 6 · ejemplo 6.351.234</small>
+        <small>El satélite usa GPS (33 Sur, 66 Oeste). Eso no se pega acá: la app lo calcula sola.</small>
       </div>
 
       <div class="paso">
@@ -534,6 +535,7 @@
         <label for="fHaCampo">Hectáreas reales (no deje 500 si el campo es más chico)</label>
         <input id="fHaCampo" type="number" step="1" min="5" max="20000" value="" placeholder="ej. 80" />
         <label class="chk-plano"><input type="checkbox" id="fInchauspe" /> Plano viejo (Campo Inchauspe, anterior a POSGAR)</label>
+        <p class="ok" id="convSat" hidden></p>
       </div>
 
       <div class="paso">
@@ -1464,11 +1466,28 @@
       });
       return mejor;
     }
+    function tmDirecto(latDeg, lonDeg, lon0Deg, falseE, falseN, k0) {
+      const a = 6378137, f = 1 / 298.257223563, e2 = f * (2 - f);
+      const lat = latDeg * Math.PI / 180, lon = lonDeg * Math.PI / 180, lon0 = lon0Deg * Math.PI / 180;
+      const sinL = Math.sin(lat), cosL = Math.cos(lat), tanL = Math.tan(lat);
+      const N = a / Math.sqrt(1 - e2 * sinL * sinL);
+      const T = tanL * tanL, C = (e2 / (1 - e2)) * cosL * cosL, A = (lon - lon0) * cosL;
+      const M = a * ((1 - e2 / 4 - 3 * e2 * e2 / 64) * lat - (3 * e2 / 8 + 3 * e2 * e2 / 32) * Math.sin(2 * lat) + (15 * e2 * e2 / 256) * Math.sin(4 * lat));
+      return [
+        falseE + k0 * N * (A + (1 - T + C) * A * A * A / 6),
+        falseN + k0 * (M + N * tanL * (A * A / 2 + (5 - T + 9 * C) * A * A * A * A / 24))
+      ];
+    }
+    function wgsAGk(lat, lon) {
+      const faja = Math.max(1, Math.min(7, Math.round((lon + 75) / 3)));
+      return tmDirecto(lat, lon, -75 + 3 * faja, faja * 1e6 + 5e5, 10000000, 1);
+    }
     function enCuyo(lat, lon) {
       return lat > -56 && lat < -21 && lon > -74 && lon < -53;
     }
     function extraerPuntosDeTexto(txt) {
       const pts = [];
+      pts.gkPares = [];
       const visto = {};
       function add(lat, lon) {
         if (!isFinite(lat) || !isFinite(lon) || !enCuyo(lat, lon)) return;
@@ -1479,7 +1498,11 @@
       }
       function addGK(a, b) {
         const wgs = gkAWgs(a, b, fajaElegida());
-        if (wgs) add(wgs[0], wgs[1]);
+        if (wgs) {
+          add(wgs[0], wgs[1]);
+          const par = ordenarEsteNorte(Math.abs(a), Math.abs(b));
+          pts.gkPares.push([par[0], par[1]]);
+        }
       }
       const t = String(txt || "").replace(/\u00a0/g, " ");
       let m, re;
@@ -1535,6 +1558,24 @@
       });
       return window.Tesseract;
     }
+    function fmtGK(n) {
+      return Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    function textoGps(lat, lon) {
+      return Math.abs(lat).toFixed(4).replace(".", ",") + " Sur · " + Math.abs(lon).toFixed(4).replace(".", ",") + " Oeste";
+    }
+    function pintarConvSat(lat, lon) {
+      const el = document.getElementById("convSat");
+      if (!el || !puntoValido(lat, lon)) return;
+      el.hidden = false;
+      el.textContent = "En el satélite queda: " + textoGps(lat, lon) + ". Eso es GPS. El plano sigue en Gauss-Krüger, sin signo menos.";
+    }
+    function llenarFormGK(pares) {
+      if (!pares || !pares.length) return;
+      document.getElementById("fLat").value = fmtGK(pares[0][0]);
+      document.getElementById("fLon").value = fmtGK(pares[0][1]);
+      document.getElementById("fLimites").value = pares.map((p) => fmtGK(p[0]) + " " + fmtGK(p[1])).join("\n");
+    }
     function decirPlano(msg) {
       const el = document.getElementById("msgPlano");
       el.hidden = false;
@@ -1572,12 +1613,24 @@
     function aplicarFormCampo(c) {
       document.getElementById("fProd").value = c.prod || c.nombre || "";
       document.getElementById("fTel").value = c.tel || "";
-      document.getElementById("fLat").value = c.lat || "";
-      document.getElementById("fLon").value = c.lon || "";
+      let este = c.lat || "", norte = c.lon || "";
+      const a = parseNum(c.lat), b = parseNum(c.lon);
+      if (isFinite(a) && isFinite(b) && Math.abs(a) <= 90 && Math.abs(b) <= 180 && Math.abs(a) > 0.2) {
+        const gk = wgsAGk(a > 0 ? -a : a, b > 0 ? -b : b);
+        este = fmtGK(gk[0]);
+        norte = fmtGK(gk[1]);
+      }
+      document.getElementById("fLat").value = este;
+      document.getElementById("fLon").value = norte;
       if (document.getElementById("fFaja")) document.getElementById("fFaja").value = c.faja || "auto";
       if (document.getElementById("fInchauspe")) document.getElementById("fInchauspe").checked = !!c.inchauspe;
       document.getElementById("fHaCampo").value = c.ha || "";
-      document.getElementById("fLimites").value = c.limites || "";
+      let lim = c.limites || "";
+      if (lim && !/\d{6,}/.test(lim.replace(/[.\s]/g, ""))) {
+        const ring = parseLimites(lim);
+        if (ring.length) lim = ring.map((p) => { const g = wgsAGk(p[0], p[1]); return fmtGK(g[0]) + " " + fmtGK(g[1]); }).join("\n");
+      }
+      document.getElementById("fLimites").value = lim;
     }
     function aplicarSitioGenerico() {
       for (let n = 1; n <= 6; n++) {
@@ -1731,16 +1784,17 @@
       L.popup({ maxWidth: 280 })
         .setLatLng([cx, cy])
         .setContent("<b>" + escHtml(store.nombreCampo || "Mi campo") + "</b><br>" +
-          (hayAnillo ? (Math.round(ha) + " ha según el plano") : "Vértice del plano (punto exacto)") +
-          "<br>" + cx.toFixed(5) + ", " + cy.toFixed(5))
+          (hayAnillo ? (Math.round(ha) + " ha según el plano") : "Vértice del plano") +
+          "<br>" + textoGps(cx, cy))
         .openOn(map);
+      pintarConvSat(cx, cy);
       const cercaDemo = distM([cx, cy], DEMO_CENTRO) < 2500;
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = cercaDemo
         ? "Ojo: esas coordenadas caen en el demostrativo de La Calera. Pegue ESTE y NORTE del plano, no las del ejemplo."
         : (hayAnillo
-          ? "Campo de " + Math.round(ha) + " ha con el alambrado de las esquinas del plano. El polígono dorado es el límite declarado, no el padrón."
-          : "El punto dorado es ESA esquina del plano (lugar correcto). El cuadro de potreros no es su campo: escriba las hectáreas reales y pegue TODA la tabla de vértices.");
+          ? "Campo de " + Math.round(ha) + " ha. En el satélite: " + textoGps(cx, cy) + ". El plano sigue en Gauss-Krüger (sin menos)."
+          : "El punto es esa esquina del plano. En el satélite: " + textoGps(cx, cy) + ". Para el campo real pegue toda la tabla y las hectáreas.");
       if (!cargarCampoProductor.silencio) enfocarCampo();
     }
     cargarCampoProductor.silencio = false;
@@ -1802,18 +1856,14 @@
         const { data } = await worker.recognize(canvas);
         await worker.terminate();
         const pts = extraerPuntosDeTexto(data && data.text);
+        const gk = pts.gkPares || [];
+        if (gk.length) llenarFormGK(gk);
         if (pts.length >= 3) {
-          document.getElementById("fLimites").value = pts.map((p) => p[0] + ", " + p[1]).join("\n");
-          document.getElementById("fLat").value = pts[0][0];
-          document.getElementById("fLon").value = pts[0][1];
-          decirPlano("Se leyeron " + pts.length + " vértices Gauss-Krüger y se pasaron a latitud/longitud. Revíselos y toque «Ver mi campo con INTA». Si cae lejos, cambie la faja (San Luis 3, Córdoba 4).");
+          decirPlano("Se leyeron " + pts.length + " vértices. Quedaron en Este/Norte, como el plano (sin signo menos). Toque «Ver mi campo en el satélite».");
         } else if (pts.length === 1 || pts.length === 2) {
-          document.getElementById("fLat").value = pts[0][0];
-          document.getElementById("fLon").value = pts[0][1];
-          if (pts[1]) document.getElementById("fLimites").value = pts.map((p) => p[0] + ", " + p[1]).join("\n");
-          decirPlano("Se leyó un punto. Si el plano tiene más vértices, péguelos: Este Norte (ej. 3456789 6351234), sin signo menos.");
+          decirPlano("Se leyó un vértice en Gauss-Krüger. Si hay más esquinas, péguelas en la tabla (Este Norte) y toque Ver mi campo.");
         } else {
-          decirPlano("No se leyeron vértices. Foto nítida de la tabla Este/Norte, o péguelos a mano sin signo menos (ej. 3456789 6351234). Elija faja 3 en San Luis o 4 en Córdoba.");
+          decirPlano("No se leyeron vértices. Foto nítida de la tabla Este/Norte, o péguelos a mano (ej. 3.456.789 y 6.351.234), sin signo menos.");
         }
       } catch (e) {
         decirPlano("No se pudo leer el plano en este teléfono. Péguelas las esquinas a mano o pruebe otra foto.");
