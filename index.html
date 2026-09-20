@@ -521,13 +521,13 @@
             <input id="fLon" type="text" inputmode="decimal" placeholder="6.351.234" autocomplete="off" />
           </div>
         </div>
-        <label for="fFaja">¿Dónde está el campo?</label>
+        <label for="fFaja">Provincia / faja del plano</label>
         <select id="fFaja">
+          <option value="auto">Que lo calcule el número de ESTE (recomendado)</option>
           <option value="3">San Luis (faja 3)</option>
           <option value="4">Córdoba / El Crispín (faja 4)</option>
           <option value="2">Oeste de San Luis (faja 2)</option>
-          <option value="5">Más al este, faja 5</option>
-          <option value="auto">No sé / automática</option>
+          <option value="5">Faja 5</option>
         </select>
         <label for="fHaCampo">Hectáreas (si no las sabe, deje 500)</label>
         <input id="fHaCampo" type="number" step="1" min="20" max="20000" value="500" />
@@ -1382,20 +1382,56 @@
       const lon = lon0Deg * Math.PI / 180 + (D - (1 + 2 * T1 + C1) * D * D * D / 6) / cosP;
       return [lat * 180 / Math.PI, lon * 180 / Math.PI];
     }
+    function ordenarEsteNorte(a, b) {
+      a = Math.abs(a); b = Math.abs(b);
+      function distEje(n) {
+        const f = Math.round((n - 500000) / 1000000);
+        if (f < 1 || f > 7) return 1e12;
+        return Math.abs(n - (f * 1e6 + 5e5));
+      }
+      const aNorte = a > 5200000 && a < 7800000;
+      const bNorte = b > 5200000 && b < 7800000;
+      const aCorto = a > 150000 && a < 900000;
+      const bCorto = b > 150000 && b < 900000;
+      if (aCorto && bNorte) return [a, b];
+      if (bCorto && aNorte) return [b, a];
+      if (aNorte && !bNorte) return [b, a];
+      if (bNorte && !aNorte) return [a, b];
+      return distEje(a) <= distEje(b) ? [a, b] : [b, a];
+    }
     function gkAWgs(x, y, fajaForzada) {
       x = Math.abs(x); y = Math.abs(y);
-      const pares = [[x, y], [y, x]];
-      const intentos = [];
-      pares.forEach(([e0, n0]) => {
-        let e = e0, n = n0;
-        let faja = fajaForzada || Math.round((e - 500000) / 1000000);
-        if (fajaForzada && e < 1000000) e = e + fajaForzada * 1e6;
-        if (faja < 1 || faja > 7) return;
+      const par = ordenarEsteNorte(x, y);
+      let e = par[0], n = par[1];
+      const fajas = [];
+      if (e < 1000000) {
+        if (fajaForzada) fajas.push(fajaForzada);
+        else { fajas.push(3, 4, 2, 5); }
+      } else {
+        const fDelNumero = Math.round((e - 500000) / 1000000);
+        if (fDelNumero >= 1 && fDelNumero <= 7) fajas.push(fDelNumero);
+        else if (fajaForzada) fajas.push(fajaForzada);
+      }
+      let mejor = null, mejorPts = 1e15;
+      fajas.forEach((faja) => {
+        let ee = e;
+        if (ee < 1000000) ee = ee + faja * 1e6;
         const lon0 = -75 + 3 * faja, fe = faja * 1e6 + 5e5;
-        intentos.push(tmInverso(e, n, lon0, fe, 0, 1));
-        intentos.push(tmInverso(e, n, lon0, fe, 10000000, 1));
+        const distEje = Math.abs(ee - fe);
+        if (distEje > 230000) return;
+        [[0, 800000], [10000000, 0]].forEach(([fn, extra]) => {
+          const p = tmInverso(ee, n, lon0, fe, fn, 1);
+          if (!p || !enCuyo(p[0], p[1])) return;
+          if (n < 4500000 || n > 7800000) return;
+          const pts = distEje + extra;
+          if (pts < mejorPts) {
+            mejorPts = pts;
+            mejor = p;
+            gkAWgs.ultimo = { faja: faja, este: ee, norte: n, lat: p[0], lon: p[1] };
+          }
+        });
       });
-      return intentos.find((p) => p && enCuyo(p[0], p[1])) || null;
+      return mejor;
     }
     function enCuyo(lat, lon) {
       return lat > -56 && lat < -21 && lon > -74 && lon < -53;
@@ -1660,12 +1696,13 @@
         .openOn(map);
       const cercaDemo = distM([cx, cy], DEMO_CENTRO) < 2500;
       const comoGK = eraGK || limitesEranGK;
-      const fajaTxt = fajaElegida() ? (" faja " + fajaElegida()) : "";
+      const u = gkAWgs.ultimo;
+      const fajaTxt = u && u.faja ? (" faja " + u.faja) : "";
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = cercaDemo
-        ? "Ojo: esas coordenadas caen en el demostrativo de La Calera. Si su campo es otro, pegue Este y Norte del plano (Gauss-Krüger) y elija la faja: San Luis = 3, Córdoba = 4."
+        ? "Ojo: esas coordenadas caen en el demostrativo de La Calera. Pegue ESTE y NORTE del plano, no las del ejemplo."
         : (comoGK
-          ? "Gauss-Krüger" + fajaTxt + " pasado a satélite: " + cx.toFixed(5) + ", " + cy.toFixed(5) + ". Si cae lejos, cambie la faja y vuelva a tocar Ver mi campo."
+          ? "Gauss-Krüger" + fajaTxt + " → " + cx.toFixed(5) + ", " + cy.toFixed(5) + (u ? (" (Este " + Math.round(u.este) + " / Norte " + Math.round(u.norte) + ")") : "") + ". Si no es su campo, elija la otra provincia y vuelva a tocar el botón."
           : (hayAnillo
             ? "Campo centrado en " + cx.toFixed(5) + ", " + cy.toFixed(5) + ". El polígono dorado es el límite declarado, no el padrón."
             : "Satélite centrado en " + lat.toFixed(5) + ", " + lon.toFixed(5) + " · " + Math.round(ha) + " ha."));
