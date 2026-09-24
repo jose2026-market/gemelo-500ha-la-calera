@@ -85,7 +85,7 @@
     }
     .bar .escenas, .bar .acciones { flex-direction: column; }
     .bar .escenas button, .bar .acciones button { width: 100%; flex: none; }
-    .pills button { min-width: 36px; padding: 4px 6px; }
+    .pills button { min-width: 36px; padding: 4px 8px; }
     .modulos button { background: var(--verde-suave); color: var(--verde); border-color: var(--oro-claro); }
     .fondos button.on, .nombres-fila button.on, .modulos button.on, .escenas button.on, .pills button.on {
       background: var(--verde); color: #fff; border-color: var(--verde);
@@ -685,7 +685,14 @@
         <p class="aviso" id="msgPlano" hidden></p>
       </div>
 
-      <button type="button" id="btnVerCampo">D · Ver el campo y leer la situación actual</button>
+      <div class="paso">
+        <p><b class="nro">D</b> <b>¿El campo es un solo lote o está dividido?</b> P1 a P6 es solo el demostrativo de 500 ha. Su campo puede ser un cuadro, o 2, 3 o más, según lo que declare el productor. No depende de las hectáreas.</p>
+        <label for="fNLotes">Número de lotes / potreros</label>
+        <input id="fNLotes" type="number" min="1" max="20" step="1" value="1" />
+        <p class="ok" id="notaLotes">1 lote = un solo cuadro, sin divisiones. Si pone 2 o más, se ven esos cuadros. La rotación y el descanso se calculan con ese número: si el rodeo está N días en un lote, los otros descansan N × (lotes − 1) días.</p>
+      </div>
+
+      <button type="button" id="btnVerCampo">E · Ver el campo y leer la situación actual</button>
       <button type="button" id="btnGuardarCampo" class="sec">Guardar este campo</button>
       <button type="button" id="btnDemoCalera" class="sec" style="background:#F7F1E4;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Volver al demostrativo</button>
       <label class="solo-escritorio">Campos guardados</label>
@@ -1213,10 +1220,11 @@
       const muyLejos = potreros.filter((p) => p.dist > 550);
       const campo = store.nombreCampo || DEMO_NOMBRE;
       setTxt("fichaVista",
-        "<b>" + campo + "</b><br>" + ha.toFixed(0) + " ha · " + potreros.length + " potreros. " +
+        "<b>" + campo + "</b><br>" + ha.toFixed(0) + " ha · " +
+        (potreros.length === 1 ? "un lote (sin divisiones)." : (potreros.length + " lotes declarados.")) + " " +
         (esDemoCalera
-          ? "Demostrativo La Calera (SW Belgrano). No es un padrón nominado."
-          : "Límite declarado (no es el padrón). Situación actual = carta INTA + relieve + aguadas de este lote.") +
+          ? "Demostrativo La Calera (SW Belgrano). Los P1 a P6 son de este módulo de 500 ha, no de su campo."
+          : "Límite declarado (no es el padrón). Los cuadros coinciden con los lotes que manifestó el productor.") +
         " El informe final detalla actual / mejorando / ideal."
       );
       const ndviOn = capaEncendida("ndvi");
@@ -1287,9 +1295,7 @@
         "<br>Agua: una " + esp.nombre + " ~" + esp.aguaL + " L/día (" + esp.aguaMin + "–" + esp.aguaMax + "). Rodeo actual ≈ " + act.aguaRodeo + " L/día."
       );
       setTxt("hintPastoreo",
-        "<b>Días de pastoreo y rotación: no los calcula el INTA.</b> Dependen de lo que haga el productor: cuántas cabezas hay, cuánto pasto hay, el tamaño del potrero, el agua y si el manejo es continuo o rotativo. " +
-        "Si todavía no lo dijo, deje esos casilleros vacíos. En semiárido, un descanso de 30 días o más es una meta de manejo, no un valor medido. " +
-        "Hoy la carta indica ~" + act.haUnidad + " " + act.unidadHa + " para " + esp.plural + "."
+        textoRotacion() + " Hoy la carta indica ~" + act.haUnidad + " " + act.unidadHa + " para " + esp.plural + "."
       );
       setTxt("hintNutricion", "CC inicial ~2,7. El agua de una " + esp.nombre + " es ~" + esp.aguaL + " L/día, no el de otra especie. No recortar bebida.");
       setTxt("hintRepro", esp.desteteLab + " inicial ~" + act.destete + " %. El 85 % es techo INTA de vacas de cría; en oveja y cabra se carga el dato del productor.");
@@ -1309,7 +1315,7 @@
         return {
           color: SEM.rojo,
           sem: "rojo",
-          titulo: "P" + p.n + " · no posible",
+          titulo: nomPotrero(p) + " · no posible",
           sub: val.motivos[0],
           accion: "No es posible con la carta de suelos, el agua y el territorio de este lote. " + val.motivos.join(" ")
         };
@@ -1321,9 +1327,11 @@
           return {
             color: SEM.amarillo,
             sem: "amarillo",
-            titulo: "P" + p.n + " · sin dato de días",
+            titulo: nomPotrero(p) + " · sin dato de días",
             sub: "No hay días de pastoreo ni de rotación cargados",
-            accion: "Pregunte al productor: ¿hay hacienda ahora? ¿cuántos días lleva en este potrero y cada cuánto rota? Eso no sale de la carta INTA: depende de la carga, el pasto, el agua y su manejo."
+            accion: (potreros.length <= 1
+              ? "Un solo lote: no hay rotación entre cuadros. Pregunte cuántos días pastorea o si saca la hacienda para descansar."
+              : (potreros.length + " lotes: pregunte cuántos días deja el rodeo en cada cuadro. El descanso ronda ocupación × " + (potreros.length - 1) + " días."))
           };
         }
         if (d.estado === "descanso") {
@@ -1331,7 +1339,7 @@
           return {
             color: ok ? SEM.verde : SEM.amarillo,
             sem: ok ? "verde" : "amarillo",
-            titulo: "P" + p.n + " · descanso",
+            titulo: nomPotrero(p) + " · descanso",
             sub: hayDesc ? (d.diasDescanso + " días quieto (dato del productor)") : "descanso, sin días cargados",
             accion: ok
               ? "Potrero listo. Puede entrar un lote cuando el que está lleno se quede sin días."
@@ -1346,7 +1354,7 @@
         return {
           color: SEM[sem],
           sem,
-          titulo: "P" + p.n + " · " + d.lote,
+          titulo: nomPotrero(p) + " · " + d.lote,
           sub: (hayPasto ? (d.diasRestan + " días de pasto") : "días de pasto: sin dato") + " · " + (+Number(cab).toFixed(1)) + " " + esp.unidad,
           accion: sem === "rojo"
             ? "Sacar el lote o acercar agua. Hay sobrecarga o el pasto se acaba lejos de la aguada."
@@ -1363,7 +1371,7 @@
         return {
           color: SEM[sem],
           sem,
-          titulo: "P" + p.n + " · CC " + d.cc,
+          titulo: nomPotrero(p) + " · CC " + d.cc,
           sub: d.fo + " kg MS/ha · agua " + p.dist + " m",
           accion: sem === "rojo"
             ? "Prioridad: bebida cerca y condición de la vaca. No recortar agua. Mover el lote o el bebedero."
@@ -1379,7 +1387,7 @@
         return {
           color: SEM[sem],
           sem,
-          titulo: "P" + p.n + " · " + p.agua,
+          titulo: nomPotrero(p) + " · " + p.agua,
           sub: p.dist + " m a la aguada",
           accion: muyLejos
             ? "Más de 550 m a la bebida: acercar bebedero o cambiar de potrero. No se recorta agua."
@@ -1395,7 +1403,7 @@
       if (d.estado === "descanso") {
         return {
           color: SEM.descanso, sem: "descanso",
-          titulo: "P" + p.n + " · sin vientres",
+          titulo: nomPotrero(p) + " · sin vientres",
           sub: "Descanso / reserva",
           accion: "Dejar descansar. La parición conviene cerca de una aguada (P1 o P5)."
         };
@@ -1403,7 +1411,7 @@
       return {
         color: SEM[sem],
         sem,
-        titulo: "P" + p.n + " · destete " + d.destete + " %",
+        titulo: nomPotrero(p) + " · destete " + d.destete + " %",
         sub: d.categoria + " · preñez ~" + d.prenhez + " %",
         accion: sem === "rojo"
           ? "Vacas con ternero lejos del agua: se pierde leche y destete. Acercar bebida o cambiar de potrero."
@@ -2012,6 +2020,7 @@
         prod: (document.getElementById("fProd").value || "").trim(),
         tel: (document.getElementById("fTel").value || "").trim(),
         especie: especieId(),
+        nLotes: nLotesAct(),
         lat: document.getElementById("fLat").value,
         lon: document.getElementById("fLon").value,
         faja: (document.getElementById("fFaja") || {}).value || "auto",
@@ -2027,6 +2036,11 @@
       document.getElementById("fProd").value = c.prod || c.nombre || "";
       document.getElementById("fTel").value = c.tel || "";
       if (c.especie) syncEspecie(c.especie);
+      if (c.nLotes) {
+        const elN = document.getElementById("fNLotes");
+        if (elN) elN.value = c.nLotes;
+        store.nLotes = c.nLotes;
+      }
       let latTxt = c.lat || "", lonTxt = c.lon || "";
       const a = parseAngulo(c.lat, "lat"), b = parseAngulo(c.lon, "lon");
       if (puntoValido(a, b)) {
@@ -2055,21 +2069,88 @@
         };
       }
     }
-    function armarPotreros(south, west, north, east, haTotal) {
-      const dLat = (north - south) / 2, dLon = (east - west) / 3, haP = haTotal / 6;
-      const grid = [];
-      let n = 1;
-      for (let r = 0; r < 2; r++) {
-        for (let c = 0; c < 3; c++) {
+    function nLotesAct() {
+      if (esDemoCalera) return 6;
+      const el = document.getElementById("fNLotes");
+      const n = parseInt(el && el.value, 10);
+      const v = Number.isFinite(n) ? n : Number(store.nLotes || 1);
+      return Math.max(1, Math.min(20, v));
+    }
+    function textoNotaLotes(n) {
+      if (n <= 1) {
+        return "Un solo lote: un cuadro, sin P1–P6 ni divisiones. No hay rotación entre potreros. El descanso solo ocurre si saca la hacienda.";
+      }
+      return n + " lotes: se verán " + n + " cuadros. Si el rodeo está N días en uno, los otros descansan N × " + (n - 1) + " días. Ejemplo: 7 días de ocupación → ~" + (7 * (n - 1)) + " días de descanso.";
+    }
+    function nomPotrero(p) {
+      if (esDemoCalera) return "P" + p.n;
+      if (potreros.length === 1) return "Campo";
+      return "Lote " + p.n;
+    }
+    function textoRotacion() {
+      const n = potreros.length || nLotesAct();
+      if (n <= 1) {
+        return "<b>Un solo lote (sin divisiones).</b> No hay rotación entre cuadros. El descanso solo existe si el productor saca la hacienda. Pregunte cuántos días pastorea. Eso no lo calcula el INTA ni las hectáreas.";
+      }
+      return "<b>" + n + " lotes declarados.</b> La rotación es entre esos cuadros. Descanso ≈ días de ocupación × (" + n + " − 1). " +
+        "Ejemplo: 7 días en un lote → ~" + (7 * (n - 1)) + " días de descanso en los otros. Pregunte cuántos días deja el rodeo en cada cuadro. No es un dato INTA.";
+    }
+    function gridDeLotes(n) {
+      if (n <= 1) return [1, 1];
+      if (n === 2) return [1, 2];
+      if (n === 3) return [1, 3];
+      if (n === 4) return [2, 2];
+      if (n === 6) return [2, 3];
+      if (n === 8) return [2, 4];
+      if (n === 9) return [3, 3];
+      const cols = Math.ceil(Math.sqrt(n));
+      const rows = Math.ceil(n / cols);
+      return [rows, cols];
+    }
+    function armarLotesProductor(ring, haTotal, nLotes) {
+      const n = Math.max(1, Math.min(20, Number(nLotes) || 1));
+      const z = (diagnosticoLote && diagnosticoLote.z) || 1000;
+      if (n === 1) {
+        return [{
+          n: 1,
+          ha: +(haTotal || 0).toFixed(1),
+          z: z, dist: null, agua: "Sin marcar",
+          ring: ring.slice()
+        }];
+      }
+      const lats = ring.map((p) => p[0]), lons = ring.map((p) => p[1]);
+      const south = Math.min.apply(null, lats), north = Math.max.apply(null, lats);
+      const west = Math.min.apply(null, lons), east = Math.max.apply(null, lons);
+      const rc = gridDeLotes(n);
+      const rows = rc[0], cols = rc[1];
+      const dLat = (north - south) / rows, dLon = (east - west) / cols;
+      const haP = (haTotal || 0) / n;
+      const out = [];
+      let i = 1;
+      for (let r = 0; r < rows && i <= n; r++) {
+        for (let c = 0; c < cols && i <= n; c++) {
           const s = south + r * dLat, w = west + c * dLon;
-          grid.push({
-            n: n, ha: +haP.toFixed(1), z: 1000, dist: 400, agua: "A4 Centro",
+          out.push({
+            n: i,
+            ha: +haP.toFixed(1),
+            z: z, dist: null, agua: "Sin marcar",
             ring: [[s, w], [s, w + dLon], [s + dLat, w + dLon], [s + dLat, w]]
           });
-          n++;
+          i++;
         }
       }
-      return grid;
+      return out;
+    }
+    function aplicarLotesProductor(ring, ha) {
+      const n = nLotesAct();
+      store.nLotes = n;
+      store.anilloCampo = ring.slice();
+      potreros = armarLotesProductor(ring, ha, n);
+      potreros.forEach((p) => {
+        if (!store[p.n]) store[p.n] = { tipo: (document.getElementById("fTipo") || {}).value || "ganadero" };
+      });
+      pSel = 1;
+      asignarAgua();
     }
     function armarAguadas(south, west, north, east) {
       const H = north - south, W = east - west;
@@ -2182,19 +2263,10 @@
         esDemoCalera = false;
         aplicarSitioGenerico();
         const prevAg = aguadas.filter((a) => a.productor);
-        potreros = [{
-          n: 1,
-          ha: +(ha || 0).toFixed(1),
-          z: (diagnosticoLote && diagnosticoLote.z) || 1000,
-          dist: null,
-          agua: "Sin marcar",
-          ring: ring.slice()
-        }];
-        if (!store[1]) store[1] = { tipo: "ganadero" };
+        aguadas = prevAg;
+        aplicarLotesProductor(ring, ha);
         store.especie = especieId();
         marcarEscena("actual");
-        aguadas = prevAg;
-        asignarAgua();
       } else {
         const pines = ring.length ? ring : [[lat, lon]];
         pines.forEach((p, i) => {
@@ -2227,7 +2299,14 @@
       const cercaDemo = distM([cx, cy], DEMO_CENTRO) < 2500;
       let aviso = "Campo en " + textoGps(cx, cy) + ".";
       if (cercaDemo) aviso = "Esas coordenadas caen en el demostrativo de La Calera. Pegue latitud Sur y longitud Oeste de SU plano.";
-      else if (hayAnillo) aviso = "Alambrado cerrado: " + fmtHa(ha) + " (" + ring.length + " esquinas). En el satélite: " + textoGps(cx, cy) + ".";
+      else if (hayAnillo) {
+        const n = nLotesAct();
+        aviso = "Alambrado cerrado: " + fmtHa(ha) + ". " +
+          (n <= 1
+            ? "Un solo lote: un cuadro, sin divisiones."
+            : (n + " lotes visibles. Rotación: descanso ≈ días de ocupación × " + (n - 1) + ".")) +
+          " Satélite: " + textoGps(cx, cy) + ".";
+      }
       else if (ring.length) aviso = "El plano trajo " + ring.length + " vértice(s). Toque en el satélite las esquinas que faltan, donde se ve el alambrado.";
       else aviso = "Esa esquina está en " + textoGps(cx, cy) + ". Toque el satélite para marcar las otras esquinas.";
       document.getElementById("msg").hidden = false;
@@ -2495,6 +2574,27 @@
       document.getElementById("msg").textContent = "Volvió al demostrativo de Gemelo Digital Ganadero.";
     }
     document.getElementById("btnVerCampo").addEventListener("click", cargarCampoProductor);
+    const elNLotes = document.getElementById("fNLotes");
+    if (elNLotes) {
+      const pintarNotaLotes = () => {
+        const n = nLotesAct();
+        const nota = document.getElementById("notaLotes");
+        if (nota) nota.textContent = textoNotaLotes(n);
+      };
+      elNLotes.addEventListener("input", pintarNotaLotes);
+      elNLotes.addEventListener("change", () => {
+        pintarNotaLotes();
+        if (esDemoCalera) return;
+        if (!store.anilloCampo || store.anilloCampo.length < 3) return;
+        const ha = haDeAnillo(store.anilloCampo);
+        aplicarLotesProductor(store.anilloCampo, ha);
+        dibujarPredio();
+        if (typeof pintarCampos === "function") pintarCampos();
+        if (typeof llenar === "function") llenar();
+        refrescarMapa();
+      });
+      pintarNotaLotes();
+    }
     document.getElementById("btnDemoCalera").addEventListener("click", volverDemo);
     document.getElementById("fPlano").addEventListener("change", (ev) => {
       const f = ev.target.files && ev.target.files[0];
@@ -2640,29 +2740,60 @@
         labByN[p.n].bindPopup("<b>" + v.titulo + "</b><br>" + v.sub + "<br><br>" + v.accion);
       }
     }
+    function reconstruirPills() {
+      const pillsEl = document.getElementById("pills");
+      if (!pillsEl) return;
+      pillsEl.innerHTML = "";
+      if (!potreros.length) {
+        pillsEl.hidden = true;
+        return;
+      }
+      pillsEl.hidden = false;
+      potreros.forEach((p) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = esDemoCalera
+          ? ("P" + p.n)
+          : (potreros.length === 1 ? "Campo · un lote" : ("Lote " + p.n));
+        b.dataset.n = p.n;
+        if (p.n === pSel) b.classList.add("on");
+        b.addEventListener("click", () => abrir(p.n, true));
+        pillsEl.appendChild(b);
+      });
+    }
+    function etiquetaLote(p) {
+      if (esDemoCalera) return "P" + p.n;
+      return potreros.length === 1 ? "1 lote" : ("L" + p.n);
+    }
     function dibujarPredio() {
       group.clearLayers();
       Object.keys(polyByN).forEach((k) => { delete polyByN[k]; });
       Object.keys(labByN).forEach((k) => { delete labByN[k]; });
-      const pillsEl = document.getElementById("pills");
-      if (pillsEl) pillsEl.hidden = !esDemoCalera;
+      reconstruirPills();
       const dropLote = document.getElementById("dropLote");
       if (dropLote) {
-        dropLote.hidden = !esDemoCalera;
-        if (!esDemoCalera) dropLote.open = false;
-      }
-      if (!esDemoCalera) {
-        aguadas.forEach(ponerMarcaAguada);
-        dibujarAgua();
-        return;
+        dropLote.hidden = potreros.length < 2;
+        if (potreros.length < 2) dropLote.open = false;
       }
       potreros.forEach((p) => {
         const poly = L.polygon(p.ring, {
-          pane: "alambrado", color: "#fff", weight: 3, fillColor: SEM.verde, fillOpacity: 0.22
+          pane: "alambrado",
+          color: esDemoCalera ? "#fff" : "#C4A35A",
+          weight: 2.5,
+          fillColor: SEM.verde,
+          fillOpacity: potreros.length === 1 ? 0.10 : 0.18
         }).addTo(group);
         polyByN[p.n] = poly;
         const c = centro(p.ring);
-        const lab = L.marker(c, { icon: L.divIcon({ className: "lab", html: "<span>P" + p.n + "</span>", iconSize: [28, 16], iconAnchor: [14, 8] }) }).addTo(group);
+        const txt = etiquetaLote(p);
+        const lab = L.marker(c, {
+          icon: L.divIcon({
+            className: "lab",
+            html: "<span>" + txt + "</span>",
+            iconSize: txt.length > 4 ? [78, 16] : [28, 16],
+            iconAnchor: txt.length > 4 ? [39, 8] : [14, 8]
+          })
+        }).addTo(group);
         labByN[p.n] = lab;
         poly.on("click", () => abrir(p.n, false));
         lab.on("click", () => abrir(p.n, false));
@@ -2753,13 +2884,6 @@
     }, 280);
 
     const campos = document.getElementById("campos");
-    const pills = document.getElementById("pills");
-    potreros.forEach((p) => {
-      const b = document.createElement("button");
-      b.type = "button"; b.textContent = "P" + p.n; b.dataset.n = p.n;
-      b.addEventListener("click", () => abrir(p.n, true));
-      pills.appendChild(b);
-    });
     function campo(id, lab, type, step) {
       return "<div><label>" + lab + "</label><input id='" + id + "' type='" + (type || "text") + "'" + (step ? " step='" + step + "'" : "") + " /></div>";
     }
@@ -2768,13 +2892,18 @@
       const labEv = "Carga (" + esp.unidad + " · " + esp.plural + ")";
       const labHa = "Receptividad (" + esp.unidadHa + ")";
       if (modSel === "pastoreo") {
+        const n = potreros.length || 1;
+        const nota = n <= 1
+          ? "<p class='aviso' style='grid-column:1/-1'>Un solo lote: no hay rotación entre cuadros. El descanso solo ocurre si saca la hacienda.</p>"
+          : "<p class='aviso' style='grid-column:1/-1'>" + n + " lotes. Si carga días de ocupación, el descanso sugerido es ocupación × " + (n - 1) + " (puede cambiarlo).</p>";
         campos.innerHTML =
           campo("fEstado", "Estado (pregúntele: ¿hay hacienda o está en descanso?)") +
-          campo("fDias", "Días de pasto que quedan (dato del productor, no INTA)", "number") +
-          campo("fDesc", "Días de descanso / rotación (dato del productor, no INTA)", "number") +
+          campo("fDias", "Días de ocupación / pasto que quedan (dato del productor)", "number") +
+          campo("fDesc", "Días de descanso (dato del productor; con " + n + " lotes ≈ ocupación × " + Math.max(0, n - 1) + ")", "number") +
           campo("fFo", "Forraje en oferta (kg MS/ha)", "number") +
           campo("fEv", labEv, "number", "0.1") +
-          campo("fHaEv", labHa, "number", "0.1");
+          campo("fHaEv", labHa, "number", "0.1") +
+          nota;
       } else if (modSel === "nutricion") {
         campos.innerHTML =
           campo("fCc", "Condición corporal (1 a 5)", "number", "0.1") +
@@ -2891,7 +3020,7 @@
           "<b>Techo Ideal (INTA):</b> " + tOp.haUnidad + " " + tOp.unidadHa + " · destete " + tOp.destete + " % · " + tOp.kgHa + " kg/ha.<br>" +
           "Hacienda: " + especieAct().plural + ". Mejorando e Ideal se cargan con el productor; estos números son el techo, no el valor pegado.";
       }
-      if (sum) sum.textContent = "P" + p.n;
+      if (sum) sum.textContent = nomPotrero(p);
       actualizarFichasCampo();
     }
     function abrir(n, conPanel) {
@@ -2941,11 +3070,20 @@
     if (elEsp) elEsp.addEventListener("change", () => onCambioEspecie(elEsp.value));
     if (elEspP) elEspP.addEventListener("change", () => onCambioEspecie(elEspP.value));
     syncEspecie(store.especie || "cria");
-    campos.addEventListener("input", () => {
-      const ev = document.getElementById("fEv");
+    campos.addEventListener("input", (ev) => {
+      const evEl = document.getElementById("fEv");
       const al = document.getElementById("fAguaL");
       const ar = document.getElementById("fAguaRodeo");
-      if (ev && al && ar) ar.value = Math.round(Number(ev.value || 0) * Number(al.value || 0));
+      if (evEl && al && ar) ar.value = Math.round(Number(evEl.value || 0) * Number(al.value || 0));
+      const dias = document.getElementById("fDias");
+      const desc = document.getElementById("fDesc");
+      if (dias && desc && potreros.length > 1) {
+        if (ev.target && ev.target.id === "fDesc") desc.dataset.auto = "0";
+        if (ev.target && ev.target.id === "fDias" && dias.value !== "" && desc.dataset.auto !== "0") {
+          desc.value = Math.round(Number(dias.value) * (potreros.length - 1));
+          desc.dataset.auto = "1";
+        }
+      }
     });
     document.getElementById("btnEstimar").addEventListener("click", () => {
       refrescarMapa();
