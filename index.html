@@ -695,10 +695,9 @@
       </div>
 
       <div class="paso">
-        <p><b class="nro">D</b> <b>¿El campo es un solo lote o está dividido?</b> P1 a P6 es solo el demostrativo de 500 ha. Su campo puede ser un cuadro, o 2, 3 o más, según lo que declare el productor. No depende de las hectáreas.</p>
-        <label for="fNLotes">Número de lotes / potreros</label>
+        <p><b class="nro">D</b> <b>¿Cuántos lotes o potreros tiene el campo?</b></p>
+        <label for="fNLotes">Número de lotes</label>
         <input id="fNLotes" type="number" min="1" max="20" step="1" value="1" />
-        <p class="ok" id="notaLotes">1 lote = un solo cuadro, sin divisiones. Si pone 2 o más, se ven esos cuadros. La rotación y el descanso se calculan con ese número: si el rodeo está N días en un lote, los otros descansan N × (lotes − 1) días.</p>
       </div>
 
       <div class="paso">
@@ -2220,10 +2219,8 @@
       return Math.max(1, Math.min(20, v));
     }
     function textoNotaLotes(n) {
-      if (n <= 1) {
-        return "Un solo lote: un cuadro, sin P1–P6 ni divisiones. No hay rotación entre potreros. El descanso solo ocurre si saca la hacienda.";
-      }
-      return n + " lotes: se verán " + n + " cuadros. Si el rodeo está N días en uno, los otros descansan N × " + (n - 1) + " días. Ejemplo: 7 días de ocupación → ~" + (7 * (n - 1)) + " días de descanso.";
+      if (n <= 1) return "Un lote.";
+      return n + " lotes.";
     }
     function nomPotrero(p) {
       if (esDemoCalera) return "P" + p.n;
