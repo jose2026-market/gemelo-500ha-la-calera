@@ -649,8 +649,10 @@
       <div class="paso">
         <p><b class="nro">A</b> <b>¿Cómo se llama el establecimiento?</b></p>
         <label for="fProd">Nombre del campo</label>
-        <input id="fProd" type="text" placeholder="Ej. El Crispín" autocomplete="name" />
-        <label for="fTel">Teléfono o WhatsApp (opcional)</label>
+        <input id="fProd" type="text" placeholder="Ej. El Crispín" autocomplete="organization" />
+        <label for="fPropietario">Contacto del propietario</label>
+        <input id="fPropietario" type="text" placeholder="Nombre y apellido" autocomplete="name" />
+        <label for="fTel">Teléfono o WhatsApp</label>
         <input id="fTel" type="tel" placeholder="2664..." autocomplete="tel" />
       </div>
 
@@ -2149,6 +2151,7 @@
       return {
         nombre: (document.getElementById("fProd").value || store.nombreCampo || "").trim(),
         prod: (document.getElementById("fProd").value || "").trim(),
+        propietario: (document.getElementById("fPropietario") && document.getElementById("fPropietario").value || "").trim(),
         tel: (document.getElementById("fTel").value || "").trim(),
         especie: especieId(),
         nLotes: nLotesAct(),
@@ -2168,6 +2171,8 @@
     }
     function aplicarFormCampo(c) {
       document.getElementById("fProd").value = c.prod || c.nombre || "";
+      const elProp = document.getElementById("fPropietario");
+      if (elProp) elProp.value = c.propietario || "";
       document.getElementById("fTel").value = c.tel || "";
       if (c.especie) syncEspecie(c.especie);
       if (c.estacion || c.otbn) syncEstacionOtbn(c.estacion || estacionId(), c.otbn || otbnId());
@@ -3774,6 +3779,7 @@
     function pintarInforme() {
       const campo = store.nombreCampo || DEMO_NOMBRE;
       const prod = (document.getElementById("fProd").value || store.consulta && store.consulta.prod || "").trim();
+      const propietario = ((document.getElementById("fPropietario") && document.getElementById("fPropietario").value) || store.consulta && store.consulta.propietario || "").trim();
       const tel = (document.getElementById("fTel").value || store.consulta && store.consulta.tel || "").trim();
       const fecha = new Date().toLocaleDateString("es-AR");
       const hall = hallarCriticos();
@@ -3810,7 +3816,9 @@
       document.getElementById("cuerpoInforme").innerHTML =
         "<h1>Informe al productor</h1>" +
         "<p class='meta'>Sociedad Rural de San Luis · Gemelo Digital Ganadero · Observatorio de IA UCCuyo<br>" +
-        escHtml(campo) + (prod ? " · " + escHtml(prod) : "") + (tel ? " · " + escHtml(tel) : "") + "<br>" +
+        escHtml(campo) + (prod ? " · " + escHtml(prod) : "") +
+        (propietario ? " · contacto: " + escHtml(propietario) : "") +
+        (tel ? " · " + escHtml(tel) : "") + "<br>" +
         fecha + " · Entregable de consulta. No es padrón catastral ni análisis de agua de laboratorio.</p>" +
         "<h2>Las tres situaciones del campo · " + escHtml(esp.plural) + "</h2>" +
         "<div class='sit'>" +
@@ -3977,19 +3985,22 @@
         aviso.scrollIntoView({ block: "nearest", behavior: "smooth" });
       };
       const prod = (document.getElementById("fProd").value || "").trim();
+      const propietario = ((document.getElementById("fPropietario") && document.getElementById("fPropietario").value) || "").trim();
       const tel = (document.getElementById("fTel").value || "").trim();
       const lat = (document.getElementById("fLat").value || "").trim();
       const lon = (document.getElementById("fLon").value || "").trim();
       const ha = (document.getElementById("fHaCampo").value || "").trim();
       if (!prod || !tel) {
-        decir("Complete nombre y teléfono en Mi campo (abajo) y vuelva a tocar Pedir consulta. Ahí le confirmamos el pedido.");
+        decir("Complete nombre del campo y teléfono en Mi campo (abajo) y vuelva a tocar Pedir consulta. Ahí le confirmamos el pedido.");
         document.getElementById("fProd").focus();
         return;
       }
       if (prod) aplicarNombre(prod);
-      store.consulta = { prod, tel, lat, lon, ha, fecha: new Date().toISOString() };
+      store.consulta = { prod, propietario, tel, lat, lon, ha, fecha: new Date().toISOString() };
       saveStore(store);
-      decir("Consulta pedida. Recibimos el pedido de " + prod + ". Lo contactamos al " + tel + " para ver su campo y armar Actual, Mejorando e Ideal (techo INTA).", true);
+      decir("Consulta pedida. Recibimos el pedido de " + prod +
+        (propietario ? " (contacto: " + propietario + ")" : "") +
+        ". Lo contactamos al " + tel + " para ver su campo y armar Actual, Mejorando e Ideal (techo INTA).", true);
     });
   </script>
 </body>
