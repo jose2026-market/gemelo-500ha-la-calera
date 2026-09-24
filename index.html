@@ -642,8 +642,8 @@
       <button type="button" id="btnMiCampo" aria-expanded="false">Mi campo</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
-      <p class="aviso"><b>Preguntas al productor · para identificar el campo</b><br>
-        Haga estas preguntas en este orden. Hasta que no esté el lote en el satélite, no se lee la situación actual.</p>
+      <p class="aviso"><b>Preguntas al productor · primero el establecimiento, al final la hacienda</b><br>
+        Hasta que no esté el lote en el satélite, no se lee la situación actual.</p>
       <p class="aviso solo-celular">Vista rápida: el campo se ve en esta sesión y no queda guardado en el teléfono.</p>
 
       <div class="paso">
@@ -657,17 +657,7 @@
       </div>
 
       <div class="paso">
-        <p><b class="nro">B</b> <b>¿Qué hacienda es?</b> Este gemelo es ganadero de cría: vacas, ovejas o cabras.</p>
-        <label for="fEspecie">Especie (elija con el productor)</label>
-        <select id="fEspecie">
-          <option value="cria">Vacas de cría</option>
-          <option value="oveja">Ovejas</option>
-          <option value="cabra">Cabras</option>
-        </select>
-      </div>
-
-      <div class="paso">
-        <p><b class="nro">C</b> <b>¿Dónde está el campo?</b> Pregunte <u>una</u> de estas dos cosas (las dos valen):</p>
+        <p><b class="nro">B</b> <b>¿Dónde está el campo?</b> Pregunte <u>una</u> de estas dos cosas (las dos valen):</p>
         <p><b>1 · Las coordenadas del plano de mensura</b> — tabla de latitud y longitud (φ y λ), grados, minutos y segundos. Ejemplo: <b>33°15'20" S</b> y <b>66°48'10" O</b>.</p>
         <p class="aviso">No use las columnas X e Y (números grandes de 7 cifras: Gauss-Krüger). Si el plano solo trae 2 vértices, péguelos: las otras esquinas se marcan tocando el alambrado en el satélite.</p>
         <p><b>Una esquina</b> (para ubicar el punto)</p>
@@ -697,13 +687,13 @@
       </div>
 
       <div class="paso">
-        <p><b class="nro">D</b> <b>¿Cuántos lotes o potreros tiene el campo?</b></p>
+        <p><b class="nro">C</b> <b>¿Cuántos lotes o potreros tiene el campo?</b></p>
         <label for="fNLotes">Número de lotes</label>
         <input id="fNLotes" type="number" min="1" max="20" step="1" value="1" />
       </div>
 
       <div class="paso">
-        <p><b>Época de esta visita y OTBN.</b> La superficie del campo y la oferta forrajera de la zona no cambian. Lo que cambia es el estado fenológico (primavera, verano, otoño, invierno) y las decisiones: estirar días de consumo o sumar animales. Las dos cosas a la vez desequilibran.</p>
+        <p><b class="nro">D</b> <b>Época de esta visita y OTBN</b> de este lugar.</p>
         <label for="fEstacion">¿En qué época evalúan el campo?</label>
         <select id="fEstacion">
           <option value="primavera">Primavera</option>
@@ -719,7 +709,19 @@
         </select>
       </div>
 
-      <button type="button" id="btnVerCampo">E · Ver el campo y leer la situación actual</button>
+      <div class="paso">
+        <p><b class="nro">E</b> <b>¿Qué hacienda tiene y cuántas son?</b> Vacas, ovejas o cabras, y el número actual.</p>
+        <label for="fEspecie">Tipo de hacienda</label>
+        <select id="fEspecie">
+          <option value="cria">Vacas de cría</option>
+          <option value="oveja">Ovejas</option>
+          <option value="cabra">Cabras</option>
+        </select>
+        <label for="fCabezas">Cuántas hay ahora</label>
+        <input id="fCabezas" type="number" min="0" step="1" placeholder="ej. 10" />
+      </div>
+
+      <button type="button" id="btnVerCampo">Ver el campo y leer la situación actual</button>
       <button type="button" id="btnGuardarCampo" class="sec">Guardar este campo</button>
       <label class="solo-escritorio">Campos guardados</label>
       <div class="lista-campos" id="listaCampos"></div>
@@ -2155,6 +2157,7 @@
         tel: (document.getElementById("fTel").value || "").trim(),
         especie: especieId(),
         nLotes: nLotesAct(),
+        cabezas: (document.getElementById("fCabezas") && document.getElementById("fCabezas").value) || store.cabezas || "",
         estacion: estacionId(),
         otbn: otbnId(),
         lat: document.getElementById("fLat").value,
@@ -2175,6 +2178,8 @@
       if (elProp) elProp.value = c.propietario || "";
       document.getElementById("fTel").value = c.tel || "";
       if (c.especie) syncEspecie(c.especie);
+      const elCab = document.getElementById("fCabezas");
+      if (elCab && (c.cabezas != null && c.cabezas !== "")) elCab.value = c.cabezas;
       if (c.estacion || c.otbn) syncEstacionOtbn(c.estacion || estacionId(), c.otbn || otbnId());
       if (c.nLotes) {
         const elN = document.getElementById("fNLotes");
@@ -2581,6 +2586,31 @@
       pSel = 1;
       asignarAgua();
     }
+    function aplicarCabezasMenu() {
+      const el = document.getElementById("fCabezas");
+      const n = el && el.value !== "" ? Number(el.value) : Number(store.cabezas);
+      if (!Number.isFinite(n) || n < 0) return;
+      store.cabezas = n;
+      const p = potreros[0];
+      if (!p) return;
+      const esp = especieAct();
+      const over = {
+        cabezas: n,
+        ev: +(n * (esp.evPorCabeza || 1)).toFixed(2),
+        _sinCarga: false
+      };
+      const der = typeof diasDeCarga === "function" ? diasDeCarga(p, over) : null;
+      if (der) {
+        over.diasRestan = der.maxDias;
+        over.diasDescanso = der.descSug;
+        over.haUnidad = der.haUnidad;
+        over.haEV = der.haEV;
+        over.diasOrigen = "equilibrio";
+      }
+      if (!store[p.n]) store[p.n] = { tipo: "ganadero" };
+      if (!store[p.n].pastoreo) store[p.n].pastoreo = {};
+      store[p.n].pastoreo.actual = Object.assign({}, store[p.n].pastoreo.actual || {}, over);
+    }
     function armarAguadas(south, west, north, east) {
       const H = north - south, W = east - west;
       const pts = [
@@ -2697,6 +2727,7 @@
         aguadas = prevAg;
         aplicarLotesProductor(ring, ha);
         store.especie = especieId();
+        aplicarCabezasMenu();
         marcarEscena("actual");
       } else {
         const pines = ring.length ? ring : [[lat, lon]];
@@ -3499,6 +3530,7 @@
     });
     function onCambioEspecie(id) {
       syncEspecie(id);
+      aplicarCabezasMenu();
       pintarCampos();
       refrescarMapa();
     }
@@ -3506,6 +3538,13 @@
     const elEspP = document.getElementById("fEspeciePanel");
     if (elEsp) elEsp.addEventListener("change", () => onCambioEspecie(elEsp.value));
     if (elEspP) elEspP.addEventListener("change", () => onCambioEspecie(elEspP.value));
+    const elCabMenu = document.getElementById("fCabezas");
+    if (elCabMenu) {
+      elCabMenu.addEventListener("change", () => {
+        aplicarCabezasMenu();
+        if (typeof llenar === "function") llenar();
+      });
+    }
     syncEspecie(store.especie || "cria");
     syncEstacionOtbn(store.estacion || estacionPorFecha(), store.otbn || "II");
     function onCambioEstacionOtbn() {
