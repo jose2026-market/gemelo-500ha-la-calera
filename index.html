@@ -847,7 +847,7 @@
   <script src="superficie.js"></script>
   <script>
     const MARCA = "Gemelo Digital Ganadero";
-    const DEMO_NOMBRE = "Gemelo Digital Ganadero · demostrativo 500 ha";
+    const DEMO_NOMBRE = "Gemelo Digital Ganadero";
     const KEY = "gemelo-500ha-manejo-v1";
     const SEM = { verde: "#1B7A4A", amarillo: "#C4A035", rojo: "#B42318", descanso: "#5C7A8A" };
     const ESPECIE = {
@@ -962,7 +962,7 @@
     }
     let zmin = 917, zmax = 1023;
     const store = loadStore();
-    if (!store.nombreCampo || store.nombreCampo === "Campo gemelo · 500 ha · La Calera") store.nombreCampo = DEMO_NOMBRE;
+    if (!store.nombreCampo || /500\s*ha|demostrativo|Campo gemelo ·/i.test(store.nombreCampo)) store.nombreCampo = DEMO_NOMBRE;
     if (!Array.isArray(store.camposGuardados)) store.camposGuardados = [];
     if (!store.especie) store.especie = "cria";
     potreros.forEach((p) => { if (!store[p.n]) store[p.n] = { tipo: "ganadero" }; });
@@ -1585,7 +1585,7 @@
       store.nombreCampo = n;
       saveStore(store);
       document.querySelector(".title").textContent = n;
-      document.title = n;
+      document.title = "Gemelo Digital Ganadero";
       document.getElementById("cartelNombre").textContent = n;
       document.getElementById("fNombreCampo").value = n;
     }
@@ -2494,7 +2494,7 @@
       pintarAvisoSat(0);
       verCampo();
       document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = "Volvió al demostrativo de Gemelo Digital Ganadero (500 ha).";
+      document.getElementById("msg").textContent = "Volvió al demostrativo de Gemelo Digital Ganadero.";
     }
     document.getElementById("btnVerCampo").addEventListener("click", cargarCampoProductor);
     document.getElementById("btnDemoCalera").addEventListener("click", volverDemo);
