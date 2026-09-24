@@ -98,7 +98,11 @@
       background: #FFF6E5; border: 1px solid #E6C989; color: #6A4B12;
       font-size: 11px; padding: 6px 8px; border-radius: 8px; margin: 0 0 8px;
     }
-    .sema { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+    .eq-box { font-size: 11px; line-height: 1.4; padding: 8px 10px; border-radius: 8px; margin: 8px 0; }
+    .eq-box b.tit { display: block; margin-bottom: 4px; }
+    .eq-box.verde { background: #E7F3EC; border: 1px solid #9FCBB0; color: #0D5C2C; }
+    .eq-box.amarillo { background: #FFF6E5; border: 1px solid #E6C989; color: #6A4B12; }
+    .eq-box.rojo { background: #FDECEC; border: 1px solid #E8A0A0; color: #8A1F16; }
     label { display: block; font-size: 11px; color: #5C564F; margin: 6px 0 2px; }
     input, textarea, select {
       width: 100%; box-sizing: border-box; border: 1px solid #c5cdc8;
@@ -692,6 +696,23 @@
         <p class="ok" id="notaLotes">1 lote = un solo cuadro, sin divisiones. Si pone 2 o más, se ven esos cuadros. La rotación y el descanso se calculan con ese número: si el rodeo está N días en un lote, los otros descansan N × (lotes − 1) días.</p>
       </div>
 
+      <div class="paso">
+        <p><b>Época de esta visita y OTBN.</b> La superficie del campo y la oferta forrajera de la zona no cambian. Lo que cambia es el estado fenológico (primavera, verano, otoño, invierno) y las decisiones: estirar días de consumo o sumar animales. Las dos cosas a la vez desequilibran.</p>
+        <label for="fEstacion">¿En qué época evalúan el campo?</label>
+        <select id="fEstacion">
+          <option value="primavera">Primavera</option>
+          <option value="verano">Verano</option>
+          <option value="otono">Otoño</option>
+          <option value="invierno">Invierno</option>
+        </select>
+        <label for="fOtbn">OTBN de este lote (como se ve en el mapa)</label>
+        <select id="fOtbn">
+          <option value="II">II · amarillo (MBGI, la más frecuente)</option>
+          <option value="I">I · rojo (no desmontar, más descanso del monte)</option>
+          <option value="III">III · verde (más pastizal; igual sin soja ni desmonte)</option>
+        </select>
+      </div>
+
       <button type="button" id="btnVerCampo">E · Ver el campo y leer la situación actual</button>
       <button type="button" id="btnGuardarCampo" class="sec">Guardar este campo</button>
       <button type="button" id="btnDemoCalera" class="sec" style="background:#F7F1E4;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Volver al demostrativo</button>
@@ -708,6 +729,7 @@
         <button type="button" data-esc="optimo">Ideal</button>
       </div>
       <p class="aviso" id="topeEscena"></p>
+      <div class="eq-box amarillo" id="eqBox">El punto de equilibrio aparece al cargar el campo: superficie y oferta de la zona fijas; días y cabezas móviles según la época y el OTBN.</div>
       <div class="grid2">
         <div>
           <label>Tipo de campo</label>
@@ -723,6 +745,23 @@
             <option value="cria">Vacas de cría</option>
             <option value="oveja">Ovejas</option>
             <option value="cabra">Cabras</option>
+          </select>
+        </div>
+        <div>
+          <label>Época de la visita</label>
+          <select id="fEstacionPanel">
+            <option value="primavera">Primavera</option>
+            <option value="verano">Verano</option>
+            <option value="otono">Otoño</option>
+            <option value="invierno">Invierno</option>
+          </select>
+        </div>
+        <div>
+          <label>OTBN</label>
+          <select id="fOtbnPanel">
+            <option value="II">II · MBGI</option>
+            <option value="I">I · más descanso</option>
+            <option value="III">III · pastizal</option>
           </select>
         </div>
         <div>
@@ -804,6 +843,7 @@
         <div class="cuerpo">
           <p class="hint">Primero se lee la <b>situación actual</b> (INTA). <b>Mejorando</b> e <b>Ideal</b> no vienen cargados: se arman con el productor. El techo lo pone INTA.</p>
           <div class="ficha-oficial" id="avanceManejo"></div>
+          <div class="eq-box amarillo" id="eqBoxManejo">Punto de equilibrio: se actualiza al cambiar días, cabezas, época u OTBN.</div>
           <details class="sub" data-mod-drop="pastoreo">
             <summary>Pastoreo</summary>
             <div class="cuerpo"><p class="hint" id="hintPastoreo">Los días de pastoreo y de rotación no vienen del INTA: hay que preguntárselos al productor.</p></div>
@@ -966,6 +1006,8 @@
     if (!store.nombreCampo || /500\s*ha|demostrativo|Campo gemelo ·/i.test(store.nombreCampo)) store.nombreCampo = DEMO_NOMBRE;
     if (!Array.isArray(store.camposGuardados)) store.camposGuardados = [];
     if (!store.especie) store.especie = "cria";
+    if (!store.estacion) store.estacion = estacionPorFecha();
+    if (!store.otbn) store.otbn = "II";
     potreros.forEach((p) => { if (!store[p.n]) store[p.n] = { tipo: "ganadero" }; });
 
     function factor(p) {
@@ -1125,6 +1167,13 @@
       }
       if (esc === "optimo" && tipo === "ganadero" && !sit.bajo && Number(d.kg) / p.ha > 13) {
         motivos.push("En loma el ideal no llega a 23 kg/ha. Eso pide bajo + permiso OTBN.");
+      }
+      if (typeof equilibrioDe === "function") {
+        const eq = equilibrioDe(p, d);
+        if (eq.ratio < 0.85) {
+          motivos.push("Fuera de equilibrio en " + estacionAct().nombre + " / OTBN " + otbnAct().id +
+            ": esa combinación de días y cabezas pide más forraje del que da la zona en esta época. Estire días O sume animales, no las dos cosas. La superficie no cambia.");
+        }
       }
       return { posible: motivos.length === 0, motivos, techo: t };
     }
@@ -1294,9 +1343,8 @@
         "<b>3 · Ideal</b> " + (hayOp ? txtCifras(op) : "techo productivo INTA para este lote y esta hacienda. No se pasa.") +
         "<br>Agua: una " + esp.nombre + " ~" + esp.aguaL + " L/día (" + esp.aguaMin + "–" + esp.aguaMax + "). Rodeo actual ≈ " + act.aguaRodeo + " L/día."
       );
-      setTxt("hintPastoreo",
-        textoRotacion() + " Hoy la carta indica ~" + act.haUnidad + " " + act.unidadHa + " para " + esp.plural + "."
-      );
+      setTxt("hintPastoreo", textoRotacion() + " Hoy la carta indica ~" + act.haUnidad + " " + act.unidadHa + " para " + esp.plural + ".");
+      if (typeof pintarEquilibrio === "function") pintarEquilibrio();
       setTxt("hintNutricion", "CC inicial ~2,7. El agua de una " + esp.nombre + " es ~" + esp.aguaL + " L/día, no el de otra especie. No recortar bebida.");
       setTxt("hintRepro", esp.desteteLab + " inicial ~" + act.destete + " %. El 85 % es techo INTA de vacas de cría; en oveja y cabra se carga el dato del productor.");
       setTxt("hintAguaMod", "Una " + esp.nombre + " ~" + esp.aguaL + " L/día. Alcance de cría 400 m. " + (muyLejos[0] ? ("Lote a " + muyLejos[0].dist + " m: acercar bebedero.") : "Detalle en el informe."));
@@ -2021,6 +2069,8 @@
         tel: (document.getElementById("fTel").value || "").trim(),
         especie: especieId(),
         nLotes: nLotesAct(),
+        estacion: estacionId(),
+        otbn: otbnId(),
         lat: document.getElementById("fLat").value,
         lon: document.getElementById("fLon").value,
         faja: (document.getElementById("fFaja") || {}).value || "auto",
@@ -2036,6 +2086,7 @@
       document.getElementById("fProd").value = c.prod || c.nombre || "";
       document.getElementById("fTel").value = c.tel || "";
       if (c.especie) syncEspecie(c.especie);
+      if (c.estacion || c.otbn) syncEstacionOtbn(c.estacion || estacionId(), c.otbn || otbnId());
       if (c.nLotes) {
         const elN = document.getElementById("fNLotes");
         if (elN) elN.value = c.nLotes;
@@ -2094,6 +2145,160 @@
       }
       return "<b>" + n + " lotes declarados.</b> La rotación es entre esos cuadros. Descanso ≈ días de ocupación × (" + n + " − 1). " +
         "Ejemplo: 7 días en un lote → ~" + (7 * (n - 1)) + " días de descanso en los otros. Pregunte cuántos días deja el rodeo en cada cuadro. No es un dato INTA.";
+    }
+    const ESTACION = {
+      primavera: { id: "primavera", nombre: "primavera", pasto: 0.90, monte: 0.75,
+        nota: "Rebrote. El monte todavía va lento. Se puede rotar; no alargar de más." },
+      verano: { id: "verano", nombre: "verano", pasto: 1.20, monte: 1.00,
+        nota: "Pico de pasto estival y monte con hoja. Si hay oferta, se estiran días O se suma carga, no las dos cosas." },
+      otono: { id: "otono", nombre: "otoño", pasto: 0.80, monte: 0.90,
+        nota: "Baja el pasto; el monte todavía aporta. Estirar días pide bajar cabezas." },
+      invierno: { id: "invierno", nombre: "invierno", pasto: 0.48, monte: 0.72,
+        nota: "Pasto dormido; más ramoneo. No estirar ocupación. El OTBN I/II pide más descanso del monte." }
+    };
+    const OTBN_CAT = {
+      I: { id: "I", fo: 0.82, estira: false, descansoExtra: 1.35,
+        nota: "OTBN I: no se desmonta ni se implanta. El monte necesita más descanso. No se estira el pastoreo para 'hacer más pasto'." },
+      II: { id: "II", fo: 1.00, estira: "parcial", descansoExtra: 1.15,
+        nota: "OTBN II: bosque con ganadería integrada. Rotar sí; limpiar no. Estirar días solo si la oferta de esta estación da." },
+      III: { id: "III", fo: 1.08, estira: true, descansoExtra: 1.00,
+        nota: "OTBN III: más margen de pastizal. Sigue sin soja ni desmonte. El techo lo pone la oferta de la zona y la época." }
+    };
+    function estacionPorFecha() {
+      const m = new Date().getMonth() + 1;
+      if (m === 12 || m <= 2) return "verano";
+      if (m <= 5) return "otono";
+      if (m <= 8) return "invierno";
+      return "primavera";
+    }
+    function estacionId() {
+      const a = document.getElementById("fEstacion");
+      const b = document.getElementById("fEstacionPanel");
+      return (a && a.value) || (b && b.value) || store.estacion || estacionPorFecha();
+    }
+    function estacionAct() {
+      return ESTACION[estacionId()] || ESTACION.primavera;
+    }
+    function otbnId() {
+      const a = document.getElementById("fOtbn");
+      const b = document.getElementById("fOtbnPanel");
+      return (a && a.value) || (b && b.value) || store.otbn || "II";
+    }
+    function otbnAct() {
+      return OTBN_CAT[otbnId()] || OTBN_CAT.II;
+    }
+    function syncEstacionOtbn(est, ot) {
+      store.estacion = ESTACION[est] ? est : estacionPorFecha();
+      store.otbn = OTBN_CAT[ot] ? ot : "II";
+      const e1 = document.getElementById("fEstacion"), e2 = document.getElementById("fEstacionPanel");
+      const o1 = document.getElementById("fOtbn"), o2 = document.getElementById("fOtbnPanel");
+      if (e1) e1.value = store.estacion;
+      if (e2) e2.value = store.estacion;
+      if (o1) o1.value = store.otbn;
+      if (o2) o2.value = store.otbn;
+    }
+    function inferirOtbn() {
+      const t = String((diagnosticoLote && (diagnosticoLote.fisonomia || "")) + " " + ((diagnosticoLote && diagnosticoLote.uso) || "")).toLowerCase();
+      if (/bosque|monte denso|quebracho|caldén|calden|leñoso cerrado/.test(t)) return "I";
+      if (/pastiz|peladar|bajo|salina|gramíneo|gramineo/.test(t)) return "III";
+      if (/monte|leñoso|arbust/.test(t)) return "II";
+      return store.otbn || "II";
+    }
+    function equilibrioDe(p, extra) {
+      const d = Object.assign({}, dato(p), extra || {});
+      const tipo = (store[p.n] && store[p.n].tipo) || "ganadero";
+      const t = techoEscena(p, tipo, "actual");
+      const est = estacionAct();
+      const ot = otbnAct();
+      const esp = especieAct();
+      const n = Math.max(1, potreros.length || 1);
+      const foZona = Number(t.fo) || 280;
+      const foUsado = Number(d.fo) > 0 ? Number(d.fo) : foZona;
+      const fen = tipo === "monte" ? est.monte : est.pasto;
+      const kgHaEstacion = foUsado * fen * ot.fo;
+      const oferta = kgHaEstacion * p.ha;
+      const kgDia = 12;
+      const evC = d.ev != null && d.ev !== "" ? Number(d.ev) : t.evMax;
+      const cabezas = d.cabezas != null ? Number(d.cabezas) : evC / (esp.evPorCabeza || 1);
+      const dias = d.diasRestan != null && d.diasRestan !== "" ? Number(d.diasRestan) : null;
+      const desc = d.diasDescanso != null && d.diasDescanso !== "" ? Number(d.diasDescanso) : null;
+      const maxDias = evC > 0 ? Math.max(1, Math.round(oferta / (evC * kgDia))) : 0;
+      const maxEv = dias && dias > 0 ? +(oferta / (dias * kgDia)).toFixed(1) : t.evMax;
+      const maxCab = +(maxEv / (esp.evPorCabeza || 1)).toFixed(1);
+      const descSug = n <= 1 ? 0 : Math.round((dias || maxDias) * (n - 1) * ot.descansoExtra);
+      const descMin = n <= 1 ? 0 : Math.round(Math.max(30, (dias || 7) * (n - 1) * ot.descansoExtra));
+      let ratio;
+      if (dias && evC) ratio = oferta / (evC * kgDia * dias);
+      else ratio = 1;
+      let sem = "verde", tit = "En equilibrio", puedeEstirar = false;
+      if (ratio < 0.85) {
+        sem = "rojo";
+        tit = "Se pasó del equilibrio";
+      } else if (ratio < 1.05) {
+        sem = "amarillo";
+        tit = "Justo en el equilibrio";
+      } else {
+        sem = "verde";
+        tit = "Hay margen";
+        puedeEstirar = ot.estira !== false && est.id !== "invierno";
+      }
+      if (ot.estira === false && dias && maxDias && dias > maxDias * 0.9) {
+        sem = "rojo";
+        tit = "OTBN no deja estirar";
+        puedeEstirar = false;
+      }
+      if (est.id === "invierno" && dias && maxDias && dias > maxDias) {
+        sem = "rojo";
+        tit = "Invierno: no estirar";
+        puedeEstirar = false;
+      }
+      if (desc != null && n > 1 && desc < descMin * 0.8) {
+        if (sem === "verde") sem = "amarillo";
+        tit = "El descanso quedó corto para este OTBN";
+      }
+      const fijo = "No cambian: " + p.ha.toFixed(1) + " ha y la oferta de la zona (~" + Math.round(foZona) + " kg MS/ha).";
+      const movil = "Sí cambian: días, cabezas, lotes y la época. Si suma animales, se acortan los días. Si alarga el consumo, no suma carga.";
+      let decision;
+      if (!dias) {
+        decision = "Con " + (+cabezas.toFixed(1)) + " " + esp.unidad + " en " + est.nombre + " y OTBN " + ot.id +
+          ", el equilibrio ronda <b>" + maxDias + " días</b> de ocupación. " +
+          (n > 1 ? ("Descanso entre lotes ~" + descSug + " días. ") : "Un lote: el descanso es sacar la hacienda. ") +
+          (puedeEstirar
+            ? "Hay margen: puede alargar un poco los días o sumar algo de carga, no las dos cosas."
+            : "No conviene estirar el pastoreo en esta época / OTBN. Si quiere más cabezas, recorte días.");
+      } else {
+        decision = "Usted cargó " + dias + " días y " + (+cabezas.toFixed(1)) + " " + esp.unidad + ". " +
+          "El equilibrio de esta visita es ~" + maxDias + " días o ~" + maxCab + " " + esp.unidad + ". " +
+          (ratio >= 1.05
+            ? (puedeEstirar
+              ? "Puede estirar el pastoreo un poco o incorporar algo de hacienda, eligiendo una sola palanca."
+              : "La oferta da, pero OTBN o el invierno no recomiendan alargar. Mejor no sumar carga.")
+            : ratio >= 0.85
+              ? "Está en el punto de equilibrio. No alargue días y no sume animales a la vez."
+              : "Se desequilibró: recorte días o baje cabezas. La superficie y la oferta de la zona no se agrandan.");
+      }
+      const html = "<b class='tit'>" + tit + " · " + est.nombre + " · OTBN " + ot.id + "</b>" +
+        fijo + " " + movil + "<br>" +
+        est.nota + " " + ot.nota + "<br>" +
+        decision +
+        (n > 1 ? (" Rotación: descanso sugerido ~" + descSug + " días (ocupación × " + (n - 1) + " × OTBN).") : "");
+      return {
+        sem: sem, tit: tit, html: html, ratio: ratio, puedeEstirar: puedeEstirar,
+        maxDias: maxDias, maxCab: maxCab, descSug: descSug, descMin: descMin,
+        kgHaEstacion: Math.round(kgHaEstacion), foZona: foZona
+      };
+    }
+    function pintarEquilibrio(p, extra) {
+      const lote = p || potreros.find((x) => x.n === pSel) || potreros[0];
+      if (!lote) return;
+      const eq = equilibrioDe(lote, extra);
+      ["eqBox", "eqBoxManejo"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.className = "eq-box " + eq.sem;
+        el.innerHTML = eq.html;
+      });
+      return eq;
     }
     function gridDeLotes(n) {
       if (n <= 1) return [1, 1];
@@ -2408,6 +2613,7 @@
         bajo: !!bajo,
         futuro: { redAgua: null, analisisAgua: null, cartaPredio: null, lluviaPredio: null }
       };
+      if (!store.otbnFijado) syncEstacionOtbn(estacionId(), inferirOtbn());
       zmin = diagnosticoLote.zmin;
       zmax = Math.max(diagnosticoLote.zmax, zmin + 8);
       if (potreros[0]) potreros[0].z = diagnosticoLote.z;
@@ -3022,6 +3228,7 @@
       }
       if (sum) sum.textContent = nomPotrero(p);
       actualizarFichasCampo();
+      pintarEquilibrio(p);
     }
     function abrir(n, conPanel) {
       if (!potreros.some((x) => x.n === n)) return;
@@ -3070,6 +3277,18 @@
     if (elEsp) elEsp.addEventListener("change", () => onCambioEspecie(elEsp.value));
     if (elEspP) elEspP.addEventListener("change", () => onCambioEspecie(elEspP.value));
     syncEspecie(store.especie || "cria");
+    syncEstacionOtbn(store.estacion || estacionPorFecha(), store.otbn || "II");
+    function onCambioEstacionOtbn() {
+      store.otbnFijado = true;
+      syncEstacionOtbn(estacionId(), otbnId());
+      if (typeof pintarCampos === "function") pintarCampos();
+      refrescarMapa();
+      pintarEquilibrio();
+    }
+    ["fEstacion", "fEstacionPanel", "fOtbn", "fOtbnPanel"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", onCambioEstacionOtbn);
+    });
     campos.addEventListener("input", (ev) => {
       const evEl = document.getElementById("fEv");
       const al = document.getElementById("fAguaL");
@@ -3080,9 +3299,23 @@
       if (dias && desc && potreros.length > 1) {
         if (ev.target && ev.target.id === "fDesc") desc.dataset.auto = "0";
         if (ev.target && ev.target.id === "fDias" && dias.value !== "" && desc.dataset.auto !== "0") {
-          desc.value = Math.round(Number(dias.value) * (potreros.length - 1));
+          desc.value = Math.round(Number(dias.value) * (potreros.length - 1) * otbnAct().descansoExtra);
           desc.dataset.auto = "1";
         }
+      }
+      const p = potreros.find((x) => x.n === pSel);
+      if (p) {
+        const esp = especieAct();
+        const over = {};
+        if (dias && dias.value !== "") over.diasRestan = Number(dias.value);
+        if (desc && desc.value !== "") over.diasDescanso = Number(desc.value);
+        if (evEl && evEl.value !== "") {
+          over.cabezas = Number(evEl.value);
+          over.ev = +(over.cabezas * esp.evPorCabeza).toFixed(2);
+        }
+        const fo = document.getElementById("fFo");
+        if (fo && fo.value !== "") over.fo = Number(fo.value);
+        pintarEquilibrio(p, over);
       }
     });
     document.getElementById("btnEstimar").addEventListener("click", () => {
@@ -3345,7 +3578,10 @@
               (diagnosticoLote.fisonomia ? ". Vegetación: " + escHtml(diagnosticoLote.fisonomia) : "") +
               ". No es análisis de laboratorio ni carta 1:20.000 del padrón.")
             : "Carta INTA Peña Zubiate consultada sobre el alambrado. Si no aparece el dato, ábrala en Capas · Suelos.")) + "</div>" +
-        "<div class='item'><b>OTBN</b>Ley 26.331: no se desmonta. El monte se usa con ganadería integrada. Buffel ~30 % solo en bajos y con permiso de categoría. Soja o campo limpio no es escenario de este territorio.</div>" +
+        "<div class='item'><b>OTBN y equilibrio de esta visita</b>Ley 26.331: no se desmonta. El monte se usa con ganadería integrada. " +
+        "Época: " + escHtml(estacionAct().nombre) + " · OTBN " + otbnAct().id + ". " +
+        "La superficie y la oferta de la zona no cambian; los días y las cabezas sí. " +
+        "Estirar el pastoreo o sumar animales son palancas alternativas, no simultáneas. " + estacionAct().nota + " " + otbnAct().nota + "</div>" +
         "<div class='item'><b>Aguadas</b>" + (aguadas.length
           ? (aguadas.length + " punto(s) de bebida marcados en el satélite. No se recorta agua. Alcance de cría: 400 m. " +
             (potreros.some((p) => p.dist != null && p.dist > 400)
