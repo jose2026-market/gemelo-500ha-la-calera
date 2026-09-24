@@ -629,13 +629,7 @@
       <p class="aviso" id="msgConsulta" hidden></p>
     </div>
     <div class="nombres-fila">
-      <button type="button" id="btnNombres" aria-expanded="false">Nombres</button>
       <button type="button" id="btnMiCampo" aria-expanded="false">Mi campo</button>
-    </div>
-    <div id="cajaNombre" class="caja-nombre" hidden>
-      <label for="fNombreCampo">Nombre del campo</label>
-      <input id="fNombreCampo" type="text" placeholder="Ej. Establecimiento La Calera" autocomplete="off" />
-      <button type="button" id="btnCargarNombre">Cargar nombre</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
       <p class="aviso"><b>Preguntas al productor · para identificar el campo</b><br>
@@ -805,7 +799,7 @@
           <div class="ficha-oficial" id="avanceManejo"></div>
           <details class="sub" data-mod-drop="pastoreo">
             <summary>Pastoreo</summary>
-            <div class="cuerpo"><p class="hint" id="hintPastoreo">Carga, días de pasto y descanso del potrero.</p></div>
+            <div class="cuerpo"><p class="hint" id="hintPastoreo">Los días de pastoreo y de rotación no vienen del INTA: hay que preguntárselos al productor.</p></div>
           </details>
           <details class="sub" data-mod-drop="nutricion">
             <summary>Nutrición</summary>
@@ -1138,8 +1132,9 @@
         ev: t.evMax, haEV: t.haEV, fo: t.fo,
         cabezas: t.cabezasMax, haUnidad: t.haUnidad, aguaL: t.aguaL,
         especie: esp.id,
-        diasRestan: pastorea ? Math.max(4, Math.round(t.fo / 22)) : 0,
-        diasDescanso: pastorea ? 0 : (esc === "actual" ? 12 : esc === "m1" ? 40 : 55),
+        diasRestan: esDemoCalera && pastorea ? Math.max(4, Math.round(t.fo / 22)) : null,
+        diasDescanso: esDemoCalera && !pastorea ? (esc === "actual" ? 12 : esc === "m1" ? 40 : 55) : (esDemoCalera ? 0 : null),
+        diasOrigen: esDemoCalera ? "estimacion-demo" : "sin-dato",
         cc: pastorea ? t.cc : 3.2,
         destete: t.destete, prenhez: t.prenhez, kg: t.kgMax,
         suplemento: esc === "actual" ? "Sal a veces" : "Sal + proteína en parición",
@@ -1151,9 +1146,16 @@
     }
     function datoEscena(p, esc) {
       const tipo = (store[p.n] && store[p.n].tipo) || "ganadero";
-      if (esc === "actual") return estimar(p, tipo, "actual");
       const extra = cargasProductor(p, esc);
       const hay = Object.keys(extra).length > 0;
+      if (esc === "actual") {
+        const base = estimar(p, tipo, "actual");
+        ["diasRestan", "diasDescanso", "estado", "diasOrigen"].forEach((k) => {
+          if (extra[k] != null && extra[k] !== "") base[k] = extra[k];
+        });
+        base._sinCarga = !hay;
+        return base;
+      }
       const base = estimar(p, tipo, "actual");
       if (!hay) {
         base._sinCarga = true;
@@ -1284,7 +1286,11 @@
         "<b>3 · Ideal</b> " + (hayOp ? txtCifras(op) : "techo productivo INTA para este lote y esta hacienda. No se pasa.") +
         "<br>Agua: una " + esp.nombre + " ~" + esp.aguaL + " L/día (" + esp.aguaMin + "–" + esp.aguaMax + "). Rodeo actual ≈ " + act.aguaRodeo + " L/día."
       );
-      setTxt("hintPastoreo", "Hoy ~" + act.haUnidad + " " + act.unidadHa + " en " + esp.plural + ". Mejorando no se rellena sola: pregunte carga real y destete. El techo INTA queda como tope.");
+      setTxt("hintPastoreo",
+        "<b>Días de pastoreo y rotación: no los calcula el INTA.</b> Dependen de lo que haga el productor: cuántas cabezas hay, cuánto pasto hay, el tamaño del potrero, el agua y si el manejo es continuo o rotativo. " +
+        "Si todavía no lo dijo, deje esos casilleros vacíos. En semiárido, un descanso de 30 días o más es una meta de manejo, no un valor medido. " +
+        "Hoy la carta indica ~" + act.haUnidad + " " + act.unidadHa + " para " + esp.plural + "."
+      );
       setTxt("hintNutricion", "CC inicial ~2,7. El agua de una " + esp.nombre + " es ~" + esp.aguaL + " L/día, no el de otra especie. No recortar bebida.");
       setTxt("hintRepro", esp.desteteLab + " inicial ~" + act.destete + " %. El 85 % es techo INTA de vacas de cría; en oveja y cabra se carga el dato del productor.");
       setTxt("hintAguaMod", "Una " + esp.nombre + " ~" + esp.aguaL + " L/día. Alcance de cría 400 m. " + (muyLejos[0] ? ("Lote a " + muyLejos[0].dist + " m: acercar bebedero.") : "Detalle en el informe."));
@@ -1309,20 +1315,31 @@
         };
       }
       if (modSel === "pastoreo") {
+        const hayPasto = d.diasRestan != null && d.diasRestan !== "";
+        const hayDesc = d.diasDescanso != null && d.diasDescanso !== "";
+        if (!hayPasto && !hayDesc && d.diasOrigen !== "estimacion-demo") {
+          return {
+            color: SEM.amarillo,
+            sem: "amarillo",
+            titulo: "P" + p.n + " · sin dato de días",
+            sub: "No hay días de pastoreo ni de rotación cargados",
+            accion: "Pregunte al productor: ¿hay hacienda ahora? ¿cuántos días lleva en este potrero y cada cuánto rota? Eso no sale de la carta INTA: depende de la carga, el pasto, el agua y su manejo."
+          };
+        }
         if (d.estado === "descanso") {
-          const ok = d.diasDescanso >= 30;
+          const ok = Number(d.diasDescanso) >= 30;
           return {
             color: ok ? SEM.verde : SEM.amarillo,
             sem: ok ? "verde" : "amarillo",
             titulo: "P" + p.n + " · descanso",
-            sub: d.diasDescanso + " días quieto",
+            sub: hayDesc ? (d.diasDescanso + " días quieto (dato del productor)") : "descanso, sin días cargados",
             accion: ok
               ? "Potrero listo. Puede entrar un lote cuando el que está lleno se quede sin días."
-              : "Todavía no descansó lo suficiente. En semiárido el pasto necesita más días vacío."
+              : "Todavía no descansó lo suficiente. En semiárido el pasto necesita más días vacío (meta: 30 días o más)."
           };
         }
         const sobrecarga = d.ev > p.ha / d.haEV * 1.08;
-        const corto = d.diasRestan < 8;
+        const corto = hayPasto && Number(d.diasRestan) < 8;
         const sem = sobrecarga || (corto && p.dist > 500) ? "rojo" : corto ? "amarillo" : "verde";
         const esp = especieAct();
         const cab = d.cabezas != null ? d.cabezas : d.ev / (esp.evPorCabeza || 1);
@@ -1330,7 +1347,7 @@
           color: SEM[sem],
           sem,
           titulo: "P" + p.n + " · " + d.lote,
-          sub: d.diasRestan + " días de pasto · " + (+Number(cab).toFixed(1)) + " " + esp.unidad,
+          sub: (hayPasto ? (d.diasRestan + " días de pasto") : "días de pasto: sin dato") + " · " + (+Number(cab).toFixed(1)) + " " + esp.unidad,
           accion: sem === "rojo"
             ? "Sacar el lote o acercar agua. Hay sobrecarga o el pasto se acaba lejos de la aguada."
             : sem === "amarillo"
@@ -1587,42 +1604,23 @@
       document.querySelector(".title").textContent = n;
       document.title = "Gemelo Digital Ganadero";
       document.getElementById("cartelNombre").textContent = n;
-      document.getElementById("fNombreCampo").value = n;
+      const prod = document.getElementById("fProd");
+      if (prod && n && n !== DEMO_NOMBRE && !prod.value.trim()) prod.value = n;
     }
-    document.getElementById("btnNombres").addEventListener("click", () => {
-      const caja = document.getElementById("cajaNombre");
-      const btn = document.getElementById("btnNombres");
-      const abrir = caja.hidden;
-      caja.hidden = !abrir;
-      document.getElementById("cajaCampo").hidden = true;
-      document.getElementById("btnMiCampo").classList.remove("on");
-      btn.classList.toggle("on", abrir);
-      btn.setAttribute("aria-expanded", abrir ? "true" : "false");
-      if (abrir) {
-        document.getElementById("fNombreCampo").value = store.nombreCampo || "";
-        document.getElementById("fNombreCampo").focus();
-      }
-    });
-    document.getElementById("btnCargarNombre").addEventListener("click", () => {
-      aplicarNombre(document.getElementById("fNombreCampo").value);
-      document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = "Nombre del campo cargado en el mapa y en Google Earth.";
-    });
-    document.getElementById("fNombreCampo").addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter") {
-        ev.preventDefault();
-        document.getElementById("btnCargarNombre").click();
-      }
-    });
     document.getElementById("btnMiCampo").addEventListener("click", () => {
       const caja = document.getElementById("cajaCampo");
       const btn = document.getElementById("btnMiCampo");
       const abrirCaja = caja.hidden;
       caja.hidden = !abrirCaja;
-      document.getElementById("cajaNombre").hidden = true;
-      document.getElementById("btnNombres").classList.remove("on");
       btn.classList.toggle("on", abrirCaja);
       btn.setAttribute("aria-expanded", abrirCaja ? "true" : "false");
+      if (abrirCaja) {
+        const prod = document.getElementById("fProd");
+        if (prod && !prod.value.trim() && store.nombreCampo && store.nombreCampo !== DEMO_NOMBRE) {
+          prod.value = store.nombreCampo;
+        }
+        prod && prod.focus();
+      }
       setPanel(true);
     });
     function parseNum(s) {
@@ -2771,9 +2769,9 @@
       const labHa = "Receptividad (" + esp.unidadHa + ")";
       if (modSel === "pastoreo") {
         campos.innerHTML =
-          campo("fEstado", "Estado (pastoreando / descanso)") +
-          campo("fDias", "Días de pasto que quedan", "number") +
-          campo("fDesc", "Días de descanso", "number") +
+          campo("fEstado", "Estado (pregúntele: ¿hay hacienda o está en descanso?)") +
+          campo("fDias", "Días de pasto que quedan (dato del productor, no INTA)", "number") +
+          campo("fDesc", "Días de descanso / rotación (dato del productor, no INTA)", "number") +
           campo("fFo", "Forraje en oferta (kg MS/ha)", "number") +
           campo("fEv", labEv, "number", "0.1") +
           campo("fHaEv", labHa, "number", "0.1");
@@ -2822,8 +2820,8 @@
       const haUn = d.haUnidad != null ? Number(d.haUnidad) : Number(d.haEV || 0) * (esp.evPorCabeza || 1);
       const aguaL = d.aguaL != null ? Number(d.aguaL) : esp.aguaL;
       set("fEstado", d.estado);
-      set("fDias", d.diasRestan);
-      set("fDesc", d.diasDescanso);
+      set("fDias", d.diasRestan != null && d.diasRestan !== "" ? d.diasRestan : "");
+      set("fDesc", d.diasDescanso != null && d.diasDescanso !== "" ? d.diasDescanso : "");
       set("fFo", d.fo);
       set("fEv", +cabezas.toFixed(1));
       set("fHaEv", +haUn.toFixed(2));
@@ -2856,9 +2854,14 @@
       topeEl.style.color = val.posible ? "#0D5C2C" : "#8A1F16";
       topeEl.textContent = val.posible ? t.texto : ("Semáforo rojo: " + val.motivos.join(" "));
       const lock = escSel === "actual";
-      document.querySelectorAll("#campos input, #fLote, #fAccion").forEach((el) => { el.readOnly = lock; });
-      document.getElementById("btnGuardar").disabled = lock;
-      document.getElementById("btnGuardar").textContent = lock ? "Diagnóstico · no se edita" : "Guardar lo que van mejorando";
+      document.querySelectorAll("#campos input, #fLote, #fAccion").forEach((el) => {
+        const esDias = el.id === "fDias" || el.id === "fDesc" || el.id === "fEstado";
+        el.readOnly = lock && !esDias;
+      });
+      document.getElementById("btnGuardar").disabled = false;
+      document.getElementById("btnGuardar").textContent = lock
+        ? "Guardar días de pastoreo (dato del productor)"
+        : "Guardar lo que van mejorando";
       document.getElementById("btnEstimar").textContent = lock ? "Ver datos INTA / carta" : "Partir de lo actual (no pega el techo)";
       document.getElementById("leyenda").innerHTML =
         (modSel === "pastoreo"
@@ -2952,7 +2955,6 @@
         : "Los números que ve son los de ahora. Cambie con el productor lo que vaya mejorando y pulse Guardar. El techo INTA no se pega: si lo supera, el semáforo pasa a rojo.";
     });
     document.getElementById("btnGuardar").addEventListener("click", () => {
-      if (escSel === "actual") return;
       const p = potreros.find((x) => x.n === pSel);
       const tipo = document.getElementById("fTipo").value;
       const esp = especieAct();
@@ -2963,10 +2965,16 @@
         if (!el) return;
         carga[key] = num ? Number(el.value || 0) : el.value;
       };
+      const putDias = (id, key) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        carga[key] = el.value === "" ? null : Number(el.value);
+        if (el.value !== "") carga.diasOrigen = "productor";
+      };
       put("fLote", "lote", false);
       put("fEstado", "estado", false);
-      put("fDias", "diasRestan", true);
-      put("fDesc", "diasDescanso", true);
+      putDias("fDias", "diasRestan");
+      putDias("fDesc", "diasDescanso");
       put("fFo", "fo", true);
       put("fCc", "cc", true);
       put("fSup", "suplemento", false);
@@ -3103,7 +3111,6 @@
     function irConsulta() {
       mostrarVista("visor");
       document.getElementById("cajaCampo").hidden = false;
-      document.getElementById("cajaNombre").hidden = true;
       document.getElementById("btnMiCampo").classList.add("on");
       setPanel(true);
     }
@@ -3326,7 +3333,6 @@
     document.getElementById("btnPedirConsulta").addEventListener("click", () => {
       const caja = document.getElementById("cajaCampo");
       caja.hidden = false;
-      document.getElementById("cajaNombre").hidden = true;
       document.getElementById("btnMiCampo").classList.add("on");
       const aviso = document.getElementById("msgConsulta");
       const decir = (texto, bien) => {
