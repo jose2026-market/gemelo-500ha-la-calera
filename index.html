@@ -2089,6 +2089,7 @@
         inchauspe: usaInchauspe(),
         ha: document.getElementById("fHaCampo").value,
         limites: document.getElementById("fLimites").value,
+        anillo: (!esDemoCalera && store.anilloCampo && store.anilloCampo.length >= 3) ? store.anilloCampo : null,
         fecha: new Date().toISOString(),
         aguadas: (!esDemoCalera ? aguadas : []).map((a) => ({ name: a.name, lat: a.lat, lon: a.lon })),
         diagnostico: (!esDemoCalera && diagnosticoLote) ? diagnosticoLote : null
@@ -2114,6 +2115,12 @@
       document.getElementById("fLon").value = lonTxt;
       document.getElementById("fHaCampo").value = c.ha || "";
       document.getElementById("fLimites").value = c.limites || "";
+      if (Array.isArray(c.anillo) && c.anillo.length >= 3) {
+        store.anilloCampo = c.anillo.map((p) => [p[0], p[1]]);
+        if (!(c.limites || "").trim()) {
+          document.getElementById("fLimites").value = store.anilloCampo.map((p) => lineaGeo(p[0], p[1])).join("\n");
+        }
+      }
       if (Array.isArray(c.aguadas)) {
         aguadas = c.aguadas.map((a, i) => ({
           id: "A" + (i + 1), name: a.name || ("Aguada " + (i + 1)),
@@ -2309,6 +2316,65 @@
       }
       return out.length >= 3 ? out : [];
     }
+    function normalizarAnilloCampo(ring) {
+      if (!ring || ring.length < 3) return (ring || []).map((p) => [p[0], p[1]]);
+      const visto = {};
+      const pts = [];
+      ring.forEach((p) => {
+        if (!p || !isFinite(p[0]) || !isFinite(p[1])) return;
+        const k = Number(p[0]).toFixed(6) + "," + Number(p[1]).toFixed(6);
+        if (visto[k]) return;
+        visto[k] = 1;
+        pts.push([Number(p[0]), Number(p[1])]);
+      });
+      if (pts.length < 3) return pts;
+      const cy = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+      const cx = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+      pts.sort((a, b) => Math.atan2(a[0] - cy, a[1] - cx) - Math.atan2(b[0] - cy, b[1] - cx));
+      let a = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const j = (i + 1) % pts.length;
+        a += pts[i][1] * pts[j][0] - pts[j][1] * pts[i][0];
+      }
+      if (a < 0) pts.reverse();
+      return pts;
+    }
+    function cruzLatLon(a, b, p) {
+      return (b[1] - a[1]) * (p[0] - a[0]) - (b[0] - a[0]) * (p[1] - a[1]);
+    }
+    function intersecarBorde(a, b, c, d) {
+      const dx = b[1] - a[1], dy = b[0] - a[0];
+      const ex = d[1] - c[1], ey = d[0] - c[0];
+      const den = dx * ey - dy * ex;
+      if (Math.abs(den) < 1e-18) return [a[0], a[1]];
+      const t = ((c[1] - a[1]) * ey - (c[0] - a[0]) * ex) / den;
+      return [a[0] + t * dy, a[1] + t * dx];
+    }
+    function recortarPoligono(sujeto, clip) {
+      if (!sujeto || sujeto.length < 3 || !clip || clip.length < 3) return [];
+      let out = sujeto.map((p) => [p[0], p[1]]);
+      for (let i = 0; i < clip.length; i++) {
+        const a = clip[i], b = clip[(i + 1) % clip.length];
+        const inp = out;
+        out = [];
+        if (!inp.length) break;
+        let prev = inp[inp.length - 1];
+        let prevIn = cruzLatLon(a, b, prev) >= -1e-12;
+        for (let k = 0; k < inp.length; k++) {
+          const cur = inp[k];
+          const curIn = cruzLatLon(a, b, cur) >= -1e-12;
+          if (curIn) {
+            if (!prevIn) out.push(intersecarBorde(prev, cur, a, b));
+            out.push(cur);
+          } else if (prevIn) {
+            out.push(intersecarBorde(prev, cur, a, b));
+          }
+          prev = cur;
+          prevIn = curIn;
+        }
+      }
+      return limpiarAnillo(out);
+    }
     function recortarAnilloARect(ring, south, west, north, east) {
       if (!ring || ring.length < 3) return [];
       let poly = ring.map((p) => [p[0], p[1]]);
@@ -2363,24 +2429,13 @@
       });
       return limpiarAnillo(poly);
     }
-    function gridDeLotes(n, alto, ancho) {
-      if (n <= 1) return [1, 1];
-      const tall = (alto || 0) >= (ancho || 0);
-      if (n === 2) return tall ? [2, 1] : [1, 2];
-      if (n === 3) return tall ? [3, 1] : [1, 3];
-      if (n === 4) return [2, 2];
-      if (n === 6) return tall ? [3, 2] : [2, 3];
-      if (n === 8) return tall ? [4, 2] : [2, 4];
-      if (n === 9) return [3, 3];
-      const a = Math.ceil(Math.sqrt(n));
-      const b = Math.ceil(n / a);
-      return tall ? [Math.max(a, b), Math.min(a, b)] : [Math.min(a, b), Math.max(a, b)];
-    }
     function loteDeClip(ringCampo, s, w, nn, e, z, i, haP) {
-      const clip = recortarAnilloARect(ringCampo, s, w, nn, e);
+      let clip = recortarAnilloARect(ringCampo, s, w, nn, e);
       if (clip.length < 3) return null;
+      const dentro = recortarPoligono(clip, ringCampo);
+      if (dentro.length >= 3) clip = dentro;
       const ha = haDeAnillo(clip);
-      if (ha < 0.02) return null;
+      if (ha < 0.001) return null;
       return {
         n: i,
         ha: +(ha || haP).toFixed(1),
@@ -2405,11 +2460,13 @@
     function armarLotesProductor(ring, haTotal, nLotes) {
       const n = Math.max(1, Math.min(20, Number(nLotes) || 1));
       const z = (diagnosticoLote && diagnosticoLote.z) || 1000;
-      const campo = (ring || []).map((p) => [p[0], p[1]]);
+      const campo = normalizarAnilloCampo(ring);
+      if (campo.length < 3) return [];
+      const haCampo = haTotal || haDeAnillo(campo) || 0;
       if (n === 1) {
         return [{
           n: 1,
-          ha: +(haTotal || haDeAnillo(campo) || 0).toFixed(1),
+          ha: +haCampo.toFixed(1),
           z: z, dist: null, agua: "Sin marcar",
           ring: campo.slice()
         }];
@@ -2417,41 +2474,33 @@
       const lats = campo.map((p) => p[0]), lons = campo.map((p) => p[1]);
       const south = Math.min.apply(null, lats), north = Math.max.apply(null, lats);
       const west = Math.min.apply(null, lons), east = Math.max.apply(null, lons);
-      const alto = north - south, ancho = east - west;
-      const haP = (haTotal || haDeAnillo(campo) || 0) / n;
-      const rc = gridDeLotes(n, alto, ancho);
-      const rows = rc[0], cols = rc[1];
-      const dLat = alto / rows, dLon = ancho / cols;
-      let out = [];
-      let i = 1;
-      for (let r = 0; r < rows && i <= n; r++) {
-        for (let c = 0; c < cols && i <= n; c++) {
-          const s = south + r * dLat, w = west + c * dLon;
-          const lote = loteDeClip(campo, s, w, s + dLat, w + dLon, z, i, haP);
-          if (lote) {
-            lote.n = i;
-            out.push(lote);
-            i += 1;
-          }
-        }
-      }
-      if (out.length !== n) out = armarLotesPorFranjas(campo, n, south, west, north, east, z, haP);
+      const haP = haCampo / n;
+      const out = armarLotesPorFranjas(campo, n, south, west, north, east, z, haP);
       if (!out.length) {
         return [{
           n: 1,
-          ha: +(haTotal || 0).toFixed(1),
+          ha: +haCampo.toFixed(1),
           z: z, dist: null, agua: "Sin marcar",
           ring: campo.slice()
         }];
       }
-      out.forEach((p, k) => { p.n = k + 1; });
+      out.forEach((p, k) => {
+        const clip = recortarPoligono(p.ring, campo);
+        if (clip.length >= 3) {
+          p.ring = clip;
+          const ha = haDeAnillo(clip);
+          if (ha > 0.001) p.ha = +ha.toFixed(1);
+        }
+        p.n = k + 1;
+      });
       return out;
     }
     function aplicarLotesProductor(ring, ha) {
       const n = nLotesAct();
+      const campo = normalizarAnilloCampo(ring);
       store.nLotes = n;
-      store.anilloCampo = ring.slice();
-      potreros = armarLotesProductor(ring, ha, n);
+      store.anilloCampo = campo.slice();
+      potreros = armarLotesProductor(campo, ha || haDeAnillo(campo), n);
       potreros.forEach((p) => {
         if (!store[p.n]) store[p.n] = { tipo: (document.getElementById("fTipo") || {}).value || "ganadero" };
       });
@@ -2530,7 +2579,9 @@
         document.getElementById("fLon").value,
         document.getElementById("fLimites").value
       ].filter(Boolean).join("\n");
-      const ring = parseLimites(textoLim);
+      let ring = parseLimites(textoLim);
+      if (ring.length < 3 && store.anilloCampo && store.anilloCampo.length >= 3) ring = store.anilloCampo.slice();
+      if (ring.length >= 3) ring = normalizarAnilloCampo(ring);
       let south, west, north, east;
       const hayAnillo = ring.length >= 3;
       if (!hayAnillo && ring.length > 0) {
@@ -2871,6 +2922,7 @@
       dibujarPredio();
       aplicarNombre(DEMO_NOMBRE);
       store.campoActivo = null;
+      store.anilloCampo = null;
       diagnosticoLote = null;
       leerTerrenoLote.clave = "";
       zmin = 917; zmax = 1023;
@@ -3087,6 +3139,13 @@
       if (esDemoCalera) return "P" + p.n;
       return potreros.length === 1 ? "1 lote" : ("L" + p.n);
     }
+    function anilloDibujoLote(p) {
+      if (esDemoCalera) return p.ring;
+      const campo = store.anilloCampo;
+      if (!campo || campo.length < 3) return p.ring;
+      const clip = recortarPoligono(p.ring, campo);
+      return clip.length >= 3 ? clip : p.ring;
+    }
     function dibujarPredio() {
       group.clearLayers();
       Object.keys(polyByN).forEach((k) => { delete polyByN[k]; });
@@ -3098,7 +3157,8 @@
         if (potreros.length < 2) dropLote.open = false;
       }
       potreros.forEach((p) => {
-        const poly = L.polygon(p.ring, {
+        const ring = anilloDibujoLote(p);
+        const poly = L.polygon(ring, {
           pane: "alambrado",
           color: esDemoCalera ? "#fff" : "#C4A35A",
           weight: 2.5,
@@ -3106,7 +3166,7 @@
           fillOpacity: potreros.length === 1 ? 0.10 : 0.18
         }).addTo(group);
         polyByN[p.n] = poly;
-        const c = centro(p.ring);
+        const c = centro(ring);
         const txt = etiquetaLote(p);
         const lab = L.marker(c, {
           icon: L.divIcon({
