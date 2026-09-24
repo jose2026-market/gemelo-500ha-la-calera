@@ -2295,50 +2295,156 @@
       });
       return eq;
     }
-    function gridDeLotes(n) {
+    function limpiarAnillo(poly) {
+      if (!poly || !poly.length) return [];
+      const eps = 1e-10;
+      const out = [];
+      poly.forEach((p) => {
+        const last = out[out.length - 1];
+        if (!last || Math.abs(last[0] - p[0]) > eps || Math.abs(last[1] - p[1]) > eps) out.push([p[0], p[1]]);
+      });
+      if (out.length > 1) {
+        const a = out[0], b = out[out.length - 1];
+        if (Math.abs(a[0] - b[0]) < eps && Math.abs(a[1] - b[1]) < eps) out.pop();
+      }
+      return out.length >= 3 ? out : [];
+    }
+    function recortarAnilloARect(ring, south, west, north, east) {
+      if (!ring || ring.length < 3) return [];
+      let poly = ring.map((p) => [p[0], p[1]]);
+      const cortes = [
+        {
+          inside: (p) => p[0] >= south - 1e-12,
+          hit: (a, b) => {
+            const t = (south - a[0]) / (b[0] - a[0] || 1e-15);
+            return [south, a[1] + t * (b[1] - a[1])];
+          }
+        },
+        {
+          inside: (p) => p[0] <= north + 1e-12,
+          hit: (a, b) => {
+            const t = (north - a[0]) / (b[0] - a[0] || 1e-15);
+            return [north, a[1] + t * (b[1] - a[1])];
+          }
+        },
+        {
+          inside: (p) => p[1] >= west - 1e-12,
+          hit: (a, b) => {
+            const t = (west - a[1]) / (b[1] - a[1] || 1e-15);
+            return [a[0] + t * (b[0] - a[0]), west];
+          }
+        },
+        {
+          inside: (p) => p[1] <= east + 1e-12,
+          hit: (a, b) => {
+            const t = (east - a[1]) / (b[1] - a[1] || 1e-15);
+            return [a[0] + t * (b[0] - a[0]), east];
+          }
+        }
+      ];
+      cortes.forEach((c) => {
+        if (poly.length < 3) { poly = []; return; }
+        const next = [];
+        let prev = poly[poly.length - 1];
+        let prevIn = c.inside(prev);
+        for (let i = 0; i < poly.length; i++) {
+          const cur = poly[i];
+          const curIn = c.inside(cur);
+          if (curIn) {
+            if (!prevIn) next.push(c.hit(prev, cur));
+            next.push(cur);
+          } else if (prevIn) {
+            next.push(c.hit(prev, cur));
+          }
+          prev = cur;
+          prevIn = curIn;
+        }
+        poly = next;
+      });
+      return limpiarAnillo(poly);
+    }
+    function gridDeLotes(n, alto, ancho) {
       if (n <= 1) return [1, 1];
-      if (n === 2) return [1, 2];
-      if (n === 3) return [1, 3];
+      const tall = (alto || 0) >= (ancho || 0);
+      if (n === 2) return tall ? [2, 1] : [1, 2];
+      if (n === 3) return tall ? [3, 1] : [1, 3];
       if (n === 4) return [2, 2];
-      if (n === 6) return [2, 3];
-      if (n === 8) return [2, 4];
+      if (n === 6) return tall ? [3, 2] : [2, 3];
+      if (n === 8) return tall ? [4, 2] : [2, 4];
       if (n === 9) return [3, 3];
-      const cols = Math.ceil(Math.sqrt(n));
-      const rows = Math.ceil(n / cols);
-      return [rows, cols];
+      const a = Math.ceil(Math.sqrt(n));
+      const b = Math.ceil(n / a);
+      return tall ? [Math.max(a, b), Math.min(a, b)] : [Math.min(a, b), Math.max(a, b)];
+    }
+    function loteDeClip(ringCampo, s, w, nn, e, z, i, haP) {
+      const clip = recortarAnilloARect(ringCampo, s, w, nn, e);
+      if (clip.length < 3) return null;
+      const ha = haDeAnillo(clip);
+      if (ha < 0.02) return null;
+      return {
+        n: i,
+        ha: +(ha || haP).toFixed(1),
+        z: z, dist: null, agua: "Sin marcar",
+        ring: clip
+      };
+    }
+    function armarLotesPorFranjas(ring, n, south, west, north, east, z, haP) {
+      const alto = north - south, ancho = east - west;
+      const vertical = alto >= ancho;
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const s = vertical ? south + i * alto / n : south;
+        const nn = vertical ? south + (i + 1) * alto / n : north;
+        const w = vertical ? west : west + i * ancho / n;
+        const e = vertical ? east : west + (i + 1) * ancho / n;
+        const lote = loteDeClip(ring, s, w, nn, e, z, out.length + 1, haP);
+        if (lote) out.push(lote);
+      }
+      return out;
     }
     function armarLotesProductor(ring, haTotal, nLotes) {
       const n = Math.max(1, Math.min(20, Number(nLotes) || 1));
       const z = (diagnosticoLote && diagnosticoLote.z) || 1000;
+      const campo = (ring || []).map((p) => [p[0], p[1]]);
       if (n === 1) {
         return [{
           n: 1,
-          ha: +(haTotal || 0).toFixed(1),
+          ha: +(haTotal || haDeAnillo(campo) || 0).toFixed(1),
           z: z, dist: null, agua: "Sin marcar",
-          ring: ring.slice()
+          ring: campo.slice()
         }];
       }
-      const lats = ring.map((p) => p[0]), lons = ring.map((p) => p[1]);
+      const lats = campo.map((p) => p[0]), lons = campo.map((p) => p[1]);
       const south = Math.min.apply(null, lats), north = Math.max.apply(null, lats);
       const west = Math.min.apply(null, lons), east = Math.max.apply(null, lons);
-      const rc = gridDeLotes(n);
+      const alto = north - south, ancho = east - west;
+      const haP = (haTotal || haDeAnillo(campo) || 0) / n;
+      const rc = gridDeLotes(n, alto, ancho);
       const rows = rc[0], cols = rc[1];
-      const dLat = (north - south) / rows, dLon = (east - west) / cols;
-      const haP = (haTotal || 0) / n;
-      const out = [];
+      const dLat = alto / rows, dLon = ancho / cols;
+      let out = [];
       let i = 1;
       for (let r = 0; r < rows && i <= n; r++) {
         for (let c = 0; c < cols && i <= n; c++) {
           const s = south + r * dLat, w = west + c * dLon;
-          out.push({
-            n: i,
-            ha: +haP.toFixed(1),
-            z: z, dist: null, agua: "Sin marcar",
-            ring: [[s, w], [s, w + dLon], [s + dLat, w + dLon], [s + dLat, w]]
-          });
-          i++;
+          const lote = loteDeClip(campo, s, w, s + dLat, w + dLon, z, i, haP);
+          if (lote) {
+            lote.n = i;
+            out.push(lote);
+            i += 1;
+          }
         }
       }
+      if (out.length !== n) out = armarLotesPorFranjas(campo, n, south, west, north, east, z, haP);
+      if (!out.length) {
+        return [{
+          n: 1,
+          ha: +(haTotal || 0).toFixed(1),
+          z: z, dist: null, agua: "Sin marcar",
+          ring: campo.slice()
+        }];
+      }
+      out.forEach((p, k) => { p.n = k + 1; });
       return out;
     }
     function aplicarLotesProductor(ring, ha) {
@@ -2916,7 +3022,22 @@
     const limiteReal = L.featureGroup().addTo(map);
     const polyByN = {}, labByN = {};
     function centro(ring) {
-      return [ring.reduce((s, p) => s + p[0], 0) / ring.length, ring.reduce((s, p) => s + p[1], 0) / ring.length];
+      if (!ring || !ring.length) return [0, 0];
+      let a = 0, lat = 0, lon = 0;
+      for (let i = 0; i < ring.length; i++) {
+        const j = (i + 1) % ring.length;
+        const c = ring[i][1] * ring[j][0] - ring[j][1] * ring[i][0];
+        a += c;
+        lat += (ring[i][0] + ring[j][0]) * c;
+        lon += (ring[i][1] + ring[j][1]) * c;
+      }
+      if (Math.abs(a) < 1e-18) {
+        return [
+          ring.reduce((s, p) => s + p[0], 0) / ring.length,
+          ring.reduce((s, p) => s + p[1], 0) / ring.length
+        ];
+      }
+      return [lat / (3 * a), lon / (3 * a)];
     }
     function distM(a, b) {
       const R = 6371000;
