@@ -619,7 +619,7 @@
       <b class="title">Gemelo Digital Ganadero</b>
       <button type="button" class="btn-cerrar" id="btnCerrar" aria-label="Cerrar menú">×</button>
     </div>
-    <p class="lead">Servicio de la Sociedad Rural de San Luis: ver el campo, diagnosticar Actual / Mejorado 1 / Óptimo y entregar un informe de puntos críticos.</p>
+    <p class="lead">Servicio de la Sociedad Rural de San Luis: identificar el campo con el productor, leer la situación actual (INTA) y armar juntos Mejorando e Ideal, sin pasar el techo productivo. Hacienda de cría: vacas, ovejas o cabras.</p>
     <div class="consulta">
       <b>Servicio de consulta</b>
       <p>Se carga su establecimiento, se leen suelos + OTBN + INTA, y se entrega el informe de puntos críticos (corto y mediano plazo).</p>
@@ -638,15 +638,34 @@
       <button type="button" id="btnCargarNombre">Cargar nombre</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
-      <p class="aviso">En el plano busque la tabla de <b>coordenadas geográficas</b> (dice latitud y longitud, o φ y λ). Cada vértice trae grados, minutos y segundos, por ejemplo <b>33°15'20" S</b> y <b>66°48'10" O</b>. No use las columnas X e Y (números grandes de 7 cifras: eso es Gauss-Krüger). Si el plano solo trae <b>2 vértices</b> (suelen ser los mojones), péguelos igual: las otras esquinas se marcan tocando el alambrado en el satélite. Con el lote cerrado se lee la <b>carta de suelos INTA</b> y el relieve de ese polígono; después marque las aguadas. Eso es la situación actual. Mejorado 1 y Óptimo se cargan luego.</p>
+      <p class="aviso"><b>Preguntas al productor · para identificar el campo</b><br>
+        Haga estas preguntas en este orden. Hasta que no esté el lote en el satélite, no se lee la situación actual.</p>
       <p class="aviso solo-celular">Vista rápida: el campo se ve en esta sesión y no queda guardado en el teléfono.</p>
-      <label for="fProd">Nombre del campo</label>
-      <input id="fProd" type="text" placeholder="Ej. El Crispín" autocomplete="name" />
-      <label for="fTel">Teléfono o WhatsApp (opcional)</label>
-      <input id="fTel" type="tel" placeholder="2664..." autocomplete="tel" />
 
       <div class="paso">
-        <p><b class="nro">1</b> <b>Una esquina</b> (para ubicar el punto). Latitud Sur y longitud Oeste, como en el plano.</p>
+        <p><b class="nro">A</b> <b>¿Cómo se llama el establecimiento?</b></p>
+        <label for="fProd">Nombre del campo</label>
+        <input id="fProd" type="text" placeholder="Ej. El Crispín" autocomplete="name" />
+        <label for="fTel">Teléfono o WhatsApp (opcional)</label>
+        <input id="fTel" type="tel" placeholder="2664..." autocomplete="tel" />
+      </div>
+
+      <div class="paso">
+        <p><b class="nro">B</b> <b>¿Qué hacienda es?</b> Este gemelo es ganadero de cría: vacas, ovejas o cabras. El agua y la carga no son las mismas.</p>
+        <label for="fEspecie">Especie (elija con el productor)</label>
+        <select id="fEspecie">
+          <option value="cria">Vacas de cría</option>
+          <option value="oveja">Ovejas</option>
+          <option value="cabra">Cabras</option>
+        </select>
+        <p class="ok" id="notaEspecie">Vaca de cría con ternero: ~50–80 L/día. Una vaca seca bebe menos. Oveja: ~4–8 L. Cabra: ~3–6 L.</p>
+      </div>
+
+      <div class="paso">
+        <p><b class="nro">C</b> <b>¿Dónde está el campo?</b> Pregunte <u>una</u> de estas dos cosas (las dos valen):</p>
+        <p><b>1 · Las coordenadas del plano de mensura</b> — tabla de latitud y longitud (φ y λ), grados, minutos y segundos. Ejemplo: <b>33°15'20" S</b> y <b>66°48'10" O</b>.</p>
+        <p class="aviso">No use las columnas X e Y (números grandes de 7 cifras: Gauss-Krüger). Si el plano solo trae 2 vértices, péguelos: las otras esquinas se marcan tocando el alambrado en el satélite.</p>
+        <p><b>Una esquina</b> (para ubicar el punto)</p>
         <div class="grid2">
           <div>
             <label for="fLat">Latitud Sur</label>
@@ -660,22 +679,19 @@
         <label for="fHaCampo">Hectáreas (opcional; si pega las 4 esquinas se calculan solas)</label>
         <input id="fHaCampo" type="number" step="1" min="5" max="20000" value="" placeholder="ej. 80" />
         <p class="ok" id="convSat" hidden></p>
-      </div>
-
-      <div class="paso">
-        <p><b class="nro">2</b> <b>Esquinas del lote</b>. Si el plano trae 4, péguelas una por línea. Si solo trae 2, péguelas y complete las otras en el satélite.</p>
+        <p><b>Las 4 esquinas</b> (una por línea). Si solo hay 2, péguelas y complete en el satélite.</p>
         <small>33°15'20" S &nbsp; 66°48'10" O</small>
-        <small>También mire en el plano rumbo y distancia de cada lado; a veces están los 4 vértices en un cuadro chico.</small>
         <label for="fLimites">Esquinas (latitud Sur y longitud Oeste)</label>
         <textarea id="fLimites" placeholder="33°15'20&quot; S  66°48'10&quot; O&#10;33°15'20&quot; S  66°47'40&quot; O&#10;33°14'50&quot; S  66°47'40&quot; O&#10;33°14'50&quot; S  66°48'10&quot; O"></textarea>
-        <label for="fPlano">Foto opcional de la tabla (solo si quiere que se lean solas)</label>
+        <p><b>2 · O una foto nítida de esa misma tabla</b> (la de grados, minutos y segundos; no fotografíe solo el croquis).</p>
+        <label for="fPlano">Foto de la tabla de coordenadas</label>
         <input id="fPlano" type="file" accept="image/jpeg,image/png,image/webp,image/jpg" />
         <img id="prevPlano" class="plano-preview" alt="Foto de la tabla del plano" hidden />
         <button type="button" id="btnLeerPlano" class="sec">Leer la foto del plano</button>
         <p class="aviso" id="msgPlano" hidden></p>
       </div>
 
-      <button type="button" id="btnVerCampo">3 · Ver mi campo en el satélite</button>
+      <button type="button" id="btnVerCampo">D · Ver el campo y leer la situación actual</button>
       <button type="button" id="btnGuardarCampo" class="sec">Guardar este campo</button>
       <button type="button" id="btnDemoCalera" class="sec" style="background:#F7F1E4;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Volver al demostrativo</button>
       <label class="solo-escritorio">Campos guardados</label>
@@ -687,17 +703,25 @@
       <div class="aviso" id="aviso"></div>
       <div class="escenas">
         <button type="button" class="on" data-esc="actual">Actual</button>
-        <button type="button" data-esc="m1">Mejorado 1</button>
-        <button type="button" data-esc="optimo">Óptimo</button>
+        <button type="button" data-esc="m1">Mejorando</button>
+        <button type="button" data-esc="optimo">Ideal</button>
       </div>
       <p class="aviso" id="topeEscena"></p>
       <div class="grid2">
         <div>
           <label>Tipo de campo</label>
           <select id="fTipo">
-            <option value="ganadero">Ganadero</option>
-            <option value="monte">Monte (MBGI)</option>
+            <option value="ganadero">Ganadero de cría</option>
+            <option value="monte">Monte (MBGI, también cría)</option>
             <option value="agricola">Campo limpio (ya desmontado)</option>
+          </select>
+        </div>
+        <div>
+          <label>Hacienda</label>
+          <select id="fEspeciePanel">
+            <option value="cria">Vacas de cría</option>
+            <option value="oveja">Ovejas</option>
+            <option value="cabra">Cabras</option>
           </select>
         </div>
         <div>
@@ -777,7 +801,8 @@
       <details id="dropManejo">
         <summary>Manejo</summary>
         <div class="cuerpo">
-          <p class="hint">Actual se lee (INTA). Mejorado 1 y Óptimo los carga el productor. El detalle va al informe.</p>
+          <p class="hint">Primero se lee la <b>situación actual</b> (INTA). <b>Mejorando</b> e <b>Ideal</b> no vienen cargados: se arman con el productor. El techo lo pone INTA.</p>
+          <div class="ficha-oficial" id="avanceManejo"></div>
           <details class="sub" data-mod-drop="pastoreo">
             <summary>Pastoreo</summary>
             <div class="cuerpo"><p class="hint" id="hintPastoreo">Carga, días de pasto y descanso del potrero.</p></div>
@@ -802,8 +827,8 @@
           </div>
           <div class="escenas" role="tablist" aria-label="Escena">
             <button type="button" class="on" data-esc="actual">Actual</button>
-            <button type="button" data-esc="m1">Mejorado 1</button>
-            <button type="button" data-esc="optimo">Óptimo</button>
+            <button type="button" data-esc="m1">Mejorando</button>
+            <button type="button" data-esc="optimo">Ideal</button>
           </div>
           <div class="ficha-oficial" id="fichaManejo"></div>
           <div class="leyenda" id="leyenda"></div>
@@ -825,6 +850,64 @@
     const DEMO_NOMBRE = "Gemelo Digital Ganadero · demostrativo 500 ha";
     const KEY = "gemelo-500ha-manejo-v1";
     const SEM = { verde: "#1B7A4A", amarillo: "#C4A035", rojo: "#B42318", descanso: "#5C7A8A" };
+    const ESPECIE = {
+      cria: {
+        id: "cria", nombre: "vaca de cría", plural: "vacas de cría",
+        unidad: "EV", unidadHa: "ha/EV", evPorCabeza: 1,
+        aguaL: 70, aguaMin: 50, aguaMax: 80,
+        desteteLab: "Destete %",
+        nota: "Vaca de cría con ternero: ~50–80 L/día. Una vaca seca bebe menos (~35–45 L). No es lo mismo que «una vaca» en general."
+      },
+      oveja: {
+        id: "oveja", nombre: "oveja", plural: "ovejas",
+        unidad: "EO", unidadHa: "ha/EO", evPorCabeza: 0.17,
+        aguaL: 6, aguaMin: 4, aguaMax: 8,
+        desteteLab: "Señalada / destete %",
+        nota: "Oveja: ~4–8 L/día (más si está lactando). Un EV son unas 6 ovejas. La carga y el agua no se copian de la vaca."
+      },
+      cabra: {
+        id: "cabra", nombre: "cabra", plural: "cabras",
+        unidad: "EC", unidadHa: "ha/EC", evPorCabeza: 0.14,
+        aguaL: 4.5, aguaMin: 3, aguaMax: 6,
+        desteteLab: "Cabritos destetados %",
+        nota: "Cabra: ~3–6 L/día (más si está lactando). Un EV son unas 7 cabras. El consumo de agua no es el de una vaca de cría."
+      }
+    };
+    function especieId() {
+      const a = document.getElementById("fEspecie");
+      const b = document.getElementById("fEspeciePanel");
+      return (a && a.value) || (b && b.value) || store.especie || "cria";
+    }
+    function especieAct() {
+      return ESPECIE[especieId()] || ESPECIE.cria;
+    }
+    function syncEspecie(id) {
+      const eid = ESPECIE[id] ? id : "cria";
+      store.especie = eid;
+      const a = document.getElementById("fEspecie");
+      const b = document.getElementById("fEspeciePanel");
+      if (a) a.value = eid;
+      const n = document.getElementById("notaEspecie");
+      if (n) n.textContent = ESPECIE[eid].nota;
+      if (b) b.value = eid;
+    }
+    function nomEscena(esc) {
+      return { actual: "Actual", m1: "Mejorando", optimo: "Ideal" }[esc] || esc;
+    }
+    function marcarEscena(id) {
+      escSel = id;
+      document.querySelectorAll(".escenas button").forEach((x) => x.classList.toggle("on", x.dataset.esc === id));
+    }
+    function cargasProductor(p, esc) {
+      const extra = {};
+      ["pastoreo", "nutricion", "reproduccion", "agua"].forEach((m) => {
+        Object.assign(extra, ((store[p.n] || {})[m] || {})[esc] || {});
+      });
+      return extra;
+    }
+    function productorCargoEsc(esc) {
+      return potreros.some((p) => Object.keys(cargasProductor(p, esc)).length > 0);
+    }
     const TERRITORIO = {
       otbn: "Ley 26.331: no se desmonta. El óptimo de monte es bosque con ganadería integrada.",
       lluvia: "REM La Calera (6/9/2026): 307,7 mm en el año; 0 mm en 30 días.",
@@ -881,6 +964,7 @@
     const store = loadStore();
     if (!store.nombreCampo || store.nombreCampo === "Campo gemelo · 500 ha · La Calera") store.nombreCampo = DEMO_NOMBRE;
     if (!Array.isArray(store.camposGuardados)) store.camposGuardados = [];
+    if (!store.especie) store.especie = "cria";
     potreros.forEach((p) => { if (!store[p.n]) store[p.n] = { tipo: "ganadero" }; });
 
     function factor(p) {
@@ -943,60 +1027,75 @@
     function techoEscena(p, tipo, esc) {
       const f = factor(p);
       const sit = sitioDe(p);
-      const loma = !sit.bajo;
+      const esp = especieAct();
+      function pack(haEV, destete, kgHa, fo, cc, extraPren, texto, bloqueado) {
+        const evMax = +(p.ha / haEV * f).toFixed(1);
+        return {
+          haEV, destete, prenhez: destete + extraPren, kgHa, fo, cc,
+          evMax,
+          kgMax: Math.round(kgHa * p.ha * f),
+          haUnidad: +(haEV * esp.evPorCabeza).toFixed(2),
+          cabezasMax: +(evMax / esp.evPorCabeza).toFixed(1),
+          unidad: esp.unidad,
+          unidadHa: esp.unidadHa,
+          aguaL: esp.aguaL,
+          texto: texto, bloqueado: bloqueado
+        };
+      }
       if (esc === "actual") {
         const haEV = tipo === "monte" ? 14 : tipo === "agricola" ? 20 : 12.6;
         const destete = tipo === "monte" ? 58 : 62;
         const kgHa = tipo === "monte" ? 4.2 : tipo === "agricola" ? 0 : 5.9;
-        return {
-          haEV, destete, prenhez: destete + 8, kgHa, fo: Math.round(280 * f), cc: 2.7,
-          evMax: +(p.ha / haEV * f).toFixed(1),
-          kgMax: Math.round(kgHa * p.ha * f),
-          texto: esDemoCalera
-            ? "Situación actual del lote según INTA Región III y carta de suelos (Ortentes/Ortides, aptitud " + sit.aptitud + "). No se edita: es el diagnóstico."
-            : "Situación actual de este lote: " + sit.suelo + ", " + sit.paisaje + ", aptitud " + sit.aptitud +
-              ". Carga INTA Región III: " + haEV + " ha/EV · destete " + destete + " % · " + kgHa + " kg/ha. No se edita. Después juega Mejorado 1 y Óptimo.",
-          bloqueado: true
-        };
+        const haUn = +(haEV * esp.evPorCabeza).toFixed(2);
+        return pack(haEV, destete, kgHa, Math.round(280 * f), 2.7, 8,
+          esDemoCalera
+            ? "Situación actual del lote según INTA Región III y carta de suelos. Hacienda: " + esp.plural + ". No se edita: es el diagnóstico."
+            : "Situación actual de este lote (" + esp.plural + "): " + sit.suelo + ", " + sit.paisaje + ", aptitud " + sit.aptitud +
+              ". Carga INTA: " + haUn + " " + esp.unidadHa + " · destete " + destete + " % · " + kgHa + " kg/ha. No se edita.",
+          true);
       }
       if (esc === "m1") {
         const haEV = tipo === "monte" ? 12 : 10;
         const destete = tipo === "monte" ? 78 : 85;
         const kgHa = tipo === "monte" ? 8 : 12;
-        return {
-          haEV, destete, prenhez: destete + 6, kgHa, fo: Math.round(520 * f), cc: 3.1,
-          evMax: +(p.ha / haEV * f).toFixed(1),
-          kgMax: Math.round(kgHa * p.ha * f),
-          texto: "Mejorado 1: el productor carga lo que decide mejorar. Tope real: " + haEV + " ha/EV, destete " + destete + " %, " + kgHa + " kg/ha (INTA). Agua a " + p.dist + " m · " + sit.paisaje + ".",
-          bloqueado: false
-        };
+        const haUn = +(haEV * esp.evPorCabeza).toFixed(2);
+        return pack(haEV, destete, kgHa, Math.round(520 * f), 3.1, 6,
+          "Mejorando: cargue con el productor lo que vaya haciendo (manejo, agua, inversión). Techo INTA para " + esp.plural + ": " +
+            haUn + " " + esp.unidadHa + ", destete " + destete + " %, " + kgHa + " kg/ha. Agua de una " + esp.nombre + ": ~" +
+            esp.aguaL + " L/día (" + esp.aguaMin + "–" + esp.aguaMax + "). No se carga el techo de antemano.",
+          false);
       }
       const optimoM2 = tipo === "ganadero" && sit.bajo;
       const haEV = tipo === "monte" ? 10 : optimoM2 ? 5.9 : 10;
       const destete = tipo === "monte" ? 85 : optimoM2 ? 90 : 85;
       const kgHa = tipo === "monte" ? 12 : optimoM2 ? 23.5 : 12;
-      return {
-        haEV, destete, prenhez: destete + 5, kgHa, fo: Math.round((optimoM2 ? 780 : 560) * f), cc: 3.4,
-        evMax: +(p.ha / haEV * f).toFixed(1),
-        kgMax: Math.round(kgHa * p.ha * f),
-        texto: optimoM2
-          ? "Óptimo posible en este bajo (carta INTA): M2, ~30 % buffel si OTBN lo permite. " + kgHa + " kg/ha · destete " + destete + " %."
-          : "Óptimo posible en esta loma/monte: techo = Mejorado 1. La carta de suelos no sostiene buffel ni agrícola de renta.",
-        bloqueado: false
-      };
+      const haUn = +(haEV * esp.evPorCabeza).toFixed(2);
+      return pack(haEV, destete, kgHa, Math.round((optimoM2 ? 780 : 560) * f), 3.4, 5,
+        optimoM2
+          ? "Ideal (techo INTA) en este bajo: M2, ~30 % buffel si OTBN lo permite. " + haUn + " " + esp.unidadHa +
+            " · destete " + destete + " % · " + kgHa + " kg/ha. Hacienda: " + esp.plural + "."
+          : "Ideal (techo INTA) en esta loma/monte: no pasa de Mejorando. La carta no sostiene buffel ni agrícola. " +
+            haUn + " " + esp.unidadHa + " · destete " + destete + " % · " + kgHa + " kg/ha. Hacienda: " + esp.plural + ".",
+        false);
     }
     function validarCarga(p, tipo, d, esc) {
       const t = techoEscena(p, tipo, esc);
       const sit = sitioDe(p);
+      const esp = especieAct();
       const motivos = [];
-      if (Number(d.ev) > t.evMax * 1.02) {
-        motivos.push("Carga " + d.ev + " EV > tope " + t.evMax + " EV (receptividad " + t.haEV + " ha/EV, carta INTA).");
+      const evCattle = d.ev != null && d.ev !== ""
+        ? Number(d.ev)
+        : Number(d.cabezas || 0) * esp.evPorCabeza;
+      const cabezas = d.cabezas != null ? Number(d.cabezas) : evCattle / esp.evPorCabeza;
+      if (evCattle > t.evMax * 1.02) {
+        motivos.push("Carga " + (+cabezas.toFixed(1)) + " " + esp.unidad + " > tope " + t.cabezasMax + " " +
+          esp.unidad + " (" + t.haUnidad + " " + t.unidadHa + ", carta INTA).");
       }
       if (d.haEV && Number(d.haEV) < t.haEV * 0.97) {
-        motivos.push("Receptividad cargada (" + d.haEV + " ha/EV) es más intensa que la posible (" + t.haEV + ").");
+        motivos.push("Receptividad cargada es más intensa que el techo INTA (" + t.haUnidad + " " + t.unidadHa + ").");
       }
       if (Number(d.destete) > t.destete) {
-        motivos.push("Destete " + d.destete + " % > " + t.destete + " % posible con suelo, nutrición y agua de este lote.");
+        motivos.push(esp.desteteLab.replace(" %", "") + " " + d.destete + " % > " + t.destete + " % posible con suelo, nutrición y agua de este lote.");
       }
       if (Number(d.prenhez) > t.prenhez) {
         motivos.push("Preñez cargada por encima del techo reproductivo de este territorio (" + t.prenhez + " %).");
@@ -1007,20 +1106,24 @@
       if (Number(d.fo) > t.fo * 1.15) {
         motivos.push("Forraje en oferta mayor al posible en Ortentes de " + sit.paisaje + ".");
       }
-      if (esc !== "actual" && Number(d.ev) > 3 && p.dist > 550) {
-        motivos.push("Nutrición: agua a " + p.dist + " m. Esa carga no se sostiene sin acercar bebida (no se recorta agua).");
+      if (d.aguaL && (Number(d.aguaL) < esp.aguaMin * 0.6 || Number(d.aguaL) > esp.aguaMax * 1.4)) {
+        motivos.push("Consumo " + d.aguaL + " L/día no corresponde a una " + esp.nombre +
+          " (" + esp.aguaMin + "–" + esp.aguaMax + " L). El agua de la vaca de cría no es la de la oveja ni la de la cabra.");
+      }
+      if (esc !== "actual" && evCattle > 3 && p.dist > 550) {
+        motivos.push("Nutrición: agua a " + p.dist + " m. Esa carga de " + esp.plural + " no se sostiene sin acercar bebida (no se recorta agua).");
       }
       if (esc === "optimo" && Number(d.destete) >= 88 && p.dist > 400) {
-        motivos.push("Reproducción: destete ~90 % pide parición cerca del agua. Este lote está a " + p.dist + " m.");
+        motivos.push("Reproducción: destete alto pide parición cerca del agua. Este lote está a " + p.dist + " m.");
       }
       if (tipo === "agricola" && !sit.bajo) {
         motivos.push("Carta INTA: loma no apta para campo limpio agrícola. Ley 26.331: no desmontar.");
       }
       if (tipo === "monte" && Number(d.kg) / p.ha > 13) {
-        motivos.push("Monte: el óptimo es MBGI. No hay escenario de desmonte ni megatérmicas al 30 %.");
+        motivos.push("Monte: el ideal es MBGI. No hay escenario de desmonte ni megatérmicas al 30 %.");
       }
       if (esc === "optimo" && tipo === "ganadero" && !sit.bajo && Number(d.kg) / p.ha > 13) {
-        motivos.push("En loma el óptimo no llega a 23 kg/ha. Eso pide bajo + permiso OTBN.");
+        motivos.push("En loma el ideal no llega a 23 kg/ha. Eso pide bajo + permiso OTBN.");
       }
       return { posible: motivos.length === 0, motivos, techo: t };
     }
@@ -1028,9 +1131,13 @@
       const t = techoEscena(p, tipo, esc);
       const base = baseLote(p);
       const pastorea = base.estado === "pastoreando";
+      const esp = especieAct();
+      const cat = esDemoCalera ? base.categoria : (esp.id === "cria" ? "Vacas de cría con ternero" : esp.id === "oveja" ? "Ovejas" : "Cabras");
       return {
-        tipo, lote: base.lote, estado: base.estado, categoria: base.categoria,
+        tipo, lote: base.lote, estado: base.estado, categoria: cat,
         ev: t.evMax, haEV: t.haEV, fo: t.fo,
+        cabezas: t.cabezasMax, haUnidad: t.haUnidad, aguaL: t.aguaL,
+        especie: esp.id,
         diasRestan: pastorea ? Math.max(4, Math.round(t.fo / 22)) : 0,
         diasDescanso: pastorea ? 0 : (esc === "actual" ? 12 : esc === "m1" ? 40 : 55),
         cc: pastorea ? t.cc : 3.2,
@@ -1043,17 +1150,20 @@
       return potreros.reduce((s, p) => s + p.ha, 0);
     }
     function datoEscena(p, esc) {
-      const tipo = store[p.n].tipo || "ganadero";
-      const base = estimar(p, tipo, esc);
-      if (esc === "actual") return base;
-      const extra = {};
-      ["pastoreo", "nutricion", "reproduccion", "agua"].forEach((m) => {
-        Object.assign(extra, (store[p.n][m] || {})[esc] || {});
-      });
-      return Object.assign({}, base, extra);
+      const tipo = (store[p.n] && store[p.n].tipo) || "ganadero";
+      if (esc === "actual") return estimar(p, tipo, "actual");
+      const extra = cargasProductor(p, esc);
+      const hay = Object.keys(extra).length > 0;
+      const base = estimar(p, tipo, "actual");
+      if (!hay) {
+        base._sinCarga = true;
+        return base;
+      }
+      return Object.assign({}, base, extra, { _sinCarga: false });
     }
     function resumenEscena(esc) {
       const ha = haTotal();
+      const esp = especieAct();
       let ev = 0, kg = 0, dest = 0;
       const filas = potreros.map((p) => {
         const d = datoEscena(p, esc);
@@ -1063,21 +1173,30 @@
         return { n: p.n, ha: p.ha, dist: p.dist, agua: p.agua, sit: sitioDe(p), d: d };
       });
       const n = Math.max(1, potreros.length);
+      const cabezas = ev / (esp.evPorCabeza || 1);
       return {
         ha: +ha.toFixed(1),
         ev: +ev.toFixed(1),
+        cabezas: +cabezas.toFixed(1),
         haEV: ev ? +(ha / ev).toFixed(1) : 0,
+        haUnidad: cabezas ? +(ha / cabezas).toFixed(2) : 0,
+        unidad: esp.unidad,
+        unidadHa: esp.unidadHa,
+        aguaL: esp.aguaL,
+        aguaRodeo: Math.round(cabezas * esp.aguaL),
         kg: Math.round(kg),
         kgHa: ha ? +(kg / ha).toFixed(1) : 0,
         destete: Math.round(dest / n),
-        filas: filas
+        filas: filas,
+        sinCarga: esc !== "actual" && !productorCargoEsc(esc)
       };
     }
     function productorCargoMejora() {
-      return potreros.some((p) => {
-        const st = store[p.n] || {};
-        return ["pastoreo", "nutricion", "reproduccion", "agua"].some((m) => st[m] && (st[m].m1 || st[m].optimo));
-      });
+      return productorCargoEsc("m1") || productorCargoEsc("optimo");
+    }
+    function txtCifras(r) {
+      const esp = especieAct();
+      return r.haUnidad + " " + esp.unidadHa + " · destete ~" + r.destete + " % · " + r.kgHa + " kg/ha";
     }
     function setTxt(id, html) {
       const el = document.getElementById(id);
@@ -1096,7 +1215,7 @@
         (esDemoCalera
           ? "Demostrativo La Calera (SW Belgrano). No es un padrón nominado."
           : "Límite declarado (no es el padrón). Situación actual = carta INTA + relieve + aguadas de este lote.") +
-        " El informe final detalla inicial / mejorada / óptima."
+        " El informe final detalla actual / mejorando / ideal."
       );
       const ndviOn = capaEncendida("ndvi");
       const cobOn = capaEncendida("cobertura");
@@ -1110,7 +1229,7 @@
       setTxt("fichaSuelos", esDemoCalera
         ? "<b>Suelo que se ve · carta INTA Peña Zubiate 1:500.000</b><br>" +
           "UCSV 4 · Torriortente típico. Somero, poca reserva de agua, aptitud VII: pastoreo extensivo, no agrícola. " +
-          "P1–P5 loma/pedimento; P6 bajo más húmedo. Inicial: ~" + act.haEV + " ha/EV y " + act.kgHa + " kg carne/ha. El informe amplía potrero por potrero."
+          "P1–P5 loma/pedimento; P6 bajo más húmedo. Inicial: ~" + act.haUnidad + " " + act.unidadHa + " y " + act.kgHa + " kg carne/ha. El informe amplía potrero por potrero."
         : (diagnosticoLote
           ? "<b>Suelo de ESTE lote · " + escHtml(diagnosticoLote.fuenteSuelo) + "</b><br>" +
             escHtml(diagnosticoLote.suelo || "") +
@@ -1120,7 +1239,7 @@
             (diagnosticoLote.z ? " · " + diagnosticoLote.z + " m (" + diagnosticoLote.zmin + "–" + diagnosticoLote.zmax + " m)" : "") + ".<br>" +
             (diagnosticoLote.fisonomia ? "Vegetación: " + escHtml(diagnosticoLote.fisonomia) + ". " : "") +
             (diagnosticoLote.uso ? "Uso INTA: " + escHtml(diagnosticoLote.uso) + ". " : "") +
-            "Inicial ~" + act.haEV + " ha/EV · " + act.kgHa + " kg/ha. Mejorado 1 y Óptimo se cargan después."
+            "Inicial ~" + act.haUnidad + " " + act.unidadHa + " · " + act.kgHa + " kg/ha. Mejorando e Ideal se cargan con el productor (techo INTA)."
           : "<b>Suelo · leyendo carta INTA en este lote…</b><br>Cuando cierran las 4 esquinas se consulta Peña Zubiate 1:500.000 y el relieve.")
       );
       setTxt("fichaOtbn",
@@ -1149,24 +1268,32 @@
         " " + textoLluvia() + " A futuro se podrá cargar red de San Luis Agua y análisis de bebida."
       );
       const cargo = productorCargoMejora();
+      const hayM1 = productorCargoEsc("m1");
+      const hayOp = productorCargoEsc("optimo");
+      const esp = especieAct();
       setTxt("fichaManejo",
-        "<b>Tres situaciones del campo</b><br>" +
-        "Inicial (INTA): " + act.haEV + " ha/EV · destete ~" + act.destete + " % · " + act.kgHa + " kg/ha.<br>" +
-        "Mejorada: " + m1.haEV + " ha/EV · destete ~" + m1.destete + " % · " + m1.kgHa + " kg/ha" +
-        (cargo ? " (incluye lo que usted guardó)." : " (tope INTA; puede cargar sus datos).") + "<br>" +
-        "Óptima: " + op.haEV + " ha/EV · destete ~" + op.destete + " % · " + op.kgHa + " kg/ha, con inversión de agua y, en bajo, M2 solo si OTBN lo permite."
+        "<b>Tres situaciones · " + esp.plural + "</b><br>" +
+        "Actual (INTA): " + txtCifras(act) + ".<br>" +
+        "Mejorando: " + (hayM1 ? txtCifras(m1) + " (datos que cargó con el productor)." : "todavía igual que actual. Cargue lo que vaya mejorando; no se rellena el techo.") + "<br>" +
+        "Ideal: " + (hayOp ? txtCifras(op) + "." : "se llega con manejo e inversión, siempre bajo el techo INTA.")
       );
-      setTxt("hintPastoreo", "Hoy ~" + act.haEV + " ha/EV. Mejorado 1 apunta a 10 ha/EV rotando y descansando. No se gana con más vacas sin pasto.");
-      setTxt("hintNutricion", "CC inicial ~2,7. Agua lejos baja la condición. No recortar bebida. Sal a voluntad.");
-      setTxt("hintRepro", "Destete inicial ~" + act.destete + " %. Mejorado 1 ~85 % con servicio estacionado y parición cerca del agua.");
-      setTxt("hintAguaMod", (muyLejos[0] ? ("P" + muyLejos[0].n + " a " + muyLejos[0].dist + " m: acercar bebedero.") : "Alcance de cría 400 m.") + " Detalle en el informe.");
+      setTxt("avanceManejo",
+        "<b>Hacienda: " + esp.plural + "</b><br>" + esp.nota + "<br>" +
+        "<b>1 · Actual</b> (ya leída): " + txtCifras(act) + ".<br>" +
+        "<b>2 · Mejorando</b> " + (hayM1 ? txtCifras(m1) : "vacío hasta que carguen un dato. El techo INTA no se pega solo.") + "<br>" +
+        "<b>3 · Ideal</b> " + (hayOp ? txtCifras(op) : "techo productivo INTA para este lote y esta hacienda. No se pasa.") +
+        "<br>Agua: una " + esp.nombre + " ~" + esp.aguaL + " L/día (" + esp.aguaMin + "–" + esp.aguaMax + "). Rodeo actual ≈ " + act.aguaRodeo + " L/día."
+      );
+      setTxt("hintPastoreo", "Hoy ~" + act.haUnidad + " " + act.unidadHa + " en " + esp.plural + ". Mejorando no se rellena sola: pregunte carga real y destete. El techo INTA queda como tope.");
+      setTxt("hintNutricion", "CC inicial ~2,7. El agua de una " + esp.nombre + " es ~" + esp.aguaL + " L/día, no el de otra especie. No recortar bebida.");
+      setTxt("hintRepro", esp.desteteLab + " inicial ~" + act.destete + " %. El 85 % es techo INTA de vacas de cría; en oveja y cabra se carga el dato del productor.");
+      setTxt("hintAguaMod", "Una " + esp.nombre + " ~" + esp.aguaL + " L/día. Alcance de cría 400 m. " + (muyLejos[0] ? ("Lote a " + muyLejos[0].dist + " m: acercar bebedero.") : "Detalle en el informe."));
     }
     function dato(p) {
-      const tipo = store[p.n].tipo || "ganadero";
-      const base = estimar(p, tipo, escSel);
-      if (escSel === "actual") return base;
-      const slot = (store[p.n][modSel] || {})[escSel];
-      return Object.assign({}, base, slot || {});
+      if (escSel === "actual") return datoEscena(p, "actual");
+      const tipo = (store[p.n] && store[p.n].tipo) || "ganadero";
+      const slot = ((store[p.n] || {})[modSel] || {})[escSel];
+      return Object.assign({}, estimar(p, tipo, "actual"), slot || {}, { _sinCarga: !slot });
     }
     function decision(p) {
       const d = dato(p);
@@ -1197,11 +1324,13 @@
         const sobrecarga = d.ev > p.ha / d.haEV * 1.08;
         const corto = d.diasRestan < 8;
         const sem = sobrecarga || (corto && p.dist > 500) ? "rojo" : corto ? "amarillo" : "verde";
+        const esp = especieAct();
+        const cab = d.cabezas != null ? d.cabezas : d.ev / (esp.evPorCabeza || 1);
         return {
           color: SEM[sem],
           sem,
           titulo: "P" + p.n + " · " + d.lote,
-          sub: d.diasRestan + " días de pasto · " + d.ev + " EV",
+          sub: d.diasRestan + " días de pasto · " + (+Number(cab).toFixed(1)) + " " + esp.unidad,
           accion: sem === "rojo"
             ? "Sacar el lote o acercar agua. Hay sobrecarga o el pasto se acaba lejos de la aguada."
             : sem === "amarillo"
@@ -1242,7 +1371,7 @@
               : "Agua a " + p.dist + " m. Alcance de cría OK. " + TERRITORIO.agua
         };
       }
-      const cria = d.categoria.indexOf("ternero") >= 0;
+      const cria = /ternero|oveja|cabra|cría|cria/i.test(d.categoria || "");
       let sem = "verde";
       if (cria && p.dist > 500) sem = "rojo";
       else if (d.destete < 70 || (cria && p.dist > 350)) sem = "amarillo";
@@ -1884,6 +2013,7 @@
         nombre: (document.getElementById("fProd").value || store.nombreCampo || "").trim(),
         prod: (document.getElementById("fProd").value || "").trim(),
         tel: (document.getElementById("fTel").value || "").trim(),
+        especie: especieId(),
         lat: document.getElementById("fLat").value,
         lon: document.getElementById("fLon").value,
         faja: (document.getElementById("fFaja") || {}).value || "auto",
@@ -1898,6 +2028,7 @@
     function aplicarFormCampo(c) {
       document.getElementById("fProd").value = c.prod || c.nombre || "";
       document.getElementById("fTel").value = c.tel || "";
+      if (c.especie) syncEspecie(c.especie);
       let latTxt = c.lat || "", lonTxt = c.lon || "";
       const a = parseAngulo(c.lat, "lat"), b = parseAngulo(c.lon, "lon");
       if (puntoValido(a, b)) {
@@ -2062,6 +2193,8 @@
           ring: ring.slice()
         }];
         if (!store[1]) store[1] = { tipo: "ganadero" };
+        store.especie = especieId();
+        marcarEscena("actual");
         aguadas = prevAg;
         asignarAgua();
       } else {
@@ -2111,6 +2244,13 @@
         } else if (typeof actualizarFichasCampo === "function") actualizarFichasCampo();
       }
       if (!cargarCampoProductor.silencio) enfocarCampo();
+      if (hayAnillo) {
+        pSel = 1;
+        marcarEscena("actual");
+        if (typeof pintarCampos === "function") pintarCampos();
+        if (typeof llenar === "function") llenar();
+        if (!cargarCampoProductor.silencio && typeof setPanel === "function" && !esMovil()) setPanel(true);
+      }
       } catch (err) {
         console.error(err);
         avisoCampo("No se pudo abrir el campo. Revise latitud Sur y longitud Oeste (ej. 33,15 S y 66,80 O) o las 4 esquinas.");
@@ -2207,7 +2347,7 @@
         .setContent("<b>" + escHtml(store.nombreCampo || "Mi campo") + "</b><br>Superficie: <b>" + fmtHa(ha) + "</b><br>" +
           escHtml(String(diagnosticoLote.suelo)) + " · aptitud " + escHtml(String(diagnosticoLote.capUso)) + "<br>" +
           "Relieve: " + escHtml(String(diagnosticoLote.relieve)) + " · " + diagnosticoLote.z + " m<br>" +
-          "<b>Situación actual</b> de este lote (INTA). Toque aguadas y después cargue Mejorado 1.")
+          "<b>Situación actual</b> de este lote (INTA · " + escHtml(especieAct().plural) + "). Toque aguadas. Mejorando e Ideal se arman con el productor; el techo lo pone INTA.")
         .openOn(map);
       pintarAvisoSat(ring.length);
       return diagnosticoLote;
@@ -2626,37 +2766,43 @@
       return "<div><label>" + lab + "</label><input id='" + id + "' type='" + (type || "text") + "'" + (step ? " step='" + step + "'" : "") + " /></div>";
     }
     function pintarCampos() {
+      const esp = especieAct();
+      const labEv = "Carga (" + esp.unidad + " · " + esp.plural + ")";
+      const labHa = "Receptividad (" + esp.unidadHa + ")";
       if (modSel === "pastoreo") {
         campos.innerHTML =
           campo("fEstado", "Estado (pastoreando / descanso)") +
           campo("fDias", "Días de pasto que quedan", "number") +
           campo("fDesc", "Días de descanso", "number") +
           campo("fFo", "Forraje en oferta (kg MS/ha)", "number") +
-          campo("fEv", "Carga (EV)", "number", "0.1") +
-          campo("fHaEv", "Receptividad (ha/EV)", "number", "0.1");
+          campo("fEv", labEv, "number", "0.1") +
+          campo("fHaEv", labHa, "number", "0.1");
       } else if (modSel === "nutricion") {
         campos.innerHTML =
           campo("fCc", "Condición corporal (1 a 5)", "number", "0.1") +
           campo("fFo", "Forraje en oferta (kg MS/ha)", "number") +
           campo("fSup", "Suplemento") +
           campo("fDist", "Distancia al agua (m)", "number") +
-          campo("fEv", "Carga (EV)", "number", "0.1") +
+          campo("fEv", labEv, "number", "0.1") +
+          campo("fAguaL", "Agua por " + esp.nombre + " (L/día)", "number", "0.1") +
           campo("fKg", "kg carne / año", "number");
       } else if (modSel === "agua") {
         campos.innerHTML =
           campo("fAgua", "Aguada que usa") +
           campo("fDist", "Distancia al agua (m)", "number") +
-          campo("fEv", "Carga (EV)", "number", "0.1") +
+          campo("fEv", labEv, "number", "0.1") +
+          campo("fAguaL", "Agua por " + esp.nombre + " (L/día)", "number", "0.1") +
+          campo("fAguaRodeo", "Agua del rodeo (L/día)", "number") +
           campo("fCc", "Condición corporal (1 a 5)", "number", "0.1") +
           campo("fCat", "Categoría en el potrero") +
           campo("fKg", "kg carne / año", "number");
       } else {
         campos.innerHTML =
           campo("fCat", "Categoría en el potrero") +
-          campo("fDest", "Destete %", "number", "0.1") +
+          campo("fDest", esp.desteteLab, "number", "0.1") +
           campo("fPre", "Preñez estimada %", "number", "0.1") +
           campo("fServ", "Servicio") +
-          campo("fEv", "Vientres (EV)", "number", "0.1") +
+          campo("fEv", "Vientres (" + esp.unidad + ")", "number", "0.1") +
           campo("fKg", "kg carne / año", "number");
       }
     }
@@ -2665,20 +2811,28 @@
       if (!p) return;
       const d = dato(p);
       const v = decision(p);
+      const esp = especieAct();
       document.getElementById("fTipo").value = store[p.n].tipo || "ganadero";
+      const panEsp = document.getElementById("fEspeciePanel");
+      if (panEsp) panEsp.value = esp.id;
       document.getElementById("fLote").value = d.lote;
       document.getElementById("fAccion").value = v.accion;
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+      const cabezas = d.cabezas != null ? Number(d.cabezas) : Number(d.ev || 0) / (esp.evPorCabeza || 1);
+      const haUn = d.haUnidad != null ? Number(d.haUnidad) : Number(d.haEV || 0) * (esp.evPorCabeza || 1);
+      const aguaL = d.aguaL != null ? Number(d.aguaL) : esp.aguaL;
       set("fEstado", d.estado);
       set("fDias", d.diasRestan);
       set("fDesc", d.diasDescanso);
       set("fFo", d.fo);
-      set("fEv", d.ev);
-      set("fHaEv", d.haEV);
+      set("fEv", +cabezas.toFixed(1));
+      set("fHaEv", +haUn.toFixed(2));
       set("fCc", d.cc);
       set("fSup", d.suplemento);
       set("fDist", p.dist);
       set("fAgua", p.agua);
+      set("fAguaL", aguaL);
+      set("fAguaRodeo", Math.round(cabezas * aguaL));
       set("fKg", d.kg);
       set("fCat", d.categoria);
       set("fDest", d.destete);
@@ -2704,8 +2858,8 @@
       const lock = escSel === "actual";
       document.querySelectorAll("#campos input, #fLote, #fAccion").forEach((el) => { el.readOnly = lock; });
       document.getElementById("btnGuardar").disabled = lock;
-      document.getElementById("btnGuardar").textContent = lock ? "Diagnóstico · no se edita" : "Guardar plan";
-      document.getElementById("btnEstimar").textContent = lock ? "Ver datos INTA / carta" : "Cargar tope posible";
+      document.getElementById("btnGuardar").textContent = lock ? "Diagnóstico · no se edita" : "Guardar lo que van mejorando";
+      document.getElementById("btnEstimar").textContent = lock ? "Ver datos INTA / carta" : "Partir de lo actual (no pega el techo)";
       document.getElementById("leyenda").innerHTML =
         (modSel === "pastoreo"
           ? "<div><i style='background:#1B7A4A'></i>Pasto alcanza / descanso listo</div><div><i style='background:#C4A035'></i>Cambiar de potrero pronto</div><div><i style='background:#B42318'></i>Sobrecarga o sin días</div>"
@@ -2729,10 +2883,10 @@
         info.innerHTML = "<b>" + v.titulo + "</b><br>" + v.sub + "<br>" + v.accion + "<br><br>" +
           "<b>Suelo:</b> " + sit.suelo + " · " + sit.paisaje + " · aptitud " + sit.aptitud + ".<br>" +
           "<b>Agua:</b> " + p.agua + " a " + p.dist + " m.<br>" +
-          "<b>Inicial:</b> " + tAct.haEV + " ha/EV · destete " + tAct.destete + " % · " + tAct.kgHa + " kg/ha.<br>" +
-          "<b>Mejorada:</b> " + tM1.haEV + " ha/EV · destete " + tM1.destete + " % · " + tM1.kgHa + " kg/ha.<br>" +
-          "<b>Óptima:</b> " + tOp.haEV + " ha/EV · destete " + tOp.destete + " % · " + tOp.kgHa + " kg/ha.<br>" +
-          "El informe final amplía estos números para todo el campo.";
+          "<b>Actual:</b> " + tAct.haUnidad + " " + tAct.unidadHa + " · destete " + tAct.destete + " % · " + tAct.kgHa + " kg/ha.<br>" +
+          "<b>Techo Mejorando (INTA):</b> " + tM1.haUnidad + " " + tM1.unidadHa + " · destete " + tM1.destete + " % · " + tM1.kgHa + " kg/ha.<br>" +
+          "<b>Techo Ideal (INTA):</b> " + tOp.haUnidad + " " + tOp.unidadHa + " · destete " + tOp.destete + " % · " + tOp.kgHa + " kg/ha.<br>" +
+          "Hacienda: " + especieAct().plural + ". Mejorando e Ideal se cargan con el productor; estos números son el techo, no el valor pegado.";
       }
       if (sum) sum.textContent = "P" + p.n;
       actualizarFichasCampo();
@@ -2774,50 +2928,81 @@
       store[pSel].tipo = document.getElementById("fTipo").value;
       refrescarMapa();
     });
+    function onCambioEspecie(id) {
+      syncEspecie(id);
+      pintarCampos();
+      refrescarMapa();
+    }
+    const elEsp = document.getElementById("fEspecie");
+    const elEspP = document.getElementById("fEspeciePanel");
+    if (elEsp) elEsp.addEventListener("change", () => onCambioEspecie(elEsp.value));
+    if (elEspP) elEspP.addEventListener("change", () => onCambioEspecie(elEspP.value));
+    syncEspecie(store.especie || "cria");
+    campos.addEventListener("input", () => {
+      const ev = document.getElementById("fEv");
+      const al = document.getElementById("fAguaL");
+      const ar = document.getElementById("fAguaRodeo");
+      if (ev && al && ar) ar.value = Math.round(Number(ev.value || 0) * Number(al.value || 0));
+    });
     document.getElementById("btnEstimar").addEventListener("click", () => {
-      const p = potreros.find((x) => x.n === pSel);
-      const tipo = store[p.n].tipo || "ganadero";
-      if (!store[p.n][modSel]) store[p.n][modSel] = {};
-      store[p.n][modSel][escSel] = estimar(p, tipo, escSel);
-      saveStore(store);
       refrescarMapa();
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = escSel === "actual"
-        ? "Actual cargada desde INTA Región III y carta de suelos de este lote. No se edita."
-        : "Se cargó el tope posible de esta solapa. Si lo supera, el semáforo pasa a rojo en el mapa y en Earth.";
+        ? "Actual leída desde INTA Región III y carta de suelos de este lote. No se edita."
+        : "Los números que ve son los de ahora. Cambie con el productor lo que vaya mejorando y pulse Guardar. El techo INTA no se pega: si lo supera, el semáforo pasa a rojo.";
     });
     document.getElementById("btnGuardar").addEventListener("click", () => {
       if (escSel === "actual") return;
-      const val = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
       const p = potreros.find((x) => x.n === pSel);
       const tipo = document.getElementById("fTipo").value;
+      const esp = especieAct();
       if (!store[pSel][modSel]) store[pSel][modSel] = {};
-      const carga = Object.assign(dato(p), {
-        lote: val("fLote"),
-        estado: val("fEstado") || dato(p).estado,
-        diasRestan: Number(val("fDias") || 0),
-        diasDescanso: Number(val("fDesc") || 0),
-        fo: Number(val("fFo") || 0),
-        ev: Number(val("fEv") || 0),
-        haEV: Number(val("fHaEv") || 0),
-        cc: Number(val("fCc") || 0),
-        suplemento: val("fSup"),
-        categoria: val("fCat"),
-        destete: Number(val("fDest") || 0),
-        prenhez: Number(val("fPre") || 0),
-        servicio: val("fServ"),
-        kg: Number(val("fKg") || 0),
-        accion: val("fAccion")
-      });
+      const carga = Object.assign({}, dato(p));
+      const put = (id, key, num) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        carga[key] = num ? Number(el.value || 0) : el.value;
+      };
+      put("fLote", "lote", false);
+      put("fEstado", "estado", false);
+      put("fDias", "diasRestan", true);
+      put("fDesc", "diasDescanso", true);
+      put("fFo", "fo", true);
+      put("fCc", "cc", true);
+      put("fSup", "suplemento", false);
+      put("fCat", "categoria", false);
+      put("fDest", "destete", true);
+      put("fPre", "prenhez", true);
+      put("fServ", "servicio", false);
+      put("fKg", "kg", true);
+      put("fAccion", "accion", false);
+      const elEv = document.getElementById("fEv");
+      if (elEv) {
+        carga.cabezas = Number(elEv.value || 0);
+        carga.ev = +(carga.cabezas * esp.evPorCabeza).toFixed(2);
+      }
+      const elHa = document.getElementById("fHaEv");
+      if (elHa && elHa.value !== "") {
+        carga.haUnidad = Number(elHa.value);
+        carga.haEV = esp.evPorCabeza ? +(carga.haUnidad / esp.evPorCabeza).toFixed(2) : carga.haUnidad;
+      }
+      const elAL = document.getElementById("fAguaL");
+      if (elAL && elAL.value !== "") {
+        carga.aguaL = Number(elAL.value);
+        carga.aguaRodeo = +((carga.cabezas || 0) * carga.aguaL).toFixed(0);
+      }
+      carga.especie = esp.id;
+      carga._sinCarga = false;
       store[pSel][modSel][escSel] = carga;
       store[pSel].tipo = tipo;
+      store.especie = esp.id;
       saveStore(store);
       refrescarMapa();
       const chequeo = validarCarga(p, tipo, carga, escSel);
       document.getElementById("msg").hidden = false;
       document.getElementById("msg").textContent = chequeo.posible
-        ? "Guardado. Es posible con la carta de suelos, el agua y este lote. Ábralo en Google Earth."
-        : "Guardado, pero no es posible: semáforo rojo en el mapa y en Earth. " + chequeo.motivos[0];
+        ? "Guardado lo que van mejorando. Sigue por debajo del techo INTA para " + esp.plural + "."
+        : "Guardado, pero no es posible: semáforo rojo. " + chequeo.motivos[0];
     });
 
     function kmlColor(hex) {
@@ -2853,7 +3038,7 @@
     }
     function exportarKml() {
       const nombre = { pastoreo: "Pastoreo", nutricion: "Nutrición", reproduccion: "Reproducción" }[modSel];
-      const escena = { actual: "Actual", m1: "Mejorado 1", optimo: "Óptimo" }[escSel];
+      const escena = nomEscena(escSel);
       let marks = "";
       potreros.forEach((p) => {
         const v = decision(p);
@@ -2959,6 +3144,15 @@
       const m1 = resumenEscena("m1");
       const op = resumenEscena("optimo");
       const cargo = productorCargoMejora();
+      const hayM1 = productorCargoEsc("m1");
+      const hayOp = productorCargoEsc("optimo");
+      const esp = especieAct();
+      const tM1 = potreros[0] ? techoEscena(potreros[0], (store[potreros[0].n] || {}).tipo || "ganadero", "m1") : null;
+      const tOp = potreros[0] ? techoEscena(potreros[0], (store[potreros[0].n] || {}).tipo || "ganadero", "optimo") : null;
+      const cifrasD = (d) => {
+        const haUn = d.haUnidad != null ? d.haUnidad : +(Number(d.haEV || 0) * esp.evPorCabeza).toFixed(2);
+        return haUn + " " + esp.unidadHa + " · destete " + d.destete + " % · " + d.kg + " kg/año";
+      };
       const item = (h, tag, tagNom) =>
         "<div class='item'><span class='tag " + tag + "'>" + tagNom + "</span><b>P" + h.n + " · " + h.mod + "</b>" + escHtml(h.accion) + "</div>";
       const lista = (arr, tag, nom) => arr.length
@@ -2970,24 +3164,29 @@
         return "<div class='item'><b>P" + f.n + " · " + f.ha.toFixed(1) + " ha · " + escHtml(f.sit.paisaje) + "</b>" +
           escHtml(f.sit.suelo) + " · aptitud " + escHtml(f.sit.aptitud) + ".<br>" +
           escHtml(f.agua) + " a " + f.dist + " m.<br>" +
-          "Inicial: " + f.d.haEV + " ha/EV · destete " + f.d.destete + " % · " + f.d.kg + " kg/año.<br>" +
-          "Mejorada: " + m.d.haEV + " ha/EV · destete " + m.d.destete + " % · " + m.d.kg + " kg/año.<br>" +
-          "Óptima: " + o.d.haEV + " ha/EV · destete " + o.d.destete + " % · " + o.d.kg + " kg/año.</div>";
+          "Actual: " + cifrasD(f.d) + ".<br>" +
+          "Mejorando: " + (hayM1 ? cifrasD(m.d) : "todavía igual que actual (no cargó mejoras).") + "<br>" +
+          "Ideal: " + (hayOp ? cifrasD(o.d) : "todavía no cargó el techo; el límite lo pone INTA.") + "</div>";
       }).join("");
       document.getElementById("cuerpoInforme").innerHTML =
         "<h1>Informe al productor</h1>" +
         "<p class='meta'>Sociedad Rural de San Luis · Gemelo Digital Ganadero · Observatorio de IA UCCuyo<br>" +
         escHtml(campo) + (prod ? " · " + escHtml(prod) : "") + (tel ? " · " + escHtml(tel) : "") + "<br>" +
         fecha + " · Entregable de consulta. No es padrón catastral ni análisis de agua de laboratorio.</p>" +
-        "<h2>Las tres situaciones del campo</h2>" +
+        "<h2>Las tres situaciones del campo · " + escHtml(esp.plural) + "</h2>" +
         "<div class='sit'>" +
-          "<div class='item'><span class='tag sin'>Inicial</span><b>Cómo está hoy</b>" +
-            "<span class='num'>" + act.haEV + " ha/EV</span>Destete ~" + act.destete + " % · " + act.kgHa + " kg carne/ha · " + act.ev + " EV en " + act.ha.toFixed(0) + " ha. Lectura INTA Región III + carta de suelos. No se edita.</div>" +
-          "<div class='item'><span class='tag con'>Mejorada</span><b>Con lo que usted puede cargar</b>" +
-            "<span class='num'>" + m1.haEV + " ha/EV</span>Destete ~" + m1.destete + " % · " + m1.kgHa + " kg/ha. Tope Mejorado 1 (INTA): 10 ha/EV, 12 kg/ha, destete 85 %. " +
-            (cargo ? "Incluye números que usted guardó en Manejo." : "Todavía no hay carga propia: se muestra el tope INTA. Cárguela en Mejorado 1.") + "</div>" +
-          "<div class='item'><span class='tag med'>Óptima</span><b>Con inversión corto / mediano plazo</b>" +
-            "<span class='num'>" + op.haEV + " ha/EV</span>Destete ~" + op.destete + " % · " + op.kgHa + " kg/ha. En loma el techo sigue siendo Mejorado 1. En bajo, M2 (~5,9 ha/EV) solo si OTBN lo permite. Agua de cría a menos de 400 m.</div>" +
+          "<div class='item'><span class='tag sin'>Actual</span><b>Cómo está hoy</b>" +
+            "<span class='num'>" + act.haUnidad + " " + act.unidadHa + "</span>Destete ~" + act.destete + " % · " + act.kgHa + " kg carne/ha · " +
+            act.cabezas + " " + act.unidad + " en " + act.ha.toFixed(0) + " ha. Agua ~" + act.aguaL + " L/día por " + esp.nombre +
+            " (rodeo ≈ " + act.aguaRodeo + " L/día). Lectura INTA. No se edita.</div>" +
+          "<div class='item'><span class='tag con'>Mejorando</span><b>Lo que van cargando juntos</b>" +
+            "<span class='num'>" + (hayM1 ? m1.haUnidad + " " + m1.unidadHa : "igual que actual") + "</span>" +
+            (hayM1 ? ("Destete ~" + m1.destete + " % · " + m1.kgHa + " kg/ha. Datos del productor. ") : "Todavía no hay carga propia: se muestra lo actual, no el techo. ") +
+            "Techo INTA: " + (tM1 ? (tM1.haUnidad + " " + tM1.unidadHa + ", destete " + tM1.destete + " %, " + tM1.kgHa + " kg/ha.") : "") + "</div>" +
+          "<div class='item'><span class='tag med'>Ideal</span><b>Techo productivo INTA</b>" +
+            "<span class='num'>" + (hayOp ? op.haUnidad + " " + op.unidadHa : (tOp ? tOp.haUnidad + " " + tOp.unidadHa : "—")) + "</span>" +
+            (hayOp ? ("Destete ~" + op.destete + " % · " + op.kgHa + " kg/ha. ") : "Aún no cargó el camino; el límite lo pone INTA. ") +
+            "En loma no se pasa de Mejorando. En bajo, M2 solo si OTBN lo permite. Agua de " + esp.nombre + " ~" + esp.aguaL + " L/día.</div>" +
         "</div>" +
         "<h2>Suelo, bosque y agua que se ven en el mapa</h2>" +
         "<div class='item'><b>Suelos</b>" + (esDemoCalera
@@ -3009,7 +3208,7 @@
               : (aguadas.length ? "El lote está dentro o cerca de 400 m de una aguada marcada." : "")))
           : "Todavía no hay aguadas marcadas. Toque el satélite en represas o molinos. A futuro: red San Luis Agua y análisis de bebida.") +
           " " + textoLluvia() + "</div>" +
-        "<h2>Cada potrero · inicial / mejorada / óptima</h2>" +
+        "<h2>Cada potrero · actual / mejorando / ideal</h2>" +
         filas +
         "<h2>Corto plazo · sin inversión inmediata</h2>" +
         lista(sin, "sin", "Manejo") +
@@ -3018,16 +3217,20 @@
         lista(con, "con", "Inversión") +
         "<div class='item'><b>Agua</b>Si hay vientres a más de 400 m, acercar bebedero o cañería. No recortar bebida. Sal a voluntad. Cobre inyectable al tacto si el agua es sulfatada.</div>" +
         "<h2>Mediano plazo · situación óptima con inversión</h2>" +
-        "<div class='item'><span class='tag med'>Mediano</span><b>Mejorado 1 (manejo)</b>Subir destete hacia 85 % y bajar a ~10 ha/EV con rotación, parición cerca del agua y servicio estacionado. No pide desmonte. El productor carga estos números en la solapa Manejo · Mejorado 1.</div>" +
-        "<div class='item'><span class='tag med'>Mediano</span><b>Aguadas nuevas</b>Una aguada más donde hoy hay más de 550 m recorta el caminar de la cría. Eso sí pide inversión; el techo de kilos no se gana solo con más vacas.</div>" +
-        "<div class='item'><span class='tag med'>Mediano</span><b>Óptimo de suelo</b>En loma el techo es Mejorado 1. Buffel ~30 % solo en bajos y si el OTBN lo permite. Soja o campo limpio no es escenario de este territorio.</div>" +
-        "<p class='meta'>Este es el informe que se entrega al productor: situación inicial (lectura INTA), situación mejorada (datos que él puede cargar) y situación óptima (corto y mediano plazo, con o sin inversión). Fuente: INTA San Luis, GeoINTA Nodo 15, MAyDS OTBN 2016. Orientación de consulta; no reemplaza análisis de agua ni mensura.</p>";
+        "<div class='item'><span class='tag med'>Mediano</span><b>Mejorando (manejo e inversión)</b>Subir destete y bajar carga hacia el techo INTA de este lote y esta hacienda (" +
+          (tM1 ? tM1.haUnidad + " " + tM1.unidadHa : "10 ha/EV en vacas de cría") +
+          "), con rotación, parición cerca del agua y servicio estacionado. No pide desmonte. Se carga en Manejo · Mejorando.</div>" +
+        "<div class='item'><span class='tag med'>Mediano</span><b>Aguadas nuevas</b>Una aguada más donde hoy hay más de 550 m recorta el caminar. El agua de una " + esp.nombre +
+          " es ~" + esp.aguaL + " L/día, no el de otra especie. No se recorta bebida.</div>" +
+        "<div class='item'><span class='tag med'>Mediano</span><b>Ideal de suelo</b>En loma el techo es Mejorando. Buffel ~30 % solo en bajos y si el OTBN lo permite. Soja o campo limpio no es escenario de este territorio.</div>" +
+        "<p class='meta'>Este es el informe que se entrega al productor: situación actual (lectura INTA), situación mejorando (datos que carga con el productor) e ideal (techo INTA). Hacienda: " +
+          escHtml(esp.plural) + ". Fuente: INTA San Luis, GeoINTA Nodo 15, MAyDS OTBN 2016. Orientación de consulta; no reemplaza análisis de agua ni mensura.</p>";
       const textoWA = encodeURIComponent(
         "Informe Gemelo Digital Ganadero · Sociedad Rural de San Luis\n" +
-        campo + "\nInicial: " + act.haEV + " ha/EV · destete " + act.destete + " % · " + act.kgHa + " kg/ha.\n" +
-        "Mejorada: " + m1.haEV + " ha/EV · destete " + m1.destete + " % · " + m1.kgHa + " kg/ha.\n" +
-        "Óptima: " + op.haEV + " ha/EV · destete " + op.destete + " % · " + op.kgHa + " kg/ha.\n" +
-        "Corto plazo: rotar, estacionar servicio, no desmontar, no recortar bebida. Acercar agua si hay cría a más de 400 m."
+        campo + " · " + esp.plural + "\nActual: " + txtCifras(act) + ".\n" +
+        "Mejorando: " + (hayM1 ? txtCifras(m1) : "aún no cargada") + ".\n" +
+        "Ideal (techo INTA): " + (tOp ? tOp.haUnidad + " " + tOp.unidadHa + " · destete " + tOp.destete + " %" : txtCifras(op)) + ".\n" +
+        "Corto plazo: rotar, estacionar servicio, no desmontar, no recortar bebida. Agua de " + esp.nombre + " ~" + esp.aguaL + " L/día."
       );
       const wa = document.getElementById("btnWhatsapp");
       wa.onclick = () => { window.open("https://wa.me/?text=" + textoWA, "_blank"); };
@@ -3145,7 +3348,7 @@
       if (prod) aplicarNombre(prod);
       store.consulta = { prod, tel, lat, lon, ha, fecha: new Date().toISOString() };
       saveStore(store);
-      decir("Consulta pedida. Recibimos el pedido de " + prod + ". Lo contactamos al " + tel + " para ver su campo y armar Actual, Mejorado 1 y Óptimo.", true);
+      decir("Consulta pedida. Recibimos el pedido de " + prod + ". Lo contactamos al " + tel + " para ver su campo y armar Actual, Mejorando e Ideal (techo INTA).", true);
     });
   </script>
 </body>
