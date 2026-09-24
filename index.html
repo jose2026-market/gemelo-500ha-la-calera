@@ -588,7 +588,7 @@
       <article class="acordeon" id="accCapas">
         <button type="button" class="cab" data-acc="accCapas"><div><small>3 · Capas oficiales</small><b>Imágenes, suelos y bosque</b></div><i>+</i></button>
         <div class="cuerpo">
-          Satélite y Sentinel-2 se piden por recorte. El verde del campo (NDVI) y el uso del suelo se ven sobre el lote, también en el celular.
+          El satélite se pide por recorte. El verde del campo (NDVI) y el uso del suelo se ven sobre el lote, también en el celular.
           <button type="button" id="btnCapasOficiales">Ir a Capas</button>
         </div>
       </article>
@@ -796,7 +796,6 @@
             <div class="cuerpo">
               <div class="fondos" id="fondosImg" role="tablist" aria-label="Imagen de fondo">
                 <button type="button" class="on" data-fondo="sat">Satélite</button>
-                <button type="button" data-fondo="sentinel">Sentinel-2</button>
                 <button type="button" data-fondo="ign">Carta IGN</button>
                 <button type="button" data-fondo="relieve">Relieve</button>
               </div>
@@ -1301,7 +1300,7 @@
           ? "<b>Verde NDVI sobre este campo.</b><br>Marrón = poco pasto o suelo desnudo. Verde = más biomasa. En loma (P1–P5) el verde suele ser menor que en el bajo (P6). El informe usa esto como foto de la situación inicial."
           : cobOn
             ? "<b>Uso del suelo (IGN) sobre este campo.</b><br>Monte, pastizal y suelo desnudo. No se desmonta: el monte se lee con OTBN. El detalle de cada potrero va al informe."
-            : "<b>Imagen del campo.</b><br>Satélite o Sentinel para ver potreros. Toque Verde NDVI para el pasto de ahora o Uso del suelo para monte/pastizal. Cifras de kilos y destete: en el informe."
+            : "<b>Imagen del campo.</b><br>Satélite para ver potreros. Toque Verde NDVI para el pasto de ahora o Uso del suelo para monte/pastizal. Cifras de kilos y destete: en el informe."
       );
       setTxt("fichaSuelos", esDemoCalera
         ? "<b>Suelo que se ve · carta INTA Peña Zubiate 1:500.000</b><br>" +
@@ -1514,8 +1513,6 @@
 
     const satUrls = [
       "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-      "https://s2maps-tiles.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg",
-      "https://s2maps-tiles.eox.at/wmts/1.0.0/s2cloudless-2023_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg",
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
     ];
     let satUrlI = 0, satErr = 0;
@@ -1535,10 +1532,7 @@
     const ign = L.tileLayer("https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/mapabase_hibrido@EPSG%3A3857@png/{z}/{x}/{-y}.png", {
       maxZoom: MAX_Z, maxNativeZoom: 18, attribution: "IGN"
     });
-    const sentinel = L.tileLayer("https://s2maps-tiles.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg", {
-      maxZoom: 16, maxNativeZoom: 16, attribution: "Sentinel-2 cloudless · EOX · Copernicus"
-    });
-    const fondosLyr = { sat: sat, ign: ign, sentinel: sentinel, relieve: topo };
+    const fondosLyr = { sat: sat, ign: ign, relieve: topo };
     let relieveOverlay = null;
     function setFondo(id) {
       if (!fondosLyr[id]) id = "sat";
