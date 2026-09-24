@@ -655,14 +655,13 @@
       </div>
 
       <div class="paso">
-        <p><b class="nro">B</b> <b>¿Qué hacienda es?</b> Este gemelo es ganadero de cría: vacas, ovejas o cabras. El agua y la carga no son las mismas.</p>
+        <p><b class="nro">B</b> <b>¿Qué hacienda es?</b> Este gemelo es ganadero de cría: vacas, ovejas o cabras.</p>
         <label for="fEspecie">Especie (elija con el productor)</label>
         <select id="fEspecie">
           <option value="cria">Vacas de cría</option>
           <option value="oveja">Ovejas</option>
           <option value="cabra">Cabras</option>
         </select>
-        <p class="ok" id="notaEspecie">Vaca de cría con ternero: ~50–80 L/día. Una vaca seca bebe menos. Oveja: ~4–8 L. Cabra: ~3–6 L.</p>
       </div>
 
       <div class="paso">
@@ -850,7 +849,7 @@
           </details>
           <details class="sub" data-mod-drop="agua">
             <summary>Agua</summary>
-            <div class="cuerpo"><p class="hint" id="hintAguaMod">Aguada que usa el lote y si alcanza para cría.</p></div>
+            <div class="cuerpo"><p class="hint" id="hintAguaMod">El consumo de agua va acá, según la hacienda. Vaca de cría con ternero ~50–80 L/día (seca menos). Oveja ~4–8 L. Cabra ~3–6 L. No se recorta bebida.</p></div>
           </details>
           <div class="modulos" hidden>
             <button type="button" class="on" data-mod="pastoreo">Pastoreo</button>
@@ -915,8 +914,6 @@
       const a = document.getElementById("fEspecie");
       const b = document.getElementById("fEspeciePanel");
       if (a) a.value = eid;
-      const n = document.getElementById("notaEspecie");
-      if (n) n.textContent = ESPECIE[eid].nota;
       if (b) b.value = eid;
     }
     function nomEscena(esc) {
@@ -1330,7 +1327,7 @@
         (sit ? ("INTA este lugar: " + escHtml(sit.suelo) + " · " + escHtml(sit.paisaje) + " · aptitud " + escHtml(sit.aptitud) + ".<br>") : "") +
         "OTBN " + otbnAct().id + " · " + estacionAct().nombre +
         " · destete carta ~" + act.destete + " % · " + act.kgHa + " kg carne/ha.<br>" +
-        "Agua del rodeo ≈ " + act.aguaRodeo + " L/día. Para probar otra carga (10 → 20 vacas) abra <b>Manejo</b>: se ve al toque.";
+        "Para probar otra carga (10 → 20 vacas) abra <b>Manejo</b>: se ve al toque.";
     }
     function pintarCifrasVivas(p, extra) {
       const el = document.getElementById("cifrasVivas");
