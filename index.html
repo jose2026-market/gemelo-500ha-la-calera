@@ -719,7 +719,6 @@
 
       <button type="button" id="btnVerCampo">E · Ver el campo y leer la situación actual</button>
       <button type="button" id="btnGuardarCampo" class="sec">Guardar este campo</button>
-      <button type="button" id="btnDemoCalera" class="sec" style="background:#F7F1E4;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Volver al demostrativo</button>
       <label class="solo-escritorio">Campos guardados</label>
       <div class="lista-campos" id="listaCampos"></div>
     </div>
@@ -2981,27 +2980,6 @@
       setTimeout(() => { ir(); enfocarCampo.activo = false; }, 700);
     }
     enfocarCampo.activo = false;
-    function volverDemo() {
-      enfocarCampo.activo = false;
-      esDemoCalera = true;
-      potreros = JSON.parse(JSON.stringify(DEMO_POTREROS));
-      aguadas = JSON.parse(JSON.stringify(DEMO_AGUADAS));
-      Object.keys(DEMO_SITIO).forEach((k) => { SITIO[k] = JSON.parse(JSON.stringify(DEMO_SITIO[k])); });
-      limiteReal.clearLayers();
-      mostrarRelieveDemo(true);
-      dibujarPredio();
-      aplicarNombre(DEMO_NOMBRE);
-      store.campoActivo = null;
-      store.anilloCampo = null;
-      diagnosticoLote = null;
-      leerTerrenoLote.clave = "";
-      zmin = 917; zmax = 1023;
-      saveStore(store);
-      pintarAvisoSat(0);
-      verCampo();
-      document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = "Volvió al demostrativo de Gemelo Digital Ganadero.";
-    }
     document.getElementById("btnVerCampo").addEventListener("click", cargarCampoProductor);
     const elNLotes = document.getElementById("fNLotes");
     if (elNLotes) {
@@ -3024,7 +3002,6 @@
       });
       pintarNotaLotes();
     }
-    document.getElementById("btnDemoCalera").addEventListener("click", volverDemo);
     document.getElementById("fPlano").addEventListener("change", (ev) => {
       const f = ev.target.files && ev.target.files[0];
       const prev = document.getElementById("prevPlano");
