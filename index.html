@@ -910,6 +910,11 @@
     function especieAct() {
       return ESPECIE[especieId()] || ESPECIE.cria;
     }
+    function nAnimales(n) {
+      const x = Number(n);
+      if (!Number.isFinite(x) || x < 0) return 0;
+      return Math.round(x);
+    }
     function syncEspecie(id) {
       const eid = ESPECIE[id] ? id : "cria";
       store.especie = eid;
@@ -1257,7 +1262,7 @@
         maxDias: maxDias,
         descSug: descSug,
         ev: +evC.toFixed(2),
-        cabezas: +cab.toFixed(1),
+        cabezas: nAnimales(cab),
         haUnidad: cab > 0 ? +(p.ha / cab).toFixed(2) : 0,
         haEV: evC > 0 ? +(p.ha / evC).toFixed(2) : 0,
         aguaRodeo: Math.round(cab * (esp.aguaL || 0))
@@ -1274,7 +1279,7 @@
         });
         const esp = especieAct();
         if (extra.cabezas != null && extra.cabezas !== "") {
-          base.cabezas = Number(extra.cabezas);
+          base.cabezas = nAnimales(extra.cabezas);
           base.ev = +(base.cabezas * (esp.evPorCabeza || 1)).toFixed(2);
           if (base.cabezas > 0) {
             base.haUnidad = +(p.ha / base.cabezas).toFixed(2);
@@ -1312,7 +1317,7 @@
       return {
         ha: +ha.toFixed(1),
         ev: +ev.toFixed(1),
-        cabezas: +cabezas.toFixed(1),
+        cabezas: nAnimales(cabezas),
         haEV: ev ? +(ha / ev).toFixed(1) : 0,
         haUnidad: cabezas ? +(ha / cabezas).toFixed(2) : 0,
         unidad: esp.unidad,
@@ -1493,7 +1498,7 @@
           color: SEM[sem],
           sem,
           titulo: nomPotrero(p) + " · " + d.lote,
-          sub: (hayPasto ? (d.diasRestan + " días de pasto") : "días de pasto: sin dato") + " · " + (+Number(cab).toFixed(1)) + " " + esp.unidad,
+          sub: (hayPasto ? (d.diasRestan + " días de pasto") : "días de pasto: sin dato") + " · " + nAnimales(cab) + " " + esp.unidad,
           accion: sem === "rojo"
             ? "Sacar el lote o acercar agua. Hay sobrecarga o el pasto se acaba lejos de la aguada."
             : sem === "amarillo"
@@ -2594,9 +2599,10 @@
     }
     function aplicarCabezasMenu() {
       const el = document.getElementById("fCabezas");
-      const n = el && el.value !== "" ? Number(el.value) : Number(store.cabezas);
+      const n = el && el.value !== "" ? nAnimales(el.value) : nAnimales(store.cabezas);
       if (!Number.isFinite(n) || n < 0) return;
       store.cabezas = n;
+      if (el) el.value = n;
       const p = potreros[0];
       if (!p) return;
       const esp = especieAct();
@@ -3417,7 +3423,10 @@
 
     const campos = document.getElementById("campos");
     function campo(id, lab, type, step) {
-      return "<div><label>" + lab + "</label><input id='" + id + "' type='" + (type || "text") + "'" + (step ? " step='" + step + "'" : "") + " /></div>";
+      const extra = id === "fEv"
+        ? " min='0' step='1'"
+        : (step ? " step='" + step + "'" : "");
+      return "<div><label>" + lab + "</label><input id='" + id + "' type='" + (type || "text") + "'" + extra + " /></div>";
     }
     function pintarCampos() {
       const esp = especieAct();
@@ -3477,7 +3486,7 @@
       document.getElementById("fLote").value = d.lote;
       document.getElementById("fAccion").value = v.accion;
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-      const cabezas = d.cabezas != null ? Number(d.cabezas) : Number(d.ev || 0) / (esp.evPorCabeza || 1);
+      const cabezas = nAnimales(d.cabezas != null ? d.cabezas : Number(d.ev || 0) / (esp.evPorCabeza || 1));
       const der = diasDeCarga(p, Object.assign({}, d, { cabezas: cabezas }));
       const haUn = der.haUnidad || (d.haUnidad != null ? Number(d.haUnidad) : Number(d.haEV || 0) * (esp.evPorCabeza || 1));
       const aguaL = d.aguaL != null ? Number(d.aguaL) : esp.aguaL;
@@ -3487,7 +3496,7 @@
       set("fDias", diasMostrar);
       set("fDesc", descMostrar);
       set("fFo", d.fo);
-      set("fEv", +cabezas.toFixed(1));
+      set("fEv", cabezas);
       set("fHaEv", +haUn.toFixed(2));
       set("fCc", d.cc);
       set("fSup", d.suplemento);
@@ -3642,7 +3651,7 @@
       const over = {};
       if (fo && fo.value !== "") over.fo = Number(fo.value);
       if (evEl && evEl.value !== "") {
-        over.cabezas = Number(evEl.value);
+        over.cabezas = nAnimales(evEl.value);
         over.ev = +(over.cabezas * (esp.evPorCabeza || 1)).toFixed(2);
       }
       if (id === "fDesc" && desc) desc.dataset.auto = "0";
@@ -3686,6 +3695,10 @@
       pintarCifrasActuales();
       try { potreros.forEach(pintar); } catch (e) {}
     });
+    campos.addEventListener("change", (ev) => {
+      if (!ev.target || ev.target.id !== "fEv") return;
+      ev.target.value = nAnimales(ev.target.value);
+    });
     document.getElementById("btnEstimar").addEventListener("click", () => {
       refrescarMapa();
       document.getElementById("msg").hidden = false;
@@ -3723,8 +3736,9 @@
       put("fAccion", "accion", false);
       const elEv = document.getElementById("fEv");
       if (elEv) {
-        carga.cabezas = Number(elEv.value || 0);
+        carga.cabezas = nAnimales(elEv.value || 0);
         carga.ev = +(carga.cabezas * esp.evPorCabeza).toFixed(2);
+        elEv.value = carga.cabezas;
       }
       const elHa = document.getElementById("fHaEv");
       if (elHa && elHa.value !== "") {
