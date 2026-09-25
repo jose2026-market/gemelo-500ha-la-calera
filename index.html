@@ -255,6 +255,7 @@
       font-size: 12px; padding: 7px 26px 7px 10px;
     }
     .desplegables details.sub[open] > summary { background: var(--verde-suave); }
+    #dropCapas.capa-una details.sub:not([open]) { display: none; }
     .desplegables .capa-btn {
       width: 100%; text-align: left; margin-top: 4px;
       border-radius: 6px; font-weight: 700; padding: 8px 10px;
@@ -458,6 +459,7 @@
         padding: 0 5px 5px; border-radius: 0;
       }
       .desplegables .hint { display: none; }
+      #dropCapas details.sub[open] .leyenda-capa { display: block; font-size: 11px; line-height: 1.35; margin: 4px 0 0; }
       .desplegables .fondos {
         display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
       }
@@ -784,34 +786,34 @@
                 <button type="button" data-prod="ndvi">Verde NDVI</button>
                 <button type="button" data-prod="cobertura">Uso del suelo</button>
               </div>
-              <div class="hint" id="fichaImg">Satélite de este campo.</div>
+              <div class="hint leyenda-capa" id="fichaImg">Satélite de este campo.</div>
             </div>
           </details>
           <details class="sub" data-capa-drop="suelos">
             <summary>Suelos</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="suelos">Ver en el mapa</button>
-              <div class="hint" id="fichaSuelos">INTA Peña Zubiate · aptitud ganadera.</div>
+              <div class="hint leyenda-capa" id="fichaSuelos">INTA Peña Zubiate · aptitud ganadera.</div>
             </div>
           </details>
           <details class="sub" data-capa-drop="otbn">
             <summary>OTBN</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="otbn">Ver en el mapa</button>
-              <div class="hint" id="fichaOtbn">Ley 26.331: no se desmonta.</div>
+              <div class="hint leyenda-capa" id="fichaOtbn">Ley 26.331: no se desmonta.</div>
             </div>
           </details>
           <details class="sub" data-capa-drop="agua">
             <summary>Aguadas</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="agua">Ver en el mapa</button>
-              <div class="hint" id="fichaAgua">Toque el mapa para marcar bebida. Círculo 400 m = cría.</div>
+              <div class="hint leyenda-capa" id="fichaAgua">Toque el mapa para marcar bebida. Círculo 400 m = cría.</div>
             </div>
           </details>
           <details class="sub" data-capa-drop="lluvia">
             <summary>Lluvia</summary>
             <div class="cuerpo">
-              <div class="hint" id="fichaLluvia">Régimen de este campo: se lee al ubicar el lote.</div>
+              <div class="hint leyenda-capa" id="fichaLluvia">Régimen de este campo: se lee al ubicar el lote.</div>
             </div>
           </details>
           <div class="capas fondos" hidden>
@@ -4002,17 +4004,32 @@
     });
     document.querySelectorAll("#desplegables > details").forEach((d) => {
       d.addEventListener("toggle", () => {
-        if (!d.open) return;
+        if (!d.open) {
+          if (d.id === "dropCapas") {
+            d.querySelectorAll("[data-capa-drop]").forEach((o) => { o.open = false; });
+            syncCapaAbierta();
+          }
+          return;
+        }
         document.querySelectorAll("#desplegables > details").forEach((o) => { if (o !== d) o.open = false; });
         setPanel(false);
       });
     });
+    function syncCapaAbierta() {
+      const drop = document.getElementById("dropCapas");
+      if (!drop) return;
+      const abierta = drop.querySelector("[data-capa-drop][open]");
+      drop.classList.toggle("capa-una", !!abierta);
+    }
     document.querySelectorAll("[data-capa-drop]").forEach((d) => {
       d.addEventListener("toggle", () => {
-        if (!d.open) return;
-        document.querySelectorAll("[data-capa-drop]").forEach((o) => { if (o !== d) o.open = false; });
+        if (d.open) {
+          document.querySelectorAll("[data-capa-drop]").forEach((o) => { if (o !== d) o.open = false; });
+        }
+        syncCapaAbierta();
       });
     });
+    syncCapaAbierta();
     document.querySelectorAll(".capa-btn").forEach((b) => {
       b.addEventListener("click", () => setCapa(b.dataset.capa, !capaEncendida(b.dataset.capa), true));
     });
@@ -4035,6 +4052,7 @@
         document.querySelectorAll("#desplegables > details").forEach((o) => { o.open = o === drop; });
         drop.open = true;
         drop.querySelectorAll("[data-capa-drop]").forEach((o) => { o.open = false; });
+        syncCapaAbierta();
       }
     });
     document.getElementById("btnIrInforme").addEventListener("click", () => mostrarVista("informe"));
