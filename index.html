@@ -772,7 +772,6 @@
       <details id="dropCapas">
         <summary>Capas</summary>
         <div class="cuerpo">
-          <div class="ficha-oficial" id="fichaVista" hidden></div>
           <details class="sub" data-capa-drop="imagenes">
             <summary>Imágenes</summary>
             <div class="cuerpo">
@@ -785,28 +784,34 @@
                 <button type="button" data-prod="ndvi">Verde NDVI</button>
                 <button type="button" data-prod="cobertura">Uso del suelo</button>
               </div>
-              <div class="ficha-oficial" id="fichaImg"></div>
+              <div class="hint" id="fichaImg">Satélite de este campo.</div>
             </div>
           </details>
           <details class="sub" data-capa-drop="suelos">
             <summary>Suelos</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="suelos">Ver en el mapa</button>
-              <div class="ficha-oficial" id="fichaSuelos"></div>
+              <div class="hint" id="fichaSuelos">INTA Peña Zubiate · aptitud ganadera.</div>
             </div>
           </details>
           <details class="sub" data-capa-drop="otbn">
             <summary>OTBN</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="otbn">Ver en el mapa</button>
-              <div class="ficha-oficial" id="fichaOtbn"></div>
+              <div class="hint" id="fichaOtbn">Ley 26.331: no se desmonta.</div>
             </div>
           </details>
           <details class="sub" data-capa-drop="agua">
             <summary>Aguadas</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="agua">Ver en el mapa</button>
-              <div class="ficha-oficial" id="fichaAgua"></div>
+              <div class="hint" id="fichaAgua">Toque el mapa para marcar bebida. Círculo 400 m = cría.</div>
+            </div>
+          </details>
+          <details class="sub" data-capa-drop="lluvia">
+            <summary>Lluvia</summary>
+            <div class="cuerpo">
+              <div class="hint" id="fichaLluvia">Régimen de este campo: se lee al ubicar el lote.</div>
             </div>
           </details>
           <div class="capas fondos" hidden>
@@ -816,7 +821,6 @@
             <button type="button" data-capa="ndvi">NDVI</button>
             <button type="button" data-capa="cobertura">Uso del suelo</button>
           </div>
-          <div class="ficha-oficial" id="fichaOficial" hidden></div>
         </div>
       </details>
       <details id="dropManejo">
@@ -1012,6 +1016,13 @@
     };
     if (!store.estacion) store.estacion = estacionPorFecha();
     if (!store.otbn) store.otbn = "II";
+    if (!store.lluvia) {
+      store.lluvia = {
+        anual: 307.7, mm30: 0,
+        estaciones: { verano: 145, otono: 62, invierno: 18, primavera: 83 },
+        fuente: "REM La Calera"
+      };
+    }
     potreros.forEach((p) => { if (!store[p.n]) store[p.n] = { tipo: "ganadero" }; });
 
     function factor(p) {
@@ -1038,10 +1049,41 @@
       }
       return SITIO[p.n] || SITIO[1];
     }
+    function factorLluvia() {
+      const mm = store.lluvia && Number(store.lluvia.anual);
+      if (!mm || !isFinite(mm) || mm <= 0) return 1;
+      return Math.max(0.55, Math.min(1.35, mm / 400));
+    }
     function textoLluvia() {
-      return esDemoCalera
-        ? TERRITORIO.lluvia
-        : "Zona semiárida · INTA Región III. La lluvia de este predio se podrá cargar a futuro.";
+      const L = store.lluvia;
+      if (!L || !L.anual) {
+        return esDemoCalera
+          ? "La Calera · ~308 mm/año (REM). Régimen estival."
+          : "Zona semiárida Región III. Al ubicar el campo se lee el régimen de lluvia de ese punto.";
+      }
+      const est = L.estaciones || {};
+      return Math.round(L.anual) + " mm en 12 meses · 30 días: " + Math.round(L.mm30 || 0) + " mm" +
+        (est[estacionId()] != null ? (" · esta época: " + Math.round(est[estacionId()]) + " mm") : "") +
+        " (Open-Meteo).";
+    }
+    function pintarFichaLluvia() {
+      const el = document.getElementById("fichaLluvia");
+      if (!el) return;
+      const L = store.lluvia;
+      if (!L || !L.anual) {
+        el.textContent = esDemoCalera
+          ? "La Calera: ~308 mm/año, casi todo en primavera–verano. 30 días: 0 mm (REM)."
+          : "Ubique el campo: se lee el régimen de lluvia de esas coordenadas.";
+        return;
+      }
+      const e = L.estaciones || {};
+      el.innerHTML =
+        "<b>Régimen de este campo</b> · " + Math.round(L.anual) + " mm/año (12 meses).<br>" +
+        "Verano " + Math.round(e.verano || 0) + " · otoño " + Math.round(e.otono || 0) +
+        " · invierno " + Math.round(e.invierno || 0) + " · primavera " + Math.round(e.primavera || 0) + " mm.<br>" +
+        "Últimos 30 días: " + Math.round(L.mm30 || 0) + " mm. Semiárido de referencia ~400 mm. " +
+        (factorLluvia() < 0.95 ? "Año más seco: baja la oferta y se acortan los días." :
+          (factorLluvia() > 1.05 ? "Año más húmedo: hay más margen de pastoreo." : "Cerca de un año medio."));
     }
     function baseLote(p) {
       if (!esDemoCalera) return { estado: "pastoreando", lote: store.nombreCampo || "Lote", categoria: "Hacienda" };
@@ -1095,10 +1137,7 @@
         const kgHa = tipo === "monte" ? 4.2 : tipo === "agricola" ? 0 : 5.9;
         const haUn = +(haEV * esp.evPorCabeza).toFixed(2);
         return pack(haEV, destete, kgHa, Math.round(280 * f), 2.7, 8,
-          esDemoCalera
-            ? "Situación actual del lote según INTA Región III y carta de suelos. Hacienda: " + esp.plural + ". No se edita: es el diagnóstico."
-            : "Situación actual de este lote (" + esp.plural + "): " + sit.suelo + ", " + sit.paisaje + ", aptitud " + sit.aptitud +
-              ". Carga INTA: " + haUn + " " + esp.unidadHa + " · destete " + destete + " % · " + kgHa + " kg/ha. No se edita.",
+          "Actual INTA: " + haUn + " " + esp.unidadHa + " · destete " + destete + " % · " + kgHa + " kg/ha.",
           true);
       }
       if (esc === "m1") {
@@ -1107,9 +1146,7 @@
         const kgHa = tipo === "monte" ? 8 : 12;
         const haUn = +(haEV * esp.evPorCabeza).toFixed(2);
         return pack(haEV, destete, kgHa, Math.round(520 * f), 3.1, 6,
-          "Mejorando: cargue con el productor lo que vaya haciendo (manejo, agua, inversión). Techo INTA para " + esp.plural + ": " +
-            haUn + " " + esp.unidadHa + ", destete " + destete + " %, " + kgHa + " kg/ha. Agua de una " + esp.nombre + ": ~" +
-            esp.aguaL + " L/día (" + esp.aguaMin + "–" + esp.aguaMax + "). No se carga el techo de antemano.",
+          "Techo Mejorando INTA: " + haUn + " " + esp.unidadHa + " · destete " + destete + " % · " + kgHa + " kg/ha.",
           false);
       }
       const optimoM2 = tipo === "ganadero" && sit.bajo;
@@ -1119,10 +1156,8 @@
       const haUn = +(haEV * esp.evPorCabeza).toFixed(2);
       return pack(haEV, destete, kgHa, Math.round((optimoM2 ? 780 : 560) * f), 3.4, 5,
         optimoM2
-          ? "Ideal (techo INTA) en este bajo: M2, ~30 % buffel si OTBN lo permite. " + haUn + " " + esp.unidadHa +
-            " · destete " + destete + " % · " + kgHa + " kg/ha. Hacienda: " + esp.plural + "."
-          : "Ideal (techo INTA) en esta loma/monte: no pasa de Mejorando. La carta no sostiene buffel ni agrícola. " +
-            haUn + " " + esp.unidadHa + " · destete " + destete + " % · " + kgHa + " kg/ha. Hacienda: " + esp.plural + ".",
+          ? "Techo Ideal INTA (bajo): " + haUn + " " + esp.unidadHa + " · destete " + destete + " % · " + kgHa + " kg/ha."
+          : "Techo Ideal INTA (loma/monte): " + haUn + " " + esp.unidadHa + " · destete " + destete + " % · " + kgHa + " kg/ha.",
         false);
     }
     function validarCarga(p, tipo, d, esc) {
@@ -1214,7 +1249,8 @@
       const n = Math.max(1, potreros.length || 1);
       const foUsado = Number(d.fo) > 0 ? Number(d.fo) : (Number(t.fo) || 280);
       const fen = tipo === "monte" ? est.monte : est.pasto;
-      const oferta = foUsado * fen * ot.fo * p.ha;
+      const lluviaF = Number(d.fo) > 0 ? 1 : factorLluvia();
+      const oferta = foUsado * fen * ot.fo * lluviaF * p.ha;
       const kgDia = 12;
       const cab = d.cabezas != null && d.cabezas !== "" ? Number(d.cabezas)
         : (d.ev != null && d.ev !== "" ? Number(d.ev) / (esp.evPorCabeza || 1) : Number(t.cabezasMax) || 0);
@@ -1315,8 +1351,6 @@
       const ha = haTotal();
       const act = resumenEscena("actual");
       const esp = especieAct();
-      const p0 = potreros[0];
-      const sit = p0 ? sitioDe(p0) : null;
       const n = potreros.length;
       const lotes = n <= 1
         ? "Un solo cuadro, sin divisiones."
@@ -1326,10 +1360,9 @@
         lotes + "<br>" +
         "Animales actuales: <b>" + act.cabezas + " " + esp.plural + "</b> (" + act.ev + " " + act.unidad + ") · " +
         act.haUnidad + " " + act.unidadHa + ".<br>" +
-        (sit ? ("INTA este lugar: " + escHtml(sit.suelo) + " · " + escHtml(sit.paisaje) + " · aptitud " + escHtml(sit.aptitud) + ".<br>") : "") +
         "OTBN " + otbnAct().id + " · " + estacionAct().nombre +
         " · destete carta ~" + act.destete + " % · " + act.kgHa + " kg carne/ha.<br>" +
-        "Para probar otra carga (10 → 20 vacas) abra <b>Manejo</b>: se ve al toque.";
+        "Carga y días se recalcan solos. Lluvia del predio: solapa Capas → Lluvia.";
     }
     function pintarCifrasVivas(p, extra) {
       const el = document.getElementById("cifrasVivas");
@@ -1358,65 +1391,34 @@
       const op = resumenEscena("optimo");
       const lejos = potreros.filter((p) => p.dist > 400);
       const muyLejos = potreros.filter((p) => p.dist > 550);
-      const campo = store.nombreCampo || DEMO_NOMBRE;
-      setTxt("fichaVista",
-        "<b>" + campo + "</b><br>" + ha.toFixed(0) + " ha · " +
-        (potreros.length === 1 ? "un lote (sin divisiones)." : (potreros.length + " lotes declarados.")) + " " +
-        (esDemoCalera
-          ? "Demostrativo La Calera (SW Belgrano). Los P1 a P6 son de este módulo de 500 ha, no de su campo."
-          : "Límite declarado (no es el padrón). Los cuadros coinciden con los lotes que manifestó el productor.") +
-        " El informe final detalla actual / mejorando / ideal."
-      );
       const ndviOn = capaEncendida("ndvi");
       const cobOn = capaEncendida("cobertura");
       setTxt("fichaImg",
-        ndviOn
-          ? "<b>Verde NDVI sobre este campo.</b><br>Marrón = poco pasto o suelo desnudo. Verde = más biomasa. En loma (P1–P5) el verde suele ser menor que en el bajo (P6). El informe usa esto como foto de la situación inicial."
-          : cobOn
-            ? "<b>Uso del suelo (IGN) sobre este campo.</b><br>Monte, pastizal y suelo desnudo. No se desmonta: el monte se lee con OTBN. El detalle de cada potrero va al informe."
-            : "<b>Imagen del campo.</b><br>Satélite para ver potreros. Toque Verde NDVI para el pasto de ahora o Uso del suelo para monte/pastizal. Cifras de kilos y destete: en el informe."
+        ndviOn ? "NDVI: marrón = poco pasto; verde = más biomasa."
+          : cobOn ? "Uso del suelo (IGN): monte, pastizal, desnudo."
+          : "Satélite de este campo. NDVI = pasto. Uso = monte/pastizal."
       );
       setTxt("fichaSuelos", esDemoCalera
-        ? "<b>Suelo que se ve · carta INTA Peña Zubiate 1:500.000</b><br>" +
-          "UCSV 4 · Torriortente típico. Somero, poca reserva de agua, aptitud VII: pastoreo extensivo, no agrícola. " +
-          "P1–P5 loma/pedimento; P6 bajo más húmedo. Inicial: ~" + act.haUnidad + " " + act.unidadHa + " y " + act.kgHa + " kg carne/ha. El informe amplía potrero por potrero."
+        ? "INTA Peña Zubiate · UCSV 4 · Torriortente · aptitud VII (ganadero, no agrícola)."
         : (diagnosticoLote
-          ? "<b>Suelo de ESTE lote · " + escHtml(diagnosticoLote.fuenteSuelo) + "</b><br>" +
-            escHtml(diagnosticoLote.suelo || "") +
+          ? (escHtml(diagnosticoLote.suelo || "Carta INTA") +
             (diagnosticoLote.ucsv ? " · UCSV " + diagnosticoLote.ucsv : "") +
-            (diagnosticoLote.capUso ? " · aptitud " + diagnosticoLote.capUso : "") + ".<br>" +
-            "Relieve: " + escHtml(diagnosticoLote.relieve || (diagnosticoLote.bajo ? "bajo" : "loma")) +
-            (diagnosticoLote.z ? " · " + diagnosticoLote.z + " m (" + diagnosticoLote.zmin + "–" + diagnosticoLote.zmax + " m)" : "") + ".<br>" +
-            (diagnosticoLote.fisonomia ? "Vegetación: " + escHtml(diagnosticoLote.fisonomia) + ". " : "") +
-            (diagnosticoLote.uso ? "Uso INTA: " + escHtml(diagnosticoLote.uso) + ". " : "") +
-            "Inicial ~" + act.haUnidad + " " + act.unidadHa + " · " + act.kgHa + " kg/ha. Mejorando e Ideal se cargan con el productor (techo INTA)."
-          : "<b>Suelo · leyendo carta INTA en este lote…</b><br>Cuando cierran las 4 esquinas se consulta Peña Zubiate 1:500.000 y el relieve.")
+            (diagnosticoLote.capUso ? " · " + diagnosticoLote.capUso : "") +
+            " · " + escHtml(diagnosticoLote.relieve || (diagnosticoLote.bajo ? "bajo" : "loma")) + ".")
+          : "Cierre el alambrado: se lee la carta INTA de este lote.")
       );
-      setTxt("fichaOtbn",
-        "<b>OTBN · Ley 26.331</b><br>No se desmonta. El monte se usa con ganadería integrada (MBGI). " +
-        "Buffel ~30 % solo en bajos y si la categoría OTBN lo permite. Soja o campo limpio no es escenario. El informe deja constancia de esta regla."
-      );
+      setTxt("fichaOtbn", "Ley 26.331: no se desmonta. Buffel solo en bajos si OTBN lo permite.");
       setTxt("fichaAgua",
-        "<b>" + aguadas.length + " aguada" + (aguadas.length === 1 ? "" : "s") + " · no se recorta bebida</b><br>" +
-        (esDemoCalera
-          ? ("Círculo 400 m = alcance de cría. " +
-            (muyLejos.length
-              ? "Crítico: " + muyLejos.map((p) => "P" + p.n + " a " + p.dist + " m").join(", ") + "."
-              : lejos.length
-                ? "Vigilar: " + lejos.map((p) => "P" + p.n + " a " + p.dist + " m").join(", ") + " (más de 400 m)."
-                : "Todas las crías están a menos de 400 m."))
-          : (aguadas.length
-            ? ("Marcó " + aguadas.length + " punto(s) de bebida. Alcance de cría: 400 m. " +
-              (potreros[0] && potreros[0].dist != null ? ("El lote está a " + potreros[0].dist + " m del agua más cercana. ") : "") +
-              "Toque la gota o Quitar si quiere moverla.")
-            : "Toque el satélite en cada represa, molino o bebedero. Hasta que no marque agua, el diagnóstico no usa distancia.")) +
-        (esDemoCalera ? "" : (aguadas.length
-          ? "<div class='lista-aguadas'>" + aguadas.map((a) =>
-              "<button type='button' data-quitar-aguada='" + a.id + "'>Quitar " + escHtml(a.name) + "</button>"
-            ).join("") + "</div>"
-          : "")) +
-        " " + textoLluvia() + " A futuro se podrá cargar red de San Luis Agua y análisis de bebida."
+        (aguadas.length
+          ? (aguadas.length + " aguada" + (aguadas.length === 1 ? "" : "s") + " · cría 400 m" +
+            (potreros[0] && potreros[0].dist != null ? (" · lote a " + potreros[0].dist + " m") : "") + ".")
+          : "Toque el mapa: represa, molino o bebedero. Cría 400 m.") +
+        (esDemoCalera || !aguadas.length ? "" :
+          "<div class='lista-aguadas'>" + aguadas.map((a) =>
+            "<button type='button' data-quitar-aguada='" + a.id + "'>Quitar " + escHtml(a.name) + "</button>"
+          ).join("") + "</div>")
       );
+      try { pintarFichaLluvia(); } catch (e) {}
       const cargo = productorCargoMejora();
       const hayM1 = productorCargoEsc("m1");
       const hayOp = productorCargoEsc("optimo");
@@ -1684,26 +1686,6 @@
       return !!(lyr && map.hasLayer(lyr));
     }
     function actualizarFichaOficial() {
-      const ficha = document.getElementById("fichaOficial");
-      if (!ficha) return;
-      const partes = [];
-      if (capaEncendida("suelos")) {
-        partes.push("<b>Carta de suelos INTA · Peña Zubiate 1:500.000</b><br>UCSV 4 · Torriortente típico · aptitud VII · pastoreo extensivo. Ver ficha en Suelos.");
-      }
-      if (capaEncendida("otbn")) {
-        partes.push("<b>OTBN Ley 26.331</b><br>No se desmonta. Monte con ganadería integrada.");
-      }
-      if (capaEncendida("agua")) {
-        partes.push("<b>Aguadas</b><br>Círculo 400 m = cría. No se recorta bebida.");
-      }
-      if (capaEncendida("ndvi")) {
-        partes.push("<b>Verde NDVI</b><br>Marrón = poco pasto. Verde = más biomasa.");
-      }
-      if (capaEncendida("cobertura")) {
-        partes.push("<b>Uso del suelo</b><br>IGN: monte, pastizal y suelo desnudo.");
-      }
-      ficha.innerHTML = partes.join("<br><br>");
-      ficha.hidden = partes.length === 0;
       try { actualizarFichasCampo(); } catch (e) { /* no cortar el menú ni las solapas */ }
     }
     function setCapa(id, on, refresh) {
@@ -1718,7 +1700,6 @@
         }
       });
       actualizarFichaOficial();
-      if (refresh) llenar();
     }
     setCapa("suelos", false);
     setCapa("otbn", false);
@@ -1737,7 +1718,6 @@
       const prender = !capaEncendida(id);
       ["ndvi", "cobertura"].forEach((k) => setCapa(k, prender && k === id, false));
       document.querySelectorAll("[data-prod]").forEach((x) => x.classList.toggle("on", prender && x.dataset.prod === id));
-      llenar();
     });
 
     function aplicarNombre(nombre) {
@@ -2610,6 +2590,8 @@
       if (!store[p.n]) store[p.n] = { tipo: "ganadero" };
       if (!store[p.n].pastoreo) store[p.n].pastoreo = {};
       store[p.n].pastoreo.actual = Object.assign({}, store[p.n].pastoreo.actual || {}, over);
+      saveStore(store);
+      try { pintarCifrasVivas(p, over); pintarEquilibrio(); } catch (e) {}
     }
     function armarAguadas(south, west, north, east) {
       const H = north - south, W = east - west;
@@ -2775,6 +2757,7 @@
       document.getElementById("msg").textContent = aviso;
       decirPlano(aviso);
       pintarAvisoSat(ring.length || (puntoValido(lat, lon) ? 1 : 0));
+      try { leerLluviaCampo(cx, cy); } catch (e) {}
       if (hayAnillo) {
         const k = ring.map((p) => p[0].toFixed(4) + "," + p[1].toFixed(4)).join("|");
         if (leerTerrenoLote.clave !== k) {
@@ -2841,6 +2824,63 @@
         return (j.elevation || []).filter((n) => isFinite(n));
       } catch (e) { return []; }
     }
+    async function leerLluviaCampo(lat, lon) {
+      if (!isFinite(lat) || !isFinite(lon)) return;
+      const k = Number(lat).toFixed(3) + "," + Number(lon).toFixed(3);
+      if (leerLluviaCampo.clave === k && store.lluvia && store.lluvia.anual && store.lluvia.fuente === "Open-Meteo") return;
+      leerLluviaCampo.clave = k;
+      const el = document.getElementById("fichaLluvia");
+      if (el) el.textContent = "Leyendo régimen de lluvia de este punto…";
+      const fin = new Date();
+      fin.setUTCDate(fin.getUTCDate() - 5);
+      const ini = new Date(fin.getTime());
+      ini.setUTCFullYear(ini.getUTCFullYear() - 1);
+      function iso(d) { return d.toISOString().slice(0, 10); }
+      try {
+        const url = "https://archive-api.open-meteo.com/v1/archive?latitude=" + Number(lat).toFixed(4) +
+          "&longitude=" + Number(lon).toFixed(4) +
+          "&start_date=" + iso(ini) + "&end_date=" + iso(fin) +
+          "&daily=precipitation_sum&timezone=America%2FArgentina%2FSan_Luis";
+        const r = await fetch(url);
+        if (!r.ok) throw new Error("lluvia");
+        const j = await r.json();
+        const days = (j.daily && j.daily.time) || [];
+        const mm = (j.daily && j.daily.precipitation_sum) || [];
+        const est = { verano: 0, otono: 0, invierno: 0, primavera: 0 };
+        let anual = 0, mm30 = 0;
+        const n = days.length;
+        for (let i = 0; i < n; i++) {
+          const v = Number(mm[i]);
+          if (!isFinite(v) || v < 0) continue;
+          anual += v;
+          const m = Number(String(days[i]).slice(5, 7));
+          if (m === 12 || m === 1 || m === 2) est.verano += v;
+          else if (m <= 5) est.otono += v;
+          else if (m <= 8) est.invierno += v;
+          else est.primavera += v;
+          if (i >= n - 30) mm30 += v;
+        }
+        store.lluvia = {
+          anual: +anual.toFixed(1),
+          mm30: +mm30.toFixed(1),
+          estaciones: {
+            verano: +est.verano.toFixed(1),
+            otono: +est.otono.toFixed(1),
+            invierno: +est.invierno.toFixed(1),
+            primavera: +est.primavera.toFixed(1)
+          },
+          lat: +Number(lat).toFixed(4),
+          lon: +Number(lon).toFixed(4),
+          fuente: "Open-Meteo"
+        };
+        if (diagnosticoLote && diagnosticoLote.futuro) diagnosticoLote.futuro.lluviaPredio = store.lluvia;
+        if (typeof aplicarCabezasMenu === "function") aplicarCabezasMenu();
+        if (typeof actualizarFichasCampo === "function") actualizarFichasCampo();
+        if (typeof llenar === "function") llenar();
+      } catch (e) {
+        if (el) el.textContent = "No se leyó lluvia de este punto. Semiárido Región III ~400 mm/año.";
+      }
+    }
     async function leerTerrenoLote(ring, ha, cx, cy) {
       const pts = [[cx, cy]].concat(ring.slice(0, 4));
       const sueloP = consultarSueloInta(cx, cy);
@@ -2879,7 +2919,7 @@
         store.campoActivo.aguadas = aguadas.map((a) => ({ name: a.name, lat: a.lat, lon: a.lon }));
         saveStore(store);
       }
-      try { setCapa("suelos", true, false); } catch (e) {}
+      try { leerLluviaCampo(cx, cy); } catch (e) {}
       if (typeof actualizarFichasCampo === "function") actualizarFichasCampo();
       if (typeof llenar === "function") llenar();
       L.popup({ maxWidth: 300 })
@@ -3290,6 +3330,7 @@
       });
     }
     dibujarPredio();
+    try { leerLluviaCampo(DEMO_CENTRO[0], DEMO_CENTRO[1]); } catch (e) {}
     const pueblos = [
       { name: "La Calera", lat: -32.8631, lon: -66.8489, nota: "Comisión municipal · 766 hab. (INDEC 2022)" },
       { name: "Nogolí", lat: -32.9167, lon: -66.3333, nota: "Dique Nogolí · 1.221 hab." },
@@ -3438,11 +3479,8 @@
         "</b> · " + v.accion;
       const sit = sitioDe(p);
       document.getElementById("hechos").innerHTML =
-        "<b>" + (esDemoCalera ? ("P" + p.n) : (store.nombreCampo || "Este lote")) + " · " + p.ha.toFixed(1) + " ha · " + sit.paisaje +
-        (p.z ? " · " + p.z + " m" : "") + "</b><br>" +
-        sit.suelo + " · aptitud " + sit.aptitud + ".<br>" +
-        (p.dist != null ? (p.agua + " a " + p.dist + " m. ") : "Aguada aún no marcada en el satélite. ") +
-        textoLluvia() + " " + TERRITORIO.otbn;
+        "<b>" + (esDemoCalera ? ("P" + p.n) : (store.nombreCampo || "Este lote")) + " · " + p.ha.toFixed(1) + " ha</b> · " +
+        sit.paisaje + (p.z ? " · " + p.z + " m" : "") + ".";
       const t = techoEscena(p, store[p.n].tipo || "ganadero", escSel);
       const val = validarCarga(p, store[p.n].tipo || "ganadero", d, escSel);
       const topeEl = document.getElementById("topeEscena");
@@ -3460,31 +3498,19 @@
       document.getElementById("btnEstimar").textContent = "Ver datos INTA / carta";
       document.getElementById("leyenda").innerHTML =
         (modSel === "pastoreo"
-          ? "<div><i style='background:#1B7A4A'></i>Pasto alcanza / descanso listo</div><div><i style='background:#C4A035'></i>Cambiar de potrero pronto</div><div><i style='background:#B42318'></i>Sobrecarga o sin días</div>"
+          ? "<div><i style='background:#1B7A4A'></i>Pasto alcanza</div><div><i style='background:#C4A035'></i>Cambiar pronto</div><div><i style='background:#B42318'></i>Sobrecarga</div>"
           : modSel === "nutricion"
-            ? "<div><i style='background:#1B7A4A'></i>Comen y beben bien</div><div><i style='background:#C4A035'></i>Condición justa / loma</div><div><i style='background:#B42318'></i>Lejos del agua o flacas</div>"
+            ? "<div><i style='background:#1B7A4A'></i>Comen bien</div><div><i style='background:#C4A035'></i>CC justa</div><div><i style='background:#B42318'></i>Lejos del agua</div>"
             : modSel === "agua"
-              ? "<div><i style='background:#1E6BB8'></i>Agua a menos de 400 m</div><div><i style='background:#C4A035'></i>400–550 m</div><div><i style='background:#B42318'></i>Más de 550 m</div>"
-            : "<div><i style='background:#1B7A4A'></i>Parición cerca del agua</div><div><i style='background:#C4A035'></i>Destete bajo</div><div><i style='background:#B42318'></i>Cría lejos de la aguada</div>") +
-        "<div>Capa: " + ({ pastoreo: "Pastoreo", nutricion: "Nutrición", reproduccion: "Reproducción", agua: "Agua" }[modSel]) + "</div>" +
-        (capaEncendida("suelos") ? "<div>Suelos INTA · UCSV 4 Torriortente típico (apt. VII)</div>" : "") +
-        (capaEncendida("otbn") ? "<div><i style='background:#B42318'></i>OTBN I · <i style='background:#C4A035'></i>II · <i style='background:#1B7A4A'></i>III · MAyDS 2016</div>" : "") +
-        (capaEncendida("agua") ? "<div>Agua · círculo 400 m / línea 800 m · no recortar bebida</div>" : "") +
-        (capaEncendida("ndvi") ? "<div><i style='background:#C4A035'></i>Marrón poco pasto · <i style='background:#1B7A4A'></i>verde más biomasa (NDVI)</div>" : "") +
-        (capaEncendida("cobertura") ? "<div>Uso del suelo IGN sobre el campo</div>" : "");
+              ? "<div><i style='background:#1E6BB8'></i>&lt; 400 m</div><div><i style='background:#C4A035'></i>400–550 m</div><div><i style='background:#B42318'></i>&gt; 550 m</div>"
+            : "<div><i style='background:#1B7A4A'></i>Parición cerca</div><div><i style='background:#C4A035'></i>Destete bajo</div><div><i style='background:#B42318'></i>Cría lejos</div>");
       const info = document.getElementById("infoLote");
       const sum = document.getElementById("sumLote");
       if (info) {
         const tAct = techoEscena(p, store[p.n].tipo || "ganadero", "actual");
-        const tM1 = techoEscena(p, store[p.n].tipo || "ganadero", "m1");
-        const tOp = techoEscena(p, store[p.n].tipo || "ganadero", "optimo");
-        info.innerHTML = "<b>" + v.titulo + "</b><br>" + v.sub + "<br>" + v.accion + "<br><br>" +
-          "<b>Suelo:</b> " + sit.suelo + " · " + sit.paisaje + " · aptitud " + sit.aptitud + ".<br>" +
-          "<b>Agua:</b> " + p.agua + " a " + p.dist + " m.<br>" +
-          "<b>Actual:</b> " + tAct.haUnidad + " " + tAct.unidadHa + " · destete " + tAct.destete + " % · " + tAct.kgHa + " kg/ha.<br>" +
-          "<b>Techo Mejorando (INTA):</b> " + tM1.haUnidad + " " + tM1.unidadHa + " · destete " + tM1.destete + " % · " + tM1.kgHa + " kg/ha.<br>" +
-          "<b>Techo Ideal (INTA):</b> " + tOp.haUnidad + " " + tOp.unidadHa + " · destete " + tOp.destete + " % · " + tOp.kgHa + " kg/ha.<br>" +
-          "Hacienda: " + especieAct().plural + ". Mejorando e Ideal se cargan con el productor; estos números son el techo, no el valor pegado.";
+        info.innerHTML = "<b>" + nomPotrero(p) + "</b> · " + p.ha.toFixed(1) + " ha · " +
+          tAct.haUnidad + " " + tAct.unidadHa +
+          (p.dist != null ? (" · agua " + p.dist + " m") : "") + ".";
       }
       if (sum) sum.textContent = nomPotrero(p);
       actualizarFichasCampo();
@@ -3496,6 +3522,8 @@
       pSel = n;
       document.querySelectorAll(".pills button").forEach((b) => b.classList.toggle("on", Number(b.dataset.n) === n));
       llenar();
+      const dropCapas = document.getElementById("dropCapas");
+      if (dropCapas && dropCapas.open) return;
       const drop = document.getElementById("dropLote");
       if (drop && esDemoCalera && document.body.classList.contains("vista-visor")) {
         document.querySelectorAll("#desplegables > details").forEach((o) => { o.open = o === drop; });
@@ -3540,19 +3568,26 @@
     if (elEspP) elEspP.addEventListener("change", () => onCambioEspecie(elEspP.value));
     const elCabMenu = document.getElementById("fCabezas");
     if (elCabMenu) {
-      elCabMenu.addEventListener("change", () => {
+      const alToque = () => {
         aplicarCabezasMenu();
         if (typeof llenar === "function") llenar();
-      });
+      };
+      elCabMenu.addEventListener("input", alToque);
+      elCabMenu.addEventListener("change", alToque);
     }
     syncEspecie(store.especie || "cria");
     syncEstacionOtbn(store.estacion || estacionPorFecha(), store.otbn || "II");
     function onCambioEstacionOtbn() {
       store.otbnFijado = true;
       syncEstacionOtbn(estacionId(), otbnId());
+      aplicarCabezasMenu();
       if (typeof pintarCampos === "function") pintarCampos();
       refrescarMapa();
-      pintarEquilibrio();
+      try {
+        pintarEquilibrio();
+        actualizarFichasCampo();
+        if (typeof llenar === "function") llenar();
+      } catch (e) {}
     }
     ["fEstacion", "fEstacionPanel", "fOtbn", "fOtbnPanel"].forEach((id) => {
       const el = document.getElementById(id);
@@ -3999,10 +4034,7 @@
       if (drop) {
         document.querySelectorAll("#desplegables > details").forEach((o) => { o.open = o === drop; });
         drop.open = true;
-        const img = drop.querySelector("[data-capa-drop='imagenes']");
-        if (img) {
-          drop.querySelectorAll("[data-capa-drop]").forEach((o) => { o.open = o === img; });
-        }
+        drop.querySelectorAll("[data-capa-drop]").forEach((o) => { o.open = false; });
       }
     });
     document.getElementById("btnIrInforme").addEventListener("click", () => mostrarVista("informe"));
