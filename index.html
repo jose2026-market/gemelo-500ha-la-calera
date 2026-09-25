@@ -282,6 +282,16 @@
       border: 1px solid var(--oro); background: #fff; color: var(--verde);
     }
     .desplegables .capa-btn.on { background: var(--verde); color: #fff; border-color: var(--verde); }
+    .punto-act {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; margin: 8px 0 4px; padding: 10px 12px;
+      border-radius: 999px; font-weight: 800; font-size: 13px;
+      border: 1px solid var(--verde); background: var(--verde); color: #fff;
+    }
+    .punto-act .punto {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.35);
+    }
     .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
     .ficha-oficial b { color: var(--verde); }
     .ficha-oficial[hidden] { display: none; }
@@ -843,15 +853,16 @@
       <details id="dropManejo">
         <summary>Manejo</summary>
         <div class="cuerpo">
-          <p class="hint">Tres situaciones a la par. Toque una solapa para editarla: los demás números se recalcan al cambiar un dato.</p>
+          <p class="hint">Cargue el dato en la solapa y toque el punto verde para actualizar. No se cambia hasta ese clic.</p>
           <div class="tres-sit" id="tresSit"></div>
-          <div class="eq-box amarillo" id="eqBoxManejo">Punto de equilibrio: se actualiza al cambiar días, cabezas, época u OTBN.</div>
+          <div class="eq-box amarillo" id="eqBoxManejo">Punto de equilibrio: se actualiza al tocar el punto verde.</div>
           <div class="escenas" role="tablist" aria-label="Escena">
             <button type="button" class="on" data-esc="actual">Inicial</button>
             <button type="button" data-esc="m1">Mejorando</button>
             <button type="button" data-esc="optimo">Ideal</button>
           </div>
           <div id="campos" class="grid2"></div>
+          <button type="button" class="punto-act" id="btnActualizarManejo"><span class="punto"></span> Actualizar este dato</button>
           <div class="acciones">
             <button type="button" class="sec" id="btnEstimar">Ver INTA / carta</button>
             <button type="button" class="sec" id="btnKml">Ver en Google Earth</button>
@@ -3592,7 +3603,7 @@
         el.readOnly = !!(derivado[el.id] || (escSel === "actual" && lockInta[el.id]));
       });
       document.getElementById("btnGuardar").disabled = false;
-      document.getElementById("btnGuardar").textContent = "Guardar este manejo (se ve al cambiar)";
+      document.getElementById("btnGuardar").textContent = "Guardar este manejo";
       document.getElementById("btnEstimar").textContent = "Ver datos INTA / carta";
       document.getElementById("leyenda").innerHTML =
         (modSel === "pastoreo"
@@ -3762,26 +3773,19 @@
       if (dias && dias.value !== "" && over.diasRestan == null) over.diasRestan = Number(dias.value);
       if (desc && desc.value !== "" && over.diasDescanso == null) over.diasDescanso = Number(desc.value);
       if (al && ar && evEl) ar.value = Math.round(Number(evEl.value || 0) * Number(al.value || esp.aguaL));
-      persistirVivo(p, over);
-      pintarEquilibrio(p, over);
-      pintarCifrasVivas(p, over);
-      pintarCifrasActuales();
-      try { potreros.forEach(pintar); } catch (e) {}
     });
     campos.addEventListener("change", (ev) => {
       if (!ev.target || ev.target.id !== "fEv") return;
       ev.target.value = nAnimales(ev.target.value);
     });
-    document.getElementById("btnEstimar").addEventListener("click", () => {
-      refrescarMapa();
-      document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = "INTA de este lugar (suelo, destete, kg/ha). Los animales y los días los prueba en Manejo: se ven al cambiar.";
-    });
-    document.getElementById("btnGuardar").addEventListener("click", () => {
-      const p = potreros.find((x) => x.n === pSel);
-      const tipo = document.getElementById("fTipo").value;
+    function aplicarCargaManejo() {
+      const p = potreros.find((x) => x.n === pSel) || potreros[0];
+      if (!p) return;
+      const tipoEl = document.getElementById("fTipo");
+      const tipo = (tipoEl && tipoEl.value) || (store[p.n] && store[p.n].tipo) || "ganadero";
       const esp = especieAct();
-      if (!store[pSel][modSel]) store[pSel][modSel] = {};
+      if (!store[p.n]) store[p.n] = { tipo: tipo };
+      if (!store[p.n][modSel]) store[p.n][modSel] = {};
       const carga = Object.assign({}, dato(p));
       const put = (id, key, num) => {
         const el = document.getElementById(id);
@@ -3810,7 +3814,7 @@
       const elEv = document.getElementById("fEv");
       if (elEv) {
         carga.cabezas = nAnimales(elEv.value || 0);
-        carga.ev = +(carga.cabezas * esp.evPorCabeza).toFixed(2);
+        carga.ev = +(carga.cabezas * (esp.evPorCabeza || 1)).toFixed(2);
         elEv.value = carga.cabezas;
       }
       const elHa = document.getElementById("fHaEv");
@@ -3825,16 +3829,44 @@
       }
       carga.especie = esp.id;
       carga._sinCarga = false;
-      store[pSel][modSel][escSel] = carga;
-      store[pSel].tipo = tipo;
+      store[p.n][modSel][escSel] = carga;
+      store[p.n].tipo = tipo;
       store.especie = esp.id;
       saveStore(store);
-      refrescarMapa();
+      persistirVivo(p, carga);
+      pintarEquilibrio(p, carga);
+      pintarCifrasVivas(p, carga);
+      pintarCifrasActuales();
+      pintarTresSit();
+      pintarCartelCampo();
+      try { potreros.forEach(pintar); } catch (e) {}
       const chequeo = validarCarga(p, tipo, carga, escSel);
+      const msg = document.getElementById("msg");
+      if (msg) {
+        msg.hidden = false;
+        msg.textContent = chequeo.posible
+          ? ("Dato cargado en " + nomEscena(escSel) + ".")
+          : ("Cargado en " + nomEscena(escSel) + ", pero semáforo rojo. " + (chequeo.motivos[0] || ""));
+      }
+      return chequeo;
+    }
+    document.getElementById("btnEstimar").addEventListener("click", () => {
+      refrescarMapa();
       document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = chequeo.posible
-        ? "Guardado lo que van mejorando. Sigue por debajo del techo INTA para " + esp.plural + "."
-        : "Guardado, pero no es posible: semáforo rojo. " + chequeo.motivos[0];
+      document.getElementById("msg").textContent = "INTA de este lugar (suelo, destete, kg/ha). Los animales y los días los prueba en Manejo: se ven al cambiar.";
+    });
+    document.getElementById("btnActualizarManejo").addEventListener("click", () => aplicarCargaManejo());
+    document.getElementById("btnGuardar").addEventListener("click", () => {
+      const chequeo = aplicarCargaManejo();
+      const p = potreros.find((x) => x.n === pSel);
+      const esp = especieAct();
+      const msg = document.getElementById("msg");
+      if (msg && chequeo) {
+        msg.textContent = chequeo.posible
+          ? "Guardado lo que van mejorando. Sigue por debajo del techo INTA para " + esp.plural + "."
+          : "Guardado, pero no es posible: semáforo rojo. " + chequeo.motivos[0];
+      }
+      if (p) refrescarMapa();
     });
 
     function kmlColor(hex) {
