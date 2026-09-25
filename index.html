@@ -1607,15 +1607,31 @@
     });
     const fondosLyr = { sat: sat, ign: ign, relieve: topo };
     let relieveOverlay = null;
-    function setFondo(id) {
+    let fondoActivo = "sat";
+    let imagenLista = false;
+    function aplicarFondo(id) {
       if (!fondosLyr[id]) id = "sat";
+      fondoActivo = id;
       Object.keys(fondosLyr).forEach((k) => {
         const lyr = fondosLyr[k];
         if (k === id) { if (!map.hasLayer(lyr)) lyr.addTo(map); }
         else if (map.hasLayer(lyr)) map.removeLayer(lyr);
       });
       if (relieveOverlay) relieveOverlay.setOpacity(id === "relieve" ? 0.46 : 0.12);
-      document.querySelectorAll("button[data-fondo]").forEach((b) => b.classList.toggle("on", b.dataset.fondo === id));
+    }
+    function setFondo(id) {
+      aplicarFondo(id);
+      if (!imagenLista) {
+        document.querySelectorAll("button[data-fondo]").forEach((b) => b.classList.toggle("on", b.dataset.fondo === fondoActivo));
+        return;
+      }
+      ["ndvi", "cobertura"].forEach((k) => {
+        (capasOff[k] || []).forEach((lyr) => {
+          if (map.hasLayer(lyr)) map.removeLayer(lyr);
+        });
+      });
+      pintarVerdeImagen();
+      actualizarFichaOficial();
     }
     setFondo("sat");
     document.getElementById("desplegables").addEventListener("click", (ev) => {
@@ -1685,15 +1701,22 @@
       try { actualizarFichasCampo(); } catch (e) { /* no cortar el menú ni las solapas */ }
     }
     const OVERLAYS = ["suelos", "otbn", "agua", "ndvi", "cobertura"];
+    function pintarVerdeImagen() {
+      const overlay = capaEncendida("ndvi") ? "ndvi" : (capaEncendida("cobertura") ? "cobertura" : "");
+      document.querySelectorAll("[data-prod]").forEach((x) => {
+        x.classList.toggle("on", overlay === x.dataset.prod);
+      });
+      document.querySelectorAll("button[data-fondo]").forEach((b) => {
+        b.classList.toggle("on", !overlay && b.dataset.fondo === fondoActivo);
+      });
+    }
     function pintarBotonesCapa() {
       document.querySelectorAll(".capa-btn").forEach((b) => {
         const enc = capaEncendida(b.dataset.capa);
         b.classList.toggle("on", enc);
         b.textContent = enc ? "Ocultar del mapa" : "Ver en el mapa";
       });
-      document.querySelectorAll("[data-prod]").forEach((x) => {
-        x.classList.toggle("on", capaEncendida(x.dataset.prod));
-      });
+      pintarVerdeImagen();
     }
     function setCapa(id, on) {
       if (on) {
@@ -1711,6 +1734,7 @@
       pintarBotonesCapa();
       actualizarFichaOficial();
     }
+    imagenLista = true;
     setCapa("suelos", false);
     setCapa("otbn", false);
     setCapa("agua", false);
