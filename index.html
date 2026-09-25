@@ -231,10 +231,10 @@
     .desplegables details[open] > summary::after { content: "▴"; }
     .desplegables > details > .cuerpo {
       position: absolute; top: calc(100% + 6px); left: 0;
-      min-width: 228px; width: max(228px, 100%);
-      max-width: min(280px, 78vw);
-      max-height: min(58dvh, calc(100dvh - 160px));
-      overflow: auto; padding: 8px;
+      min-width: 260px; width: max(260px, 100%);
+      max-width: min(340px, 40vw);
+      max-height: min(48dvh, calc(100dvh - 200px));
+      overflow: auto; padding: 10px;
       background: linear-gradient(#fffdf8, #f4eee0);
       border: 1px solid #8a6a2a; border-radius: 0 10px 10px 10px;
       box-shadow: 0 10px 22px rgba(0,0,0,.28);
@@ -472,16 +472,16 @@
       }
       .desplegables summary::after { right: 5px; top: 7px; }
       .desplegables > details > .cuerpo {
-        position: fixed;
-        left: 50%;
-        top: calc(var(--topbar-h) + 50px + env(safe-area-inset-top, 0px));
-        transform: translateX(-50%);
+        position: absolute;
+        left: 0;
+        top: calc(100% + 4px);
+        transform: none;
         min-width: 0;
-        width: min(240px, 72vw);
-        max-width: 72vw;
-        max-height: min(32dvh, 240px);
-        padding: 6px;
-        border-radius: 10px;
+        width: min(280px, 46vw);
+        max-width: 46vw;
+        max-height: min(42dvh, 320px);
+        padding: 8px;
+        border-radius: 0 10px 10px 10px;
       }
       .desplegables details.sub > .cuerpo {
         position: static; transform: none; left: auto; top: auto;
@@ -737,9 +737,9 @@
         </select>
         <label for="fOtbn">OTBN de este lote (como se ve en el mapa)</label>
         <select id="fOtbn">
-          <option value="II">II · amarillo (MBGI, la más frecuente)</option>
-          <option value="I">I · rojo (no desmontar, más descanso del monte)</option>
-          <option value="III">III · verde (más pastizal; igual sin soja ni desmonte)</option>
+          <option value="II">II · amarillo</option>
+          <option value="I">I · rojo</option>
+          <option value="III">III · verde</option>
         </select>
       </div>
 
@@ -832,7 +832,7 @@
             <summary>OTBN</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="otbn">Ver en el mapa</button>
-              <div class="hint leyenda-capa" id="fichaOtbn">Ley 26.331: no se desmonta.</div>
+              <div class="hint leyenda-capa" id="fichaOtbn">Este lote: II amarillo. I rojo · III verde. No se desmonta.</div>
             </div>
           </details>
           <details class="sub" data-capa-drop="agua">
@@ -1480,7 +1480,9 @@
             " · " + escHtml(diagnosticoLote.relieve || (diagnosticoLote.bajo ? "bajo" : "loma")) + ".")
           : "Cierre el alambrado: se lee la carta INTA de este lote.")
       );
-      setTxt("fichaOtbn", "Ley 26.331: no se desmonta. Buffel solo en bajos si OTBN lo permite.");
+      setTxt("fichaOtbn", "Este lote: OTBN " + otbnAct().id +
+        ({ I: " rojo", II: " amarillo", III: " verde" }[otbnAct().id] || "") +
+        ". I rojo · II amarillo · III verde. No se desmonta.");
       setTxt("fichaAgua",
         (aguadas.length
           ? (aguadas.length + " aguada" + (aguadas.length === 1 ? "" : "s") + " · cría 400 m" +
@@ -1736,13 +1738,30 @@
       version: "1.1.1",
       tiled: true
     });
-    const capaOtbn = L.tileLayer("https://tiles.arcgis.com/tiles/RTK5Unh1Z71JKIiR/arcgis/rest/services/OTBN_MAyDS2016/MapServer/tile/{z}/{y}/{x}", {
-      pane: "oficial",
-      opacity: 0.38,
-      maxNativeZoom: 13,
-      maxZoom: MAX_Z,
-      attribution: "MAyDS · OTBN Ley 26.331"
-    });
+    const capaOtbn = L.layerGroup();
+    function colorOtbn(id) {
+      return { I: "#B42318", II: "#C4A035", III: "#1B7A4A" }[id] || "#C4A035";
+    }
+    function pintarOtbnCampo() {
+      capaOtbn.clearLayers();
+      const col = colorOtbn(otbnId());
+      const rings = [];
+      if (store.anilloCampo && store.anilloCampo.length >= 3) rings.push(store.anilloCampo);
+      else potreros.forEach((p) => {
+        const ring = (typeof anilloDibujoLote === "function" ? anilloDibujoLote(p) : p.ring) || p.ring;
+        if (ring && ring.length >= 3) rings.push(ring);
+      });
+      rings.forEach((ring) => {
+        L.polygon(ring, {
+          pane: "oficial",
+          color: col,
+          weight: 2,
+          fillColor: col,
+          fillOpacity: 0.16,
+          interactive: false
+        }).addTo(capaOtbn);
+      });
+    }
     function fechaModis8d() {
       const d = new Date();
       d.setUTCDate(d.getUTCDate() - 16);
@@ -1808,6 +1827,7 @@
         if (on && !map.hasLayer(lyr)) lyr.addTo(map);
         if (!on && map.hasLayer(lyr)) map.removeLayer(lyr);
       });
+      if (id === "otbn" && on) pintarOtbnCampo();
       pintarBotonesCapa();
       actualizarFichaOficial();
     }
@@ -3411,6 +3431,7 @@
       });
       aguadas.forEach(ponerMarcaAguada);
       dibujarAgua();
+      if (typeof capaEncendida === "function" && capaEncendida("otbn")) pintarOtbnCampo();
     }
     function dibujarAgua() {
       capaAgua.clearLayers();
@@ -3701,6 +3722,7 @@
       syncEstacionOtbn(estacionId(), otbnId());
       aplicarCabezasMenu();
       if (typeof pintarCampos === "function") pintarCampos();
+      if (typeof capaEncendida === "function" && capaEncendida("otbn")) pintarOtbnCampo();
       refrescarMapa();
       try {
         pintarEquilibrio();
