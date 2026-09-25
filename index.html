@@ -123,6 +123,25 @@
       padding: 0; font-size: 12px; font-weight: 800;
       text-shadow: 0 1px 3px #000;
     }
+    .lab span.etiq-campo {
+      background: rgba(247,241,228,.92) !important; color: var(--verde);
+      text-shadow: none; border: 1px solid #8a6a2a; border-radius: 6px;
+      padding: 4px 8px; font-size: 11px; line-height: 1.2; font-weight: 800;
+      white-space: nowrap; min-width: 0;
+    }
+    .lab span.etiq-campo i { display: block; font-style: normal; font-weight: 600; font-size: 10px; color: #5C564F; }
+    .tres-sit {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin: 6px 0;
+    }
+    .tres-sit .sit-col {
+      display: flex; flex-direction: column; gap: 2px; text-align: left;
+      border: 1px solid #c5cdc8; background: #fff; border-radius: 6px;
+      padding: 6px 5px; font-size: 10px; line-height: 1.25; color: #1C2B26;
+      font-weight: 600; cursor: pointer;
+    }
+    .tres-sit .sit-col b { color: var(--verde); font-size: 11px; }
+    .tres-sit .sit-col.on { border-color: var(--verde); background: var(--verde-suave); }
+    .tres-sit .sit-col .muted { color: #8a7a62; font-weight: 500; font-size: 9px; }
     .lab em { display: none; }
     .pueblo { background: none; border: 0; }
     .pueblo span {
@@ -475,6 +494,8 @@
       .desplegables .ficha-oficial, .desplegables .leyenda {
         font-size: 10px; max-height: 5.5em; overflow: auto; margin-top: 4px;
       }
+      .tres-sit { gap: 3px; }
+      .tres-sit .sit-col { padding: 5px 3px; font-size: 9px; }
       .mapa-tools {
         top: auto;
         right: auto;
@@ -822,11 +843,11 @@
       <details id="dropManejo">
         <summary>Manejo</summary>
         <div class="cuerpo">
-          <p class="hint">Ya está leída la <b>situación actual</b> (INTA de este lugar). Acá prueba carga y días: si pasa de 10 a 20 vacas, EV, ha/EV, pastoreo y rotación se recalcan al toque. La superficie no cambia.</p>
-          <div class="ficha-oficial" id="cifrasVivas">Cambie animales o días: las cifras se actualizan acá.</div>
+          <p class="hint">Tres situaciones a la par. Toque una solapa para editarla: los demás números se recalcan al cambiar un dato.</p>
+          <div class="tres-sit" id="tresSit"></div>
           <div class="eq-box amarillo" id="eqBoxManejo">Punto de equilibrio: se actualiza al cambiar días, cabezas, época u OTBN.</div>
           <div class="escenas" role="tablist" aria-label="Escena">
-            <button type="button" class="on" data-esc="actual">Actual</button>
+            <button type="button" class="on" data-esc="actual">Inicial</button>
             <button type="button" data-esc="m1">Mejorando</button>
             <button type="button" data-esc="optimo">Ideal</button>
           </div>
@@ -924,11 +945,50 @@
       if (b) b.value = eid;
     }
     function nomEscena(esc) {
-      return { actual: "Actual", m1: "Mejorando", optimo: "Ideal" }[esc] || esc;
+      return { actual: "Inicial", m1: "Mejorando", optimo: "Ideal" }[esc] || esc;
+    }
+    function pintarCartelCampo() {
+      const el = document.getElementById("cartelNombre");
+      if (!el) return;
+      const nom = store.nombreCampo || DEMO_NOMBRE;
+      const ha = potreros.length ? Math.round(haTotal()) : 0;
+      el.innerHTML = escHtml(nom) + (ha ? (" <small>" + ha + " ha · " + nomEscena(escSel) + "</small>") : "");
+    }
+    function htmlPopupCampo(p) {
+      const ha = p && p.ha != null ? p.ha : haTotal();
+      return "<b>" + escHtml(store.nombreCampo || "Campo") + "</b><br>" +
+        (ha ? (Number(ha).toFixed(0) + " ha<br>") : "") +
+        nomEscena(escSel);
+    }
+    function pintarTresSit() {
+      const el = document.getElementById("tresSit");
+      if (!el) return;
+      if (!potreros.length) {
+        el.innerHTML = "<p class='hint' style='grid-column:1/-1;margin:0'>Cargue el campo para ver Inicial, Mejorando e Ideal.</p>";
+        return;
+      }
+      const p = potreros.find((x) => x.n === pSel) || potreros[0];
+      const esp = especieAct();
+      el.innerHTML = ["actual", "m1", "optimo"].map((esc) => {
+        const d = datoEscena(p, esc);
+        const der = diasDeCarga(p, d);
+        const cab = nAnimales(d.cabezas != null ? d.cabezas : der.cabezas);
+        const dias = d.diasRestan != null && d.diasRestan !== "" ? d.diasRestan : der.maxDias;
+        const vacio = esc !== "actual" && d._sinCarga;
+        return "<button type='button' class='sit-col" + (escSel === esc ? " on" : "") + "' data-esc-col='" + esc + "'>" +
+          "<b>" + nomEscena(esc) + "</b>" +
+          (vacio ? "<span class='muted'>sin cargar aún</span>" : "") +
+          "<span>" + cab + " " + esp.plural + "</span>" +
+          "<span>" + (der.haUnidad || d.haUnidad || "—") + " " + esp.unidadHa + "</span>" +
+          "<span>" + (dias || "—") + " días</span>" +
+          "<span>destete " + Math.round(Number(d.destete) || 0) + " %</span>" +
+          "</button>";
+      }).join("");
     }
     function marcarEscena(id) {
       escSel = id;
       document.querySelectorAll(".escenas button").forEach((x) => x.classList.toggle("on", x.dataset.esc === id));
+      try { pintarCartelCampo(); pintarTresSit(); } catch (e) {}
     }
     function cargasProductor(p, esc) {
       const extra = {};
@@ -1366,6 +1426,7 @@
         "Carga y días se recalcan solos. Lluvia del predio: solapa Capas → Lluvia.";
     }
     function pintarCifrasVivas(p, extra) {
+      try { pintarTresSit(); pintarCartelCampo(); } catch (e) {}
       const el = document.getElementById("cifrasVivas");
       if (!el) return;
       const lote = p || potreros.find((x) => x.n === pSel) || potreros[0];
@@ -1442,7 +1503,7 @@
       setTxt("hintNutricion", "CC inicial ~2,7. El agua de una " + esp.nombre + " es ~" + esp.aguaL + " L/día, no el de otra especie. No recortar bebida.");
       setTxt("hintRepro", esp.desteteLab + " inicial ~" + act.destete + " %. El 85 % es techo INTA de vacas de cría; en oveja y cabra se carga el dato del productor.");
       setTxt("hintAguaMod", "Una " + esp.nombre + " ~" + esp.aguaL + " L/día. Alcance de cría 400 m. " + (muyLejos[0] ? ("Lote a " + muyLejos[0].dist + " m: acercar bebedero.") : "Detalle en el informe."));
-      try { pintarCifrasActuales(); pintarCifrasVivas(); } catch (e) {}
+      try { pintarCifrasActuales(); pintarCifrasVivas(); pintarTresSit(); } catch (e) {}
     }
     function dato(p) {
       if (escSel === "actual") return datoEscena(p, "actual");
@@ -1758,6 +1819,7 @@
       document.querySelector(".title").textContent = n;
       document.title = "Gemelo Digital Ganadero";
       document.getElementById("cartelNombre").textContent = n;
+      pintarCartelCampo();
       const prod = document.getElementById("fProd");
       if (prod && n && n !== DEMO_NOMBRE && !prod.value.trim()) prod.value = n;
     }
@@ -2765,12 +2827,7 @@
       store.campoActivo = snapshotFormCampo();
       store.campoActivo.nombre = store.nombreCampo;
       saveStore(store);
-      L.popup({ maxWidth: 280 })
-        .setLatLng([cx, cy])
-        .setContent("<b>" + escHtml(store.nombreCampo || "Mi campo") + "</b><br>" +
-          (hayAnillo ? ("Superficie: <b>" + fmtHa(ha) + "</b> según el alambrado") : ("Hay " + (ring.length || 1) + " vértice(s) del plano. Toque el satélite para completar el alambrado.")) +
-          "<br>" + textoGps(cx, cy))
-        .openOn(map);
+      pintarCartelCampo();
       pintarConvSat(cx, cy);
       const cercaDemo = distM([cx, cy], DEMO_CENTRO) < 2500;
       let aviso = "Campo en " + textoGps(cx, cy) + ".";
@@ -2954,13 +3011,7 @@
       try { leerLluviaCampo(cx, cy); } catch (e) {}
       if (typeof actualizarFichasCampo === "function") actualizarFichasCampo();
       if (typeof llenar === "function") llenar();
-      L.popup({ maxWidth: 300 })
-        .setLatLng([cx, cy])
-        .setContent("<b>" + escHtml(store.nombreCampo || "Mi campo") + "</b><br>Superficie: <b>" + fmtHa(ha) + "</b><br>" +
-          escHtml(String(diagnosticoLote.suelo)) + " · aptitud " + escHtml(String(diagnosticoLote.capUso)) + "<br>" +
-          "Relieve: " + escHtml(String(diagnosticoLote.relieve)) + " · " + diagnosticoLote.z + " m<br>" +
-          "<b>Situación actual</b> de este lote (INTA · " + escHtml(especieAct().plural) + "). Toque aguadas. Mejorando e Ideal se arman con el productor; el techo lo pone INTA.")
-        .openOn(map);
+      pintarCartelCampo();
       pintarAvisoSat(ring.length);
       return diagnosticoLote;
     }
@@ -3253,6 +3304,14 @@
       const x = Math.sin(dp / 2) * Math.sin(dp / 2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) * Math.sin(dl / 2);
       return 2 * R * Math.asin(Math.min(1, Math.sqrt(x)));
     }
+    function htmlEtiquetaCampo(p) {
+      if (esDemoCalera || potreros.length > 1) {
+        return "<span>" + etiquetaLote(p) + "</span>";
+      }
+      const nom = String(store.nombreCampo || "Campo");
+      const corto = nom.length > 22 ? nom.slice(0, 20) + "…" : nom;
+      return "<span class='etiq-campo'><b>" + corto + "</b><i>" + Number(p.ha).toFixed(0) + " ha</i><i>" + nomEscena(escSel) + "</i></span>";
+    }
     function pintar(p) {
       const v = decision(p);
       if (polyByN[p.n]) polyByN[p.n].setStyle({ fillColor: v.color, color: "#fff", weight: 3, fillOpacity: 0.22 });
@@ -3260,13 +3319,15 @@
         c.poly.setStyle({ fillColor: v.color, fillOpacity: 0.08 + 0.16 * c.hs });
       });
       if (labByN[p.n]) {
+        const html = htmlEtiquetaCampo(p);
+        const ancho = html.indexOf("etiq-campo") >= 0 ? 150 : (etiquetaLote(p).length > 4 ? 78 : 28);
+        const alto = html.indexOf("etiq-campo") >= 0 ? 46 : 16;
         labByN[p.n].setIcon(L.divIcon({
           className: "lab",
-          html: "<span>P" + p.n + "</span>",
-          iconSize: [28, 16],
-          iconAnchor: [14, 8]
+          html: html,
+          iconSize: [ancho, alto],
+          iconAnchor: [ancho / 2, alto / 2]
         }));
-        labByN[p.n].bindPopup("<b>" + v.titulo + "</b><br>" + v.sub + "<br><br>" + v.accion);
       }
     }
     function reconstruirPills() {
@@ -3322,13 +3383,15 @@
         }).addTo(group);
         polyByN[p.n] = poly;
         const c = centro(ring);
-        const txt = etiquetaLote(p);
+        const html = htmlEtiquetaCampo(p);
+        const ancho = html.indexOf("etiq-campo") >= 0 ? 150 : (etiquetaLote(p).length > 4 ? 78 : 28);
+        const alto = html.indexOf("etiq-campo") >= 0 ? 46 : 16;
         const lab = L.marker(c, {
           icon: L.divIcon({
             className: "lab",
-            html: "<span>" + txt + "</span>",
-            iconSize: txt.length > 4 ? [78, 16] : [28, 16],
-            iconAnchor: txt.length > 4 ? [39, 8] : [14, 8]
+            html: html,
+            iconSize: [ancho, alto],
+            iconAnchor: [ancho / 2, alto / 2]
           })
         }).addTo(group);
         labByN[p.n] = lab;
@@ -3582,11 +3645,21 @@
       el.addEventListener("click", (ev) => {
         const b = ev.target.closest("button[data-esc]");
         if (!b) return;
-        escSel = b.dataset.esc;
-        document.querySelectorAll(".escenas button").forEach((x) => x.classList.toggle("on", x.dataset.esc === escSel));
+        marcarEscena(b.dataset.esc);
+        if (typeof pintarCampos === "function") pintarCampos();
         refrescarMapa();
       });
     });
+    const tresSitEl = document.getElementById("tresSit");
+    if (tresSitEl) {
+      tresSitEl.addEventListener("click", (ev) => {
+        const b = ev.target.closest("[data-esc-col]");
+        if (!b) return;
+        marcarEscena(b.dataset.escCol);
+        if (typeof pintarCampos === "function") pintarCampos();
+        refrescarMapa();
+      });
+    }
     document.getElementById("fTipo").addEventListener("change", () => {
       store[pSel].tipo = document.getElementById("fTipo").value;
       refrescarMapa();
