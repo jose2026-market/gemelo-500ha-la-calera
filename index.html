@@ -256,6 +256,7 @@
     }
     .desplegables details.sub[open] > summary { background: var(--verde-suave); }
     #dropCapas.capa-una details.sub:not([open]) { display: none; }
+    .desplegables [hidden] { display: none !important; }
     .desplegables .capa-btn {
       width: 100%; text-align: left; margin-top: 4px;
       border-radius: 6px; font-weight: 700; padding: 8px 10px;
@@ -784,7 +785,7 @@
               </div>
               <div class="fondos" id="prodImg" role="group" aria-label="Productividad">
                 <button type="button" data-prod="ndvi">Verde NDVI</button>
-                <button type="button" data-prod="cobertura">Uso del suelo</button>
+                <button type="button" data-prod="cobertura">Cobertura IGN</button>
               </div>
               <div class="hint leyenda-capa" id="fichaImg">Satélite de este campo.</div>
             </div>
@@ -816,13 +817,6 @@
               <div class="hint leyenda-capa" id="fichaLluvia">Régimen de este campo: se lee al ubicar el lote.</div>
             </div>
           </details>
-          <div class="capas fondos" hidden>
-            <button type="button" data-capa="suelos">Suelos</button>
-            <button type="button" data-capa="otbn">OTBN</button>
-            <button type="button" data-capa="agua">Aguadas</button>
-            <button type="button" data-capa="ndvi">NDVI</button>
-            <button type="button" data-capa="cobertura">Uso del suelo</button>
-          </div>
         </div>
       </details>
       <details id="dropManejo">
@@ -1397,8 +1391,8 @@
       const cobOn = capaEncendida("cobertura");
       setTxt("fichaImg",
         ndviOn ? "NDVI: marrón = poco pasto; verde = más biomasa."
-          : cobOn ? "Uso del suelo (IGN): monte, pastizal, desnudo."
-          : "Satélite de este campo. NDVI = pasto. Uso = monte/pastizal."
+          : cobOn ? "Cobertura IGN: monte, pastizal, desnudo."
+          : "Satélite de este campo. NDVI = pasto. Cobertura IGN = monte/pastizal."
       );
       setTxt("fichaSuelos", esDemoCalera
         ? "INTA Peña Zubiate · UCSV 4 · Torriortente · aptitud VII (ganadero, no agrícola)."
@@ -1690,17 +1684,31 @@
     function actualizarFichaOficial() {
       try { actualizarFichasCampo(); } catch (e) { /* no cortar el menú ni las solapas */ }
     }
-    function setCapa(id, on, refresh) {
+    const OVERLAYS = ["suelos", "otbn", "agua", "ndvi", "cobertura"];
+    function pintarBotonesCapa() {
+      document.querySelectorAll(".capa-btn").forEach((b) => {
+        const enc = capaEncendida(b.dataset.capa);
+        b.classList.toggle("on", enc);
+        b.textContent = enc ? "Ocultar del mapa" : "Ver en el mapa";
+      });
+      document.querySelectorAll("[data-prod]").forEach((x) => {
+        x.classList.toggle("on", capaEncendida(x.dataset.prod));
+      });
+    }
+    function setCapa(id, on) {
+      if (on) {
+        OVERLAYS.forEach((k) => {
+          if (k === id) return;
+          (capasOff[k] || []).forEach((lyr) => {
+            if (map.hasLayer(lyr)) map.removeLayer(lyr);
+          });
+        });
+      }
       (capasOff[id] || []).forEach((lyr) => {
         if (on && !map.hasLayer(lyr)) lyr.addTo(map);
         if (!on && map.hasLayer(lyr)) map.removeLayer(lyr);
       });
-      document.querySelectorAll(".capas button, .capa-btn").forEach((b) => {
-        if (b.dataset.capa === id) {
-          b.classList.toggle("on", on);
-          if (b.classList.contains("capa-btn")) b.textContent = on ? "Ocultar del mapa" : "Ver en el mapa";
-        }
-      });
+      pintarBotonesCapa();
       actualizarFichaOficial();
     }
     setCapa("suelos", false);
@@ -1708,18 +1716,10 @@
     setCapa("agua", false);
     setCapa("ndvi", false);
     setCapa("cobertura", false);
-    document.querySelector(".capas").addEventListener("click", (ev) => {
-      const b = ev.target.closest("button[data-capa]");
-      if (!b) return;
-      setCapa(b.dataset.capa, !capaEncendida(b.dataset.capa), true);
-    });
     document.getElementById("prodImg").addEventListener("click", (ev) => {
       const b = ev.target.closest("button[data-prod]");
       if (!b) return;
-      const id = b.dataset.prod;
-      const prender = !capaEncendida(id);
-      ["ndvi", "cobertura"].forEach((k) => setCapa(k, prender && k === id, false));
-      document.querySelectorAll("[data-prod]").forEach((x) => x.classList.toggle("on", prender && x.dataset.prod === id));
+      setCapa(b.dataset.prod, !capaEncendida(b.dataset.prod));
     });
 
     function aplicarNombre(nombre) {
@@ -4025,6 +4025,13 @@
       d.addEventListener("toggle", () => {
         if (d.open) {
           document.querySelectorAll("[data-capa-drop]").forEach((o) => { if (o !== d) o.open = false; });
+          const keep = d.dataset.capaDrop === "imagenes" ? ["ndvi", "cobertura"]
+            : (d.dataset.capaDrop === "suelos" || d.dataset.capaDrop === "otbn" || d.dataset.capaDrop === "agua")
+              ? [d.dataset.capaDrop]
+              : [];
+          OVERLAYS.forEach((k) => {
+            if (keep.indexOf(k) < 0 && capaEncendida(k)) setCapa(k, false);
+          });
         }
         syncCapaAbierta();
       });
