@@ -107,6 +107,18 @@
     .eq-solapa.verde { background: #1B7A4A; border-color: #0D5C2C; }
     .eq-solapa.amarillo { background: #C4A035; border-color: #8a6a2a; }
     .eq-solapa.rojo { background: #B42318; border-color: #8A1F16; }
+    .cruz-est {
+      display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px;
+      margin: 6px 0 4px;
+    }
+    .cruz-est button {
+      font-size: 9px; font-weight: 800; line-height: 1.2; padding: 6px 2px;
+      border-radius: 6px; color: #fff; border: 1px solid transparent;
+    }
+    .cruz-est button.verde { background: #1B7A4A; border-color: #0D5C2C; }
+    .cruz-est button.amarillo { background: #C4A035; border-color: #8a6a2a; color: #1C2B26; }
+    .cruz-est button.rojo { background: #B42318; border-color: #8A1F16; }
+    .cruz-est button.on { box-shadow: 0 0 0 2px var(--verde); }
     label { display: block; font-size: 11px; color: #5C564F; margin: 6px 0 2px; }
     input, textarea, select {
       width: 100%; box-sizing: border-box; border: 1px solid #c5cdc8;
@@ -737,7 +749,7 @@
       </div>
 
       <div class="paso">
-        <p><b class="nro">D</b> <b>Época de esta visita y OTBN</b> de este lugar.</p>
+        <p><b class="nro">D</b> <b>Época de esta visita y OTBN</b> de este lugar. El color legal (I rojo · II amarillo · III verde) no cambia con el año. El margen de pasto de cada estación sí.</p>
         <label for="fEstacion">¿En qué época evalúan el campo?</label>
         <select id="fEstacion">
           <option value="primavera">Primavera</option>
@@ -751,6 +763,8 @@
           <option value="I">I · rojo</option>
           <option value="III">III · verde</option>
         </select>
+        <div class="cruz-est" data-cruz-est></div>
+        <p class="hint" data-nota-est-otbn></p>
         <button type="button" class="punto-act" data-paso="D"><span class="punto"></span> Actualizar este dato</button>
         <p class="ok" data-aviso-paso="D" hidden></p>
       </div>
@@ -842,7 +856,9 @@
             <summary>OTBN</summary>
             <div class="cuerpo">
               <button type="button" class="capa-btn" data-capa="otbn">Ver en el mapa</button>
+              <div class="cruz-est" data-cruz-est></div>
               <div class="hint leyenda-capa" id="fichaOtbn">Este lote: II amarillo. I rojo · III verde. No se desmonta.</div>
+              <p class="hint" data-nota-est-otbn></p>
             </div>
           </details>
           <details class="sub" data-capa-drop="agua">
@@ -870,7 +886,8 @@
       <details id="dropManejo">
         <summary>Manejo</summary>
         <div class="cuerpo">
-          <p class="hint">Inicial, Mejorando e Ideal son del <b>año completo</b> (el invierno limita cuántos animales se mantienen). No es solo el verano. Cargue el dato y toque el punto verde.</p>
+          <p class="hint">Inicial, Mejorando e Ideal son del <b>año completo</b> (el invierno limita). El OTBN no cambia de color; el margen de cada estación sí.</p>
+          <div class="cruz-est" data-cruz-est></div>
           <div class="tres-sit" id="tresSit"></div>
           <div class="eq-solapa amarillo" id="eqBoxManejo" aria-label="Equilibrio"></div>
           <div class="escenas" role="tablist" aria-label="Escena">
@@ -1718,7 +1735,8 @@
       );
       setTxt("fichaOtbn", "Este lote: OTBN " + otbnAct().id +
         ({ I: " rojo", II: " amarillo", III: " verde" }[otbnAct().id] || "") +
-        ". I rojo · II amarillo · III verde. No se desmonta.");
+        " todo el año. I rojo · II amarillo · III verde. No se desmonta.");
+      try { pintarCruzEstOtbn(); } catch (e) {}
       setTxt("fichaAgua",
         (aguadas.length
           ? (aguadas.length + " aguada" + (aguadas.length === 1 ? "" : "s") + " · cría 400 m" +
@@ -1981,6 +1999,8 @@
     function pintarOtbnCampo() {
       capaOtbn.clearLayers();
       const col = colorOtbn(otbnId());
+      const vis = margenEstacionOtbn(estacionId(), otbnId(), tipoLoteAct());
+      const opac = vis.sem === "rojo" ? 0.10 : vis.sem === "amarillo" ? 0.16 : 0.24;
       const rings = [];
       if (store.anilloCampo && store.anilloCampo.length >= 3) rings.push(store.anilloCampo);
       else potreros.forEach((p) => {
@@ -1993,7 +2013,7 @@
           color: col,
           weight: 2,
           fillColor: col,
-          fillOpacity: 0.16,
+          fillOpacity: opac,
           interactive: false
         }).addTo(capaOtbn);
       });
@@ -2609,6 +2629,44 @@
     function otbnAct() {
       return OTBN_CAT[otbnId()] || OTBN_CAT.II;
     }
+    function tipoLoteAct() {
+      const p = potreros[0];
+      return (p && store[p.n] && store[p.n].tipo) || "ganadero";
+    }
+    function margenEstacionOtbn(estId, otId, tipo) {
+      const est = ESTACION[estId] || ESTACION.invierno;
+      const ot = OTBN_CAT[otId] || OTBN_CAT.II;
+      const fen = (tipo === "monte") ? est.monte : est.pasto;
+      const ratio = fen * ot.fo;
+      let sem = "verde";
+      if (ratio < 0.62) sem = "rojo";
+      else if (ratio < 0.95) sem = "amarillo";
+      if (ot.estira === false && est.id !== "verano" && sem === "verde") sem = "amarillo";
+      if (est.id === "invierno") {
+        if (ot.id === "I") sem = "rojo";
+        else if (sem === "verde") sem = "amarillo";
+      }
+      return { sem: sem, ratio: +ratio.toFixed(2), fen: fen, fo: ot.fo, est: est, ot: ot };
+    }
+    function pintarCruzEstOtbn() {
+      const ot = otbnId();
+      const vis = estacionId();
+      const tipo = tipoLoteAct();
+      const ids = ["primavera", "verano", "otono", "invierno"];
+      const labs = { primavera: "Prim.", verano: "Verano", otono: "Otoño", invierno: "Inv." };
+      const html = ids.map((id) => {
+        const m = margenEstacionOtbn(id, ot, tipo);
+        return "<button type='button' class='" + m.sem + (id === vis ? " on" : "") + "' data-est-col='" + id + "'>" +
+          labs[id] + "</button>";
+      }).join("");
+      document.querySelectorAll("[data-cruz-est]").forEach((el) => { el.innerHTML = html; });
+      const visM = margenEstacionOtbn(vis, ot, tipo);
+      const invM = margenEstacionOtbn("invierno", ot, tipo);
+      const colLey = { I: "rojo", II: "amarillo", III: "verde" }[ot] || "amarillo";
+      const txt = "OTBN " + ot + " es " + colLey + " todo el año (ley 26.331). El margen de pasto sí cambia: " +
+        visM.est.nombre + " " + visM.sem + ". El año lo limita el invierno (" + invM.sem + ").";
+      document.querySelectorAll("[data-nota-est-otbn]").forEach((el) => { el.textContent = txt; });
+    }
     function syncEstacionOtbn(est, ot) {
       store.estacion = ESTACION[est] ? est : estacionPorFecha();
       store.otbn = OTBN_CAT[ot] ? ot : "II";
@@ -2618,6 +2676,7 @@
       if (e2) e2.value = store.estacion;
       if (o1) o1.value = store.otbn;
       if (o2) o2.value = store.otbn;
+      try { pintarCruzEstOtbn(); } catch (e) {}
     }
     function inferirOtbn() {
       const t = String((diagnosticoLote && (diagnosticoLote.fisonomia || "")) + " " + ((diagnosticoLote && diagnosticoLote.uso) || "")).toLowerCase();
@@ -3985,6 +4044,20 @@
         if (typeof llenar === "function") llenar();
       } catch (e) {}
     }
+    ["fEstacion", "fOtbn"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", () => { try { pintarCruzEstOtbn(); } catch (e) {} });
+    });
+    document.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-est-col]");
+      if (!b) return;
+      const enMenu = b.closest("#cajaCampo");
+      const el = document.getElementById("fEstacion");
+      if (el) el.value = b.dataset.estCol;
+      if (enMenu) pintarCruzEstOtbn();
+      else if (typeof onCambioEstacionOtbn === "function") onCambioEstacionOtbn();
+      else pintarCruzEstOtbn();
+    });
     ["fEstacionPanel", "fOtbnPanel"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.addEventListener("change", onCambioEstacionOtbn);
