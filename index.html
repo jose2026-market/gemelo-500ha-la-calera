@@ -1005,6 +1005,9 @@
       if (!Number.isFinite(x) || x < 0) return 0;
       return Math.round(x);
     }
+    function nomN(n, esp) {
+      return n + " " + (Math.abs(Number(n)) === 1 ? esp.nombre : esp.plural);
+    }
     function syncEspecie(id) {
       const eid = ESPECIE[id] ? id : "cria";
       store.especie = eid;
@@ -1080,10 +1083,6 @@
         { nom: "Dic", est: "verano", d: 31, w: 1.12 }
       ];
     }
-    function pesoMesForraje(m, L) {
-      const mmEst = Number((L && L.estaciones || {})[m.est]);
-      return mmEst > 0 ? mmEst * m.w : m.w;
-    }
     function calendarioCarga(p, esc) {
       const tipo = (store[p.n] && store[p.n].tipo) || "ganadero";
       const ot = otbnAct();
@@ -1093,45 +1092,51 @@
       const cab = nAnimales((esc !== "actual" && d._sinCarga)
         ? (dAct.cabezas != null ? dAct.cabezas : 0)
         : (d.cabezas != null ? d.cabezas : 0));
-      const mej = extraMejoras(esc === "actual" ? "m1" : esc);
+      const mej = extraMejoras(esc === "m1" ? "m1" : "actual");
       const rue = rueForraje();
       const L = store.lluvia || {};
       const fLl = typeof factorLluvia === "function" ? factorLluvia() : 1;
       const kgAnio0 = (store.forraje && store.forraje.kgAnio)
         || Math.round((Number(L.anual) || 400) * rue * (ot.fo || 1));
-      const fMej = (esc === "m1" || esc === "actual") ? (mej.f || 1) : 1;
-      const kgAnio = Math.round(kgAnio0 * (esc === "m1" ? fMej : 1));
+      const fMej = esc === "m1" ? (mej.f || 1) : 1;
+      const kgAnio = Math.round(kgAnio0 * fMej);
       const extraInvHa = (esc === "m1" ? (mej.kg || 0) : 0) / Math.max(p.ha, 0.1);
       const meses = mesesForraje();
-      const sumW = meses.reduce((s, m) => s + pesoMesForraje(m, L), 0);
+      const sumW = meses.reduce((s, m) => s + m.w, 0);
       const ev = esp.evPorCabeza || 1;
+      const tAct = techoEscena(p, tipo, "actual");
+      const tM1 = techoEscena(p, tipo, "m1");
+      const tOp = techoEscena(p, tipo, "optimo");
+      const kgRef = 400 * rue * (ot.fo || 1);
+      const util = (kgRef > 0 && p.ha > 0)
+        ? (tAct.cabezasMax * 12 * 365 * ev) / (kgRef * p.ha)
+        : 0.28;
+      let cubreForraje = (kgAnio0 * util * p.ha) / (12 * 365 * ev);
+      if (esc === "m1") cubreForraje *= fMej;
+      cubreForraje = nAnimales(cubreForraje);
+      const extraCab = nAnimales((esc === "m1" ? (mej.kg || 0) : 0) / (365 * 12 * ev));
+      const topeIni = Math.min(cubreForraje, nAnimales(tAct.cabezasMax));
+      const topeM1 = Math.min(Math.max(cubreForraje, 0) + extraCab, nAnimales(tM1.cabezasMax * fMej + extraCab));
+      const topeOp = Math.min(cubreForraje + extraCab, nAnimales(tOp.cabezasMax));
+      const topePaso = esc === "optimo" ? topeOp : (esc === "m1" ? topeM1 : Math.min(cubreForraje, nAnimales(tM1.cabezasMax)));
+      const cubreAnio = topePaso;
       const filas = meses.map((m) => {
-        let oferta = kgAnio * (pesoMesForraje(m, L) / sumW);
+        let oferta = kgAnio * (m.w / sumW);
         if (m.est === "invierno") oferta += extraInvHa / 3;
         const demanda = cab > 0 ? (cab * ev * 12 * m.d) / p.ha : 0;
         const cubre = ev > 0 ? nAnimales((oferta * p.ha) / (12 * m.d * ev)) : 0;
-        const deficit = demanda > oferta * 1.02 && cab > 0;
+        const deficit = demanda > oferta * 1.05 && cab > 0;
         return {
           nom: m.nom, est: m.est, d: m.d, oferta: +oferta.toFixed(0), demanda: +demanda.toFixed(0),
           cubre: cubre, deficit: deficit, ratio: oferta > 0 ? demanda / oferta : 0
         };
       });
-      const cubreAnio = filas.reduce((min, f) => Math.min(min, f.cubre || 0), filas[0] ? filas[0].cubre : 0);
-      const tAct = techoEscena(p, tipo, "actual");
-      const tM1 = techoEscena(p, tipo, "m1");
-      const tOp = techoEscena(p, tipo, "optimo");
-      const extraCab = nAnimales((esc === "m1" ? (mej.kg || 0) : 0) / (365 * 12 * ev));
-      const topeM1 = Math.min(cubreAnio, nAnimales(tM1.cabezasMax * (esc === "m1" ? fMej : 1) + extraCab));
-      const topeIni = Math.min(cubreAnio, nAnimales(tAct.cabezasMax));
-      const topeOp = Math.min(cubreAnio, nAnimales(tOp.cabezasMax));
-      const topePaso = esc === "optimo" ? topeOp : (esc === "m1" ? topeM1 : Math.min(cubreAnio, topeM1));
-      const topeSuelo = topeOp;
-      const bajar = Math.max(0, cab - cubreAnio, cab - topePaso);
-      const subir = bajar > 0 ? 0 : Math.max(0, topePaso - cab);
+      const bajar = Math.max(0, cab - cubreAnio);
+      const subir = bajar > 0 ? 0 : Math.max(0, cubreAnio - cab);
       const anioTxt = fLl < 0.95 ? "año seco" : (fLl > 1.05 ? "año húmedo" : "año medio");
       return {
         cab: cab, kgAnio: kgAnio, filas: filas, cubreAnio: cubreAnio,
-        topeSuelo: topeSuelo, topePaso: topePaso, topeM1: topeM1, topeIni: topeIni, topeOp: topeOp,
+        topeSuelo: topeOp, topePaso: topePaso, topeM1: topeM1, topeIni: topeIni, topeOp: topeOp,
         subir: subir, bajar: bajar, esp: esp, ot: ot, n: potreros.length, dist: p.dist, ha: p.ha,
         mm: Math.round(Number(L.anual) || 0), anioTxt: anioTxt, mej: mej, sit: sitioDe(p)
       };
@@ -1140,18 +1145,20 @@
       const def = cal.filas.filter((f) => f.deficit);
       const acc = [];
       if (cal.bajar > 0) {
-        acc.push({ ok: false, t: "Decisión: no aumente. Baje " + cal.bajar + " " + cal.esp.plural + " o haga las obras de abajo. Hoy " + cal.cab + " · el suelo cubre " + cal.cubreAnio + " el año (" + cal.anioTxt + ")." });
+        acc.push({ ok: false, t: "Decisión: no aumente. Baje " + nomN(cal.bajar, cal.esp) + " o haga las obras de abajo. Hoy " + nomN(cal.cab, cal.esp) + " · el suelo cubre " + nomN(cal.cubreAnio, cal.esp) + " el año (" + cal.anioTxt + ")." });
       } else if (cal.subir > 0) {
         const hacia = esc === "optimo" ? "Ideal" : "Mejorando";
-        acc.push({ ok: true, t: "Decisión: puede subir hasta " + cal.subir + " " + cal.esp.plural + " más, hacia " + hacia + ". No pase de " + cal.topePaso + " en este paso ni de " + cal.topeOp + " en el Ideal." });
+        acc.push({ ok: true, t: "Decisión: puede subir hasta " + nomN(cal.subir, cal.esp) + " más, hacia " + hacia + ". No pase de " + cal.topePaso + " en este paso ni de " + cal.topeOp + " en el Ideal." });
       } else {
-        acc.push({ ok: true, t: "Decisión: está en el tope de este paso (" + cal.topePaso + " " + cal.esp.plural + "). El Ideal del suelo es " + cal.topeOp + ". No sume más sin obras." });
+        acc.push({ ok: true, t: "Decisión: está en el tope de este paso (" + nomN(cal.topePaso, cal.esp) + "). El Ideal del suelo es " + cal.topeOp + ". No sume más sin obras." });
       }
-      if (def.length) {
+      if (def.length && cal.bajar === 0) {
+        acc.push({ ok: false, t: "El año cierra en cabezas, pero falta crecimiento en " + def.map((f) => f.nom).join(", ") + ": rotar, diferido o suplemento corto. No hace falta destetar el campo entero." });
+      } else if (def.length) {
         acc.push({ ok: false, t: "Falta pasto en " + def.map((f) => f.nom).join(", ") + ". Esos meses hay que intervenir." });
-        if (def.some((f) => f.est === "invierno")) {
-          acc.push({ ok: false, t: "Invierno (jun–ago): no estirar días. Sacar hacienda, diferido o suplemento corto. El cuello de botella es el frío, no el verano." });
-        }
+      }
+      if (def.some((f) => f.est === "invierno")) {
+        acc.push({ ok: false, t: "Invierno (jun–ago): no estirar días. Sacar hacienda, diferido o suplemento corto. El cuello de botella es el frío, no el verano." });
       }
       if (cal.n <= 1) acc.push({ ok: false, t: "Un solo lote: dividir el cuadro (inversión mínima) para rotar y dejar descansar." });
       else acc.push({ ok: true, t: cal.n + " lotes: rotar a tiempo. Descanso ≈ ocupación × " + (cal.n - 1) + " días. No dejar cría todo el año en el mismo cuadro." });
@@ -1200,11 +1207,11 @@
         : (cal.subir > 0 ? "Puede subir con cuidado" : "Está en el tope de este paso");
       return "<p class='diag-tit'>" + tit + " · " + nomEscena(escSel) + "</p>" +
         "<div class='diag-cif'>" +
-        "<span>Hoy<b>" + cal.cab + "</b>" + cal.esp.plural + "</span>" +
-        "<span>El suelo cubre el año<b>" + cal.cubreAnio + "</b>" + cal.esp.plural + "</span>" +
+        "<span>Hoy<b>" + cal.cab + "</b>" + (cal.cab === 1 ? cal.esp.nombre : cal.esp.plural) + "</span>" +
+        "<span>El suelo cubre el año<b>" + cal.cubreAnio + "</b>" + (cal.cubreAnio === 1 ? cal.esp.nombre : cal.esp.plural) + "</span>" +
         "<span class='" + (cal.bajar ? "alerta" : "") + "'>" +
           (cal.bajar ? ("Bajar<b>" + cal.bajar + "</b>") : ("Puede subir<b>" + cal.subir + "</b>")) +
-          cal.esp.plural + "</span>" +
+          (((cal.bajar || cal.subir) === 1) ? cal.esp.nombre : cal.esp.plural) + "</span>" +
         "</div>" +
         svgCalendario(cal) +
         "<p class='diag-ley'>Verde = pasto del mes (" + (cal.mm ? cal.mm + " mm · " : "") + cal.anioTxt +
