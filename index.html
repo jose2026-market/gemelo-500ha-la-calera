@@ -605,15 +605,15 @@
         font-size: 9px;
       }
       body.vista-visor .bar {
-        top: calc(var(--topbar-h) + 50px + env(safe-area-inset-top, 0px));
-        left: 50%;
-        right: auto;
+        top: calc(var(--topbar-h) + 48px + env(safe-area-inset-top, 0px));
+        left: 8px;
+        right: 8px;
         bottom: auto;
-        width: min(240px, 72vw);
-        max-height: min(32dvh, 240px);
-        padding-top: 8px;
-        padding-bottom: 10px;
-        transform: translate(-50%, 0);
+        width: auto;
+        max-width: none;
+        max-height: min(56dvh, calc(100dvh - var(--topbar-h) - 118px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
+        padding: 10px 12px 14px;
+        transform: none;
         border-radius: 10px;
         border: 1px solid #8a6a2a;
         background: linear-gradient(#fffdf8, #f4eee0);
@@ -624,7 +624,7 @@
         z-index: 1450;
       }
       body.vista-visor.panel-abierto .bar {
-        transform: translate(-50%, 0);
+        transform: none;
         visibility: visible;
         opacity: 1;
         pointer-events: auto;
