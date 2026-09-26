@@ -650,7 +650,7 @@
         </div>
       </article>
     </div>
-    <p class="nota">Las 500 ha de La Calera son el demostrativo. El servicio es para cualquier campo del productor. Capas: satélite, verde NDVI, INTA, MAyDS (OTBN).</p>
+    <p class="nota">Las 500 ha de La Calera son el demostrativo. El servicio es para cualquier campo del productor. Capas: satélite, verde NDVI, INTA, OTBN, lluvia y tasa de forraje.</p>
     <p class="nota"><a href="presentacion.html">Presentación para productores (3 diapositivas)</a> · <a href="Gemelo-Digital-Ganadero-productores.pptx">PowerPoint</a> · <a href="instructivo.html">Instructivo</a></p>
   </section>
   <section class="informe" id="informe">
@@ -856,6 +856,13 @@
             <summary>Lluvia</summary>
             <div class="cuerpo">
               <div class="hint leyenda-capa" id="fichaLluvia">Régimen de este campo: se lee al ubicar el lote.</div>
+            </div>
+          </details>
+          <details class="sub" data-capa-drop="forraje">
+            <summary>Forraje</summary>
+            <div class="cuerpo">
+              <button type="button" class="capa-btn" data-capa="ndvi">Ver verde en el mapa</button>
+              <div class="hint leyenda-capa" id="fichaForraje">Tasa de este campo: se lee al ubicar el lote.</div>
             </div>
           </details>
         </div>
@@ -1151,6 +1158,123 @@
         "Últimos 30 días: " + Math.round(L.mm30 || 0) + " mm. Semiárido de referencia ~400 mm. " +
         (factorLluvia() < 0.95 ? "Año más seco: baja la oferta y se acortan los días." :
           (factorLluvia() > 1.05 ? "Año más húmedo: hay más margen de pastoreo." : "Cerca de un año medio."));
+    }
+    function rueForraje() {
+      const p = potreros[0];
+      const tipo = (p && store[p.n] && store[p.n].tipo) || "ganadero";
+      const sit = p ? sitioDe(p) : { bajo: false };
+      if (tipo === "monte") return 2.5;
+      if (sit && sit.bajo) return 4.2;
+      return 3.6;
+    }
+    function estimarForraje() {
+      const L = store.lluvia || {};
+      const nd = store.forraje || {};
+      const ot = typeof otbnAct === "function" ? otbnAct() : { fo: 1 };
+      const rue = rueForraje();
+      const anualMm = Number(L.anual) || 0;
+      const kgAnio = anualMm > 0 ? Math.round(anualMm * rue * (ot.fo || 1)) : 0;
+      const kgDiaLluvia = kgAnio ? +(kgAnio / 365).toFixed(1) : 0;
+      const mmInv = Number((L.estaciones || {}).invierno) || 0;
+      const kgDiaInvLluvia = mmInv > 0 ? +((mmInv * rue * (ot.fo || 1)) / 90).toFixed(1) : +(kgDiaLluvia * 0.48).toFixed(1);
+      let kgDia = kgDiaLluvia;
+      let via = anualMm ? "lluvia" : "";
+      if (nd.ndvi != null && isFinite(nd.ndvi)) {
+        kgDia = +Math.max(0.2, (nd.ndvi - 0.10) * 42 * (ot.fo || 1)).toFixed(1);
+        via = "ndvi";
+      }
+      const esInv = typeof estacionAct === "function" && estacionAct().id === "invierno";
+      const kgDiaInv = nd.ndvi != null
+        ? (esInv ? kgDia : +Math.max(0.2, kgDia * 0.55).toFixed(1))
+        : kgDiaInvLluvia;
+      store.forraje = Object.assign({}, nd, {
+        rue: rue,
+        kgAnio: kgAnio,
+        kgDia: kgDia,
+        kgDiaInv: kgDiaInv,
+        via: via,
+        mmAnual: anualMm
+      });
+      if (diagnosticoLote && diagnosticoLote.futuro) diagnosticoLote.futuro.forrajePredio = store.forraje;
+      return store.forraje;
+    }
+    function textoForraje() {
+      const F = store.forraje;
+      if (!F || (!F.kgDia && !F.kgAnio)) {
+        return esDemoCalera
+          ? "Forraje La Calera: se lee NDVI y lluvia al abrir el demostrativo."
+          : "Al ubicar el campo se lee la tasa de crecimiento de pasto de ese punto.";
+      }
+      return "Tasa ahora ~" + F.kgDia + " kg MS/ha/día" +
+        (F.ndvi != null ? (" (NDVI " + Number(F.ndvi).toFixed(2) + ")") : "") +
+        (F.kgAnio ? (" · año ~" + F.kgAnio + " kg MS/ha") : "") +
+        " · invierno ~" + F.kgDiaInv + " kg/ha/día.";
+    }
+    function pintarFichaForraje() {
+      const el = document.getElementById("fichaForraje");
+      if (!el) return;
+      const F = store.forraje;
+      if (!F || (!F.kgDia && !F.kgAnio && F.ndvi == null)) {
+        el.textContent = esDemoCalera
+          ? "La Calera: tasa de pasto al leer el satélite y la lluvia de este punto."
+          : "Ubique el campo: se lee cuánto pasto está creciendo en esas coordenadas.";
+        return;
+      }
+      el.innerHTML =
+        "<b>Tasa de este campo</b> · ahora ~" + (F.kgDia || "—") + " kg MS/ha/día" +
+        (F.ndvi != null ? (" (NDVI " + Number(F.ndvi).toFixed(2) +
+          (F.fechaNdvi ? " · " + F.fechaNdvi : "") + ")") : "") + ".<br>" +
+        (F.kgAnio ? ("Año ~" + F.kgAnio + " kg MS/ha (lluvia × eficiencia INTA Región III). ") : "") +
+        "Invierno ~" + (F.kgDiaInv || "—") + " kg/ha/día (cuello de botella). NASA MODIS + lluvia del predio.";
+    }
+    function doyModis(d) {
+      const start = Date.UTC(d.getUTCFullYear(), 0, 1);
+      const doy = Math.floor((d - start) / 86400000) + 1;
+      return "A" + d.getUTCFullYear() + String(doy).padStart(3, "0");
+    }
+    async function leerNdviCampo(lat, lon) {
+      const fin = new Date();
+      fin.setUTCDate(fin.getUTCDate() - 8);
+      const ini = new Date(fin.getTime());
+      ini.setUTCDate(ini.getUTCDate() - 48);
+      const url = "https://modisrest.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=" + Number(lat).toFixed(4) +
+        "&longitude=" + Number(lon).toFixed(4) +
+        "&band=250m_16_days_NDVI&startDate=" + doyModis(ini) + "&endDate=" + doyModis(fin) +
+        "&kmAboveBelow=0&kmLeftRight=0";
+      const r = await fetch(url);
+      if (!r.ok) throw new Error("ndvi");
+      const j = await r.json();
+      const rows = (j.subset || []).slice().reverse();
+      for (let i = 0; i < rows.length; i++) {
+        const raw = Number((rows[i].data || [])[0]);
+        if (!isFinite(raw) || raw <= -2000) continue;
+        const ndvi = raw * 0.0001;
+        if (ndvi < 0 || ndvi > 1) continue;
+        return { ndvi: +ndvi.toFixed(3), fechaNdvi: String(rows[i].calendar_date || "").slice(0, 10), fuenteNdvi: "NASA MODIS" };
+      }
+      return null;
+    }
+    async function leerForrajeCampo(lat, lon) {
+      if (!isFinite(lat) || !isFinite(lon)) return;
+      const k = Number(lat).toFixed(3) + "," + Number(lon).toFixed(3);
+      if (leerForrajeCampo.clave === k && store.forraje && (store.forraje.ndvi != null || store.forraje.kgAnio)) {
+        pintarFichaForraje();
+        return;
+      }
+      leerForrajeCampo.clave = k;
+      const el = document.getElementById("fichaForraje");
+      if (el) el.textContent = "Leyendo tasa de forraje de este punto…";
+      try {
+        const nd = await leerNdviCampo(lat, lon);
+        store.forraje = Object.assign({}, store.forraje || {}, nd || {}, { lat: +Number(lat).toFixed(4), lon: +Number(lon).toFixed(4) });
+      } catch (e) {
+        store.forraje = Object.assign({}, store.forraje || {}, { lat: +Number(lat).toFixed(4), lon: +Number(lon).toFixed(4) });
+      }
+      estimarForraje();
+      pintarFichaForraje();
+      if (typeof actualizarFichasCampo === "function") {
+        try { pintarFichaForraje(); } catch (err) {}
+      }
     }
     function baseLote(p) {
       if (!esDemoCalera) return { estado: "pastoreando", lote: store.nombreCampo || "Lote", categoria: "Hacienda" };
@@ -1598,7 +1722,7 @@
             "<button type='button' data-quitar-aguada='" + a.id + "'>Quitar " + escHtml(a.name) + "</button>"
           ).join("") + "</div>")
       );
-      try { pintarFichaLluvia(); } catch (e) {}
+      try { pintarFichaLluvia(); pintarFichaForraje(); } catch (e) {}
       const cargo = productorCargoMejora();
       const hayM1 = productorCargoEsc("m1");
       const hayOp = productorCargoEsc("optimo");
@@ -1915,7 +2039,9 @@
       document.querySelectorAll(".capa-btn").forEach((b) => {
         const enc = capaEncendida(b.dataset.capa);
         b.classList.toggle("on", enc);
-        b.textContent = enc ? "Ocultar del mapa" : "Ver en el mapa";
+        b.textContent = enc
+          ? (b.dataset.capa === "ndvi" ? "Ocultar verde" : "Ocultar del mapa")
+          : (b.dataset.capa === "ndvi" ? "Ver verde en el mapa" : "Ver en el mapa");
       });
       pintarVerdeImagen();
     }
@@ -2950,7 +3076,7 @@
       document.getElementById("msg").textContent = aviso;
       decirPlano(aviso);
       pintarAvisoSat(ring.length || (puntoValido(lat, lon) ? 1 : 0));
-      try { leerLluviaCampo(cx, cy); } catch (e) {}
+      try { leerLluviaCampo(cx, cy); leerForrajeCampo(cx, cy); } catch (e) {}
       if (hayAnillo) {
         const k = ring.map((p) => p[0].toFixed(4) + "," + p[1].toFixed(4)).join("|");
         if (leerTerrenoLote.clave !== k) {
@@ -3068,6 +3194,7 @@
         };
         if (diagnosticoLote && diagnosticoLote.futuro) diagnosticoLote.futuro.lluviaPredio = store.lluvia;
         if (typeof aplicarCabezasMenu === "function") aplicarCabezasMenu();
+        if (typeof estimarForraje === "function") estimarForraje();
         if (typeof actualizarFichasCampo === "function") actualizarFichasCampo();
         if (typeof llenar === "function") llenar();
       } catch (e) {
@@ -3101,7 +3228,7 @@
         fuenteSuelo: suelo ? "Carta INTA Peña Zubiate 1:500.000" : "INTA Región III (la carta se ve en el mapa)",
         z: Math.round(z), zmin: Math.round(zLo), zmax: Math.round(zHi),
         bajo: !!bajo,
-        futuro: { redAgua: null, analisisAgua: null, cartaPredio: null, lluviaPredio: null }
+        futuro: { redAgua: null, analisisAgua: null, cartaPredio: null, lluviaPredio: null, forrajePredio: null }
       };
       if (!store.otbnFijado) syncEstacionOtbn(estacionId(), inferirOtbn());
       zmin = diagnosticoLote.zmin;
@@ -3112,7 +3239,7 @@
         store.campoActivo.aguadas = aguadas.map((a) => ({ name: a.name, lat: a.lat, lon: a.lon }));
         saveStore(store);
       }
-      try { leerLluviaCampo(cx, cy); } catch (e) {}
+      try { leerLluviaCampo(cx, cy); leerForrajeCampo(cx, cy); } catch (e) {}
       if (typeof actualizarFichasCampo === "function") actualizarFichasCampo();
       if (typeof llenar === "function") llenar();
       pintarCartelCampo();
@@ -3530,7 +3657,7 @@
       });
     }
     dibujarPredio();
-    try { leerLluviaCampo(DEMO_CENTRO[0], DEMO_CENTRO[1]); } catch (e) {}
+    try { leerLluviaCampo(DEMO_CENTRO[0], DEMO_CENTRO[1]); leerForrajeCampo(DEMO_CENTRO[0], DEMO_CENTRO[1]); } catch (e) {}
     const pueblos = [
       { name: "La Calera", lat: -32.8631, lon: -66.8489, nota: "Comisión municipal · 766 hab. (INDEC 2022)" },
       { name: "Nogolí", lat: -32.9167, lon: -66.3333, nota: "Dique Nogolí · 1.221 hab." },
@@ -4124,7 +4251,7 @@
               ? "Lejos: " + potreros.filter((p) => p.dist != null && p.dist > 400).map((p) => "lote a " + p.dist + " m").join("; ") + "."
               : (aguadas.length ? "El lote está dentro o cerca de 400 m de una aguada marcada." : "")))
           : "Todavía no hay aguadas marcadas. Toque el satélite en represas o molinos. A futuro: red San Luis Agua y análisis de bebida.") +
-          " " + textoLluvia() + "</div>" +
+          " " + textoLluvia() + " " + textoForraje() + "</div>" +
         "<h2>Cada potrero · actual / mejorando / ideal</h2>" +
         filas +
         "<h2>Corto plazo · sin inversión inmediata</h2>" +
@@ -4219,7 +4346,7 @@
           const keep = d.dataset.capaDrop === "imagenes" ? ["ndvi", "cobertura"]
             : (d.dataset.capaDrop === "suelos" || d.dataset.capaDrop === "otbn" || d.dataset.capaDrop === "agua")
               ? [d.dataset.capaDrop]
-              : [];
+              : (d.dataset.capaDrop === "forraje" ? ["ndvi"] : []);
           OVERLAYS.forEach((k) => {
             if (keep.indexOf(k) < 0 && capaEncendida(k)) setCapa(k, false);
           });
