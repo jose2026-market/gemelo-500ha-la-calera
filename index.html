@@ -118,12 +118,13 @@
     .acciones button { flex: 1; background: var(--verde); color: #fff; border-color: var(--verde); }
     .acciones button.sec { background: var(--crema); color: var(--verde); }
     .ok { font-size: 11px; color: var(--verde); margin: 6px 0 0; }
-    .lab { background: none; border: 0; }
+    .lab { background: none; border: 0; overflow: visible !important; }
     .lab span {
       display: block; text-align: center; min-width: 22px;
       color: #fff; border: 0; background: none !important;
       padding: 0; font-size: 12px; font-weight: 800;
       text-shadow: 0 1px 3px #000;
+      transform-origin: center center;
     }
     .lab span.etiq-campo {
       background: rgba(247,241,228,.92) !important; color: var(--verde);
@@ -3348,6 +3349,9 @@
       if (agregarEsquinaSat(ev.latlng)) return;
       agregarAguadaSat(ev.latlng);
     });
+    map.on("zoom zoomend moveend", () => {
+      if (typeof pintarEscalaEtiquetas === "function") pintarEscalaEtiquetas();
+    });
     function enfocarCampo() {
       enfocarCampo.activo = true;
       setPanel(false);
@@ -3543,6 +3547,53 @@
       const corto = nom.length > 22 ? nom.slice(0, 20) + "…" : nom;
       return "<span class='etiq-campo'><b>" + corto + "</b><i>" + Number(p.ha).toFixed(0) + " ha</i><i>" + nomEscena(escSel) + "</i></span>";
     }
+    function cajaPxAnillo(ring) {
+      if (!ring || ring.length < 2) return { w: 0, h: 0 };
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      ring.forEach((ll) => {
+        const pt = map.latLngToLayerPoint(L.latLng(ll[0], ll[1]));
+        if (pt.x < minX) minX = pt.x;
+        if (pt.x > maxX) maxX = pt.x;
+        if (pt.y < minY) minY = pt.y;
+        if (pt.y > maxY) maxY = pt.y;
+      });
+      return { w: Math.max(0, maxX - minX), h: Math.max(0, maxY - minY) };
+    }
+    function baseIconoEtiqueta(p) {
+      const html = htmlEtiquetaCampo(p);
+      const esCampo = html.indexOf("etiq-campo") >= 0;
+      return {
+        html: html,
+        ancho: esCampo ? 150 : (etiquetaLote(p).length > 4 ? 78 : 28),
+        alto: esCampo ? 46 : 16
+      };
+    }
+    function escalaEtiqueta(p, baseW, baseH) {
+      const box = cajaPxAnillo(anilloDibujoLote(p));
+      if (box.w < 10 || box.h < 10) return 0;
+      const s = Math.min((box.w * 0.55) / baseW, (box.h * 0.50) / baseH);
+      return Math.max(0, Math.min(2.1, s));
+    }
+    function pintarEscalaEtiquetas() {
+      potreros.forEach((p) => {
+        const lab = labByN[p.n];
+        if (!lab) return;
+        const base = baseIconoEtiqueta(p);
+        const s = escalaEtiqueta(p, base.ancho, base.alto);
+        const el = lab.getElement();
+        if (!el) return;
+        if (s < 0.22) {
+          el.style.visibility = "hidden";
+          return;
+        }
+        el.style.visibility = "visible";
+        const span = el.querySelector("span");
+        if (span) {
+          span.style.transform = "scale(" + s.toFixed(3) + ")";
+          span.style.transformOrigin = "center center";
+        }
+      });
+    }
     function pintar(p) {
       const v = decision(p);
       if (polyByN[p.n]) polyByN[p.n].setStyle({ fillColor: v.color, color: "#fff", weight: 3, fillOpacity: 0.22 });
@@ -3550,15 +3601,14 @@
         c.poly.setStyle({ fillColor: v.color, fillOpacity: 0.08 + 0.16 * c.hs });
       });
       if (labByN[p.n]) {
-        const html = htmlEtiquetaCampo(p);
-        const ancho = html.indexOf("etiq-campo") >= 0 ? 150 : (etiquetaLote(p).length > 4 ? 78 : 28);
-        const alto = html.indexOf("etiq-campo") >= 0 ? 46 : 16;
+        const base = baseIconoEtiqueta(p);
         labByN[p.n].setIcon(L.divIcon({
           className: "lab",
-          html: html,
-          iconSize: [ancho, alto],
-          iconAnchor: [ancho / 2, alto / 2]
+          html: base.html,
+          iconSize: [base.ancho, base.alto],
+          iconAnchor: [base.ancho / 2, base.alto / 2]
         }));
+        requestAnimationFrame(pintarEscalaEtiquetas);
       }
     }
     function reconstruirPills() {
@@ -3614,15 +3664,13 @@
         }).addTo(group);
         polyByN[p.n] = poly;
         const c = centro(ring);
-        const html = htmlEtiquetaCampo(p);
-        const ancho = html.indexOf("etiq-campo") >= 0 ? 150 : (etiquetaLote(p).length > 4 ? 78 : 28);
-        const alto = html.indexOf("etiq-campo") >= 0 ? 46 : 16;
+        const base = baseIconoEtiqueta(p);
         const lab = L.marker(c, {
           icon: L.divIcon({
             className: "lab",
-            html: html,
-            iconSize: [ancho, alto],
-            iconAnchor: [ancho / 2, alto / 2]
+            html: base.html,
+            iconSize: [base.ancho, base.alto],
+            iconAnchor: [base.ancho / 2, base.alto / 2]
           })
         }).addTo(group);
         labByN[p.n] = lab;
@@ -3632,6 +3680,7 @@
       aguadas.forEach(ponerMarcaAguada);
       dibujarAgua();
       if (typeof capaEncendida === "function" && capaEncendida("otbn")) pintarOtbnCampo();
+      requestAnimationFrame(pintarEscalaEtiquetas);
     }
     function dibujarAgua() {
       capaAgua.clearLayers();
