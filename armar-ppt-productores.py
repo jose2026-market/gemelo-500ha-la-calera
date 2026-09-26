@@ -21,6 +21,8 @@ ORO = RGBColor(0xC4, 0xA3, 0x5A)
 CREMA = RGBColor(0xF7, 0xF1, 0xE4)
 BLANCO = RGBColor(0xFF, 0xFF, 0xFF)
 TIERRA = RGBColor(0x2D, 0x20, 0x16)
+ROJO = RGBColor(0xB4, 0x23, 0x18)
+VERDE_PASTO = RGBColor(0x1B, 0x7A, 0x4A)
 CREMA2 = RGBColor(0xE8, 0xF0, 0xE4)
 
 W, H = Inches(13.333), Inches(7.5)
@@ -83,14 +85,9 @@ def set_bg(slide, color):
     slide.background.fill.fore_color.rgb = color
 
 
-def appear_on_click(slide, shape, order):
-    """Entrance: appear when the presenter clicks (order 1, 2, 3...)."""
+def appear_on_click(slide, shape, order, with_prev=False, sub=0):
+    """Entrance: appear on click. Same order + with_prev=True = same clic."""
     spid = str(shape._element.get("id"))
-    ns = {
-        "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
-        "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
-        "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
-    }
     sld = slide._element
     timing = sld.find(qn("p:timing"))
     if timing is None:
@@ -127,7 +124,8 @@ def appear_on_click(slide, shape, order):
     main = sld.find(".//" + qn("p:cTn") + "[@nodeType='mainSeq']/" + qn("p:childTnLst"))
     if main is None:
         return
-    uid = 20 + order * 10
+    uid = 400 + order * 80 + sub * 4
+    node = "withEffect" if with_prev else "clickEffect"
     xml = f"""
     <p:par xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
       <p:cTn id="{uid}" fill="hold">
@@ -138,7 +136,7 @@ def appear_on_click(slide, shape, order):
               <p:stCondLst><p:cond delay="0"/></p:stCondLst>
               <p:childTnLst>
                 <p:par>
-                  <p:cTn id="{uid+2}" presetID="1" presetClass="entr" presetSubtype="0" fill="hold" grpId="0" nodeType="clickEffect">
+                  <p:cTn id="{uid+2}" presetID="1" presetClass="entr" presetSubtype="0" fill="hold" grpId="{order}" nodeType="{node}">
                     <p:stCondLst><p:cond delay="0"/></p:stCondLst>
                     <p:childTnLst>
                       <p:set>
@@ -162,6 +160,142 @@ def appear_on_click(slide, shape, order):
     </p:par>
     """
     main.append(etree.fromstring(xml))
+
+
+MESES_CAL = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+FORR_CAL = [1.18, 1.08, 0.88, 0.72, 0.55, 0.42, 0.38, 0.45, 0.68, 0.88, 1.02, 1.12]
+
+
+def barras_demanda(slide, dem_rel, left, top, width, height):
+    """Barras de lo que comen (oro o rojo si superan el pasto)."""
+    max_f = max(FORR_CAL)
+    slot = width / 12.0
+    bw = slot * 0.36
+    out = []
+    for i, f in enumerate(FORR_CAL):
+        d_h = height * dem_rel
+        x = left + i * slot + slot * 0.50
+        y = top + height - d_h
+        col = ROJO if dem_rel > (f / max_f) * 1.02 else ORO
+        s = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, int(x), int(y), int(bw), int(max(d_h, Pt(3))))
+        fill(s, col)
+        s.adjustments[0] = 0.15
+        out.append(s)
+    return out
+
+
+def slide_crespin(prs, blank):
+    s = prs.slides.add_slide(blank)
+    set_bg(s, VERDE_OSC)
+    header(s, "EL CRESPÍN  ·  500 ha  ·  BELGRANO  ·  MODELO DE VISITA")
+    title(s, "Pasto y carga.", top=Inches(0.72))
+    baj = s.shapes.add_textbox(Inches(0.5), Inches(1.42), Inches(12.3), Inches(0.42))
+    tf = baj.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    p.clear()
+    r = p.add_run()
+    r.text = "Verde = lo que produce el campo (no cambia). Cada clic sube la hacienda: 25 → 40 (tope INTA) → 70 vacas."
+    r.font.size = Pt(15)
+    r.font.color.rgb = CREMA
+    r.font.name = "Calibri"
+
+    etiquetas = [
+        ("1 · 25 vacas", "Cabe: hay margen"),
+        ("2 · 40 vacas", "Tope del suelo"),
+        ("3 · 70 vacas", "Se pasó: intervenir"),
+    ]
+    for i, (lab, sub) in enumerate(etiquetas):
+        c = box(s, Inches(0.5 + i * 2.85), Inches(1.88), Inches(2.72), Inches(0.62), CREMA, ORO)
+        tf = c.text_frame
+        tf.word_wrap = True
+        tf.margin_left = Inches(0.1)
+        tf.margin_top = Inches(0.04)
+        p = tf.paragraphs[0]
+        p.clear()
+        r = p.add_run()
+        r.text = lab
+        r.font.size = Pt(12)
+        r.font.bold = True
+        r.font.color.rgb = VERDE
+        p2 = tf.add_paragraph()
+        r2 = p2.add_run()
+        r2.text = sub
+        r2.font.size = Pt(11)
+        r2.font.color.rgb = TIERRA
+
+    left = Inches(0.5)
+    top = Inches(2.62)
+    width = Inches(8.55)
+    height = Inches(3.35)
+    fondo = box(s, left - Inches(0.06), top - Inches(0.08), width + Inches(0.12), height + Inches(0.42), VERDE_OSC, ORO)
+    fondo.fill.fore_color.rgb = RGBColor(0x12, 0x2A, 0x1C)
+
+    max_f = max(FORR_CAL)
+    slot = width / 12.0
+    bw = slot * 0.36
+    for i, f in enumerate(FORR_CAL):
+        fh = height * (f / max_f)
+        x = left + i * slot + slot * 0.10
+        y = top + height - fh
+        b = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, int(x), int(y), int(bw), int(max(fh, Pt(4))))
+        fill(b, VERDE_PASTO)
+        b.adjustments[0] = 0.15
+        tb = s.shapes.add_textbox(int(left + i * slot), int(top + height + Inches(0.02)), int(slot), Inches(0.28))
+        tf = tb.text_frame
+        p = tf.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        p.clear()
+        r = p.add_run()
+        r.text = MESES_CAL[i]
+        r.font.size = Pt(10)
+        r.font.color.rgb = ORO
+        r.font.name = "Calibri"
+
+    escenarios = [
+        (0.24, 1, "25 vacas · el pasto cubre el año. Puede subir hacia 40 (tope INTA 12,6 ha/EV)."),
+        (0.38, 2, "40 vacas · tope del suelo en El Crespín. Invierno justo. No sume más sin obras."),
+        (0.62, 3, "70 vacas · rojo en invierno. Baje ~30 o rote / diferido 1–2 ha. El pasto no cambió."),
+    ]
+    tarjetas = []
+    for dem, order, texto in escenarios:
+        bars = barras_demanda(s, dem, left, top, width, height)
+        card = box(s, Inches(9.2), Inches(2.62), Inches(3.65), Inches(3.55), CREMA, ORO)
+        tf = card.text_frame
+        tf.word_wrap = True
+        tf.margin_left = Inches(0.16)
+        tf.margin_right = Inches(0.12)
+        tf.margin_top = Inches(0.16)
+        p = tf.paragraphs[0]
+        p.clear()
+        r = p.add_run()
+        r.text = "Decisión"
+        r.font.size = Pt(12)
+        r.font.bold = True
+        r.font.color.rgb = VERDE
+        p2 = tf.add_paragraph()
+        p2.space_before = Pt(10)
+        r2 = p2.add_run()
+        r2.text = texto
+        r2.font.size = Pt(15)
+        r2.font.color.rgb = TIERRA
+        tarjetas.append((order, bars, card))
+
+    for order, bars, card in tarjetas:
+        appear_on_click(s, card, order, with_prev=False, sub=0)
+        for i, b in enumerate(bars):
+            appear_on_click(s, b, order, with_prev=True, sub=i + 1)
+
+    nota = s.shapes.add_textbox(Inches(0.5), Inches(6.48), Inches(8.5), Inches(0.32))
+    tf = nota.text_frame
+    p = tf.paragraphs[0]
+    p.clear()
+    r = p.add_run()
+    r.text = "El Crespín es el modelo de la visita. En el campo del productor se lee su lote, su año y su hacienda."
+    r.font.size = Pt(12)
+    r.font.color.rgb = ORO
+    r.font.name = "Calibri"
+    return s
 
 
 def nav_btn(slide, label, left, top, w=Inches(1.35), h=Inches(0.38)):
@@ -348,85 +482,10 @@ def main():
     appear_on_click(s2, card_shapes[1], 2)
     appear_on_click(s2, card_shapes[2], 3)
 
-    # ——— 3 calendario ———
-    s3cal = prs.slides.add_slide(blank)
-    set_bg(s3cal, VERDE_OSC)
-    header(s3cal, "DIAGNÓSTICO  ·  OFERTA Y CARGA MES A MES")
-    title(s3cal, "Cuándo actuar.", top=Inches(0.82))
-    subc = s3cal.shapes.add_textbox(Inches(0.5), Inches(1.55), Inches(12.2), Inches(0.4))
-    tf = subc.text_frame
-    p = tf.paragraphs[0]
-    p.clear()
-    r = p.add_run()
-    r.text = "Verde = pasto del mes.  Oro = lo que comen.  Rojo = ese mes hay que intervenir."
-    r.font.size = Pt(16)
-    r.font.color.rgb = CREMA
-    r.font.name = "Calibri"
-
-    cifras = [
-        ("HOY", "6 vacas"),
-        ("EL SUELO CUBRE EL AÑO", "5 en año seco"),
-        ("DECISIÓN", "Bajar 1  o diferido"),
-    ]
-    cif_shapes = []
-    for i, (lab, val) in enumerate(cifras):
-        c = box(s3cal, Inches(0.5 + i * 4.2), Inches(2.05), Inches(4.0), Inches(1.15), CREMA, ORO)
-        tf = c.text_frame
-        tf.word_wrap = True
-        tf.margin_left = Inches(0.16)
-        tf.margin_top = Inches(0.1)
-        p = tf.paragraphs[0]
-        p.clear()
-        r = p.add_run()
-        r.text = lab
-        r.font.size = Pt(11)
-        r.font.bold = True
-        r.font.color.rgb = VERDE
-        p2 = tf.add_paragraph()
-        r2 = p2.add_run()
-        r2.text = val
-        r2.font.size = Pt(20)
-        r2.font.bold = True
-        r2.font.color.rgb = VERDE_OSC
-        cif_shapes.append(c)
-
-    acc = [
-        "Bajar carga o no subir",
-        "Rotar · dividir el cuadro",
-        "Acercar aguada (si > 400 m)",
-        "Sembrar 1–2 ha de diferido",
-    ]
-    acc_shapes = []
-    for i, line in enumerate(acc):
-        c = box(s3cal, Inches(0.5 + (i % 2) * 6.35), Inches(3.45 + (i // 2) * 1.15), Inches(6.15), Inches(1.02), CREMA, ORO)
-        tf = c.text_frame
-        tf.word_wrap = True
-        tf.margin_left = Inches(0.18)
-        tf.margin_top = Inches(0.22)
-        p = tf.paragraphs[0]
-        p.clear()
-        r = p.add_run()
-        r.text = line
-        r.font.size = Pt(18)
-        r.font.bold = True
-        r.font.color.rgb = VERDE
-        acc_shapes.append(c)
-
-    regl2 = s3cal.shapes.add_textbox(Inches(0.5), Inches(5.85), Inches(12.2), Inches(0.7))
-    tf = regl2.text_frame
-    tf.word_wrap = True
-    p = tf.paragraphs[0]
-    p.clear()
-    r = p.add_run()
-    r.text = "El cuello de botella es el invierno. Inversión mínima. OTBN I: no sembrar ni desmontar. El monte se usa, no se saca."
-    r.font.size = Pt(15)
-    r.font.color.rgb = ORO
-    r.font.name = "Calibri"
-
+    # ——— 3 El Crespín: pasto × carga ———
+    s3cal = slide_crespin(prs, blank)
     btn_backc = nav_btn(s3cal, "←  Atrás", Inches(0.5), Inches(6.92))
     n3 = nav_btn(s3cal, "Siguiente  →", Inches(11.5), Inches(6.92))
-    for i, sh in enumerate(cif_shapes + acc_shapes):
-        appear_on_click(s3cal, sh, i + 1)
 
     # ——— 4 ———
     s3 = prs.slides.add_slide(blank)
@@ -437,7 +496,7 @@ def main():
     pasos = [
         ("1", "Las 4 esquinas", "Plano de mensura: latitud Sur y longitud Oeste (φ y λ). No use X e Y."),
         ("2", "Las aguadas", "Toque cada represa o molino. 400 m cría · 800 m adulta. No se recorta bebida."),
-        ("3", "Manejo", "Inicial, Mejorando e Ideal. El calendario dice hasta dónde subir y en qué mes actuar."),
+        ("3", "Manejo", "Inicial, Mejorando e Ideal. En El Crespín, el calendario cruza pasto y carga mes a mes."),
         ("4", "El informe", "Puntos críticos. Corto y mediano plazo. En el celular se ve igual; no queda guardado."),
     ]
     step_shapes = []
@@ -488,7 +547,7 @@ def main():
     for line in [
         "Capas: satélite, INTA, OTBN, lluvia, forraje.",
         "Manejo: Inicial / Mejorando / Ideal.",
-        "Calendario: verde pasto, rojo actuar.",
+        "El Crespín: 25 → 40 → 70 vacas.",
         "IA: interfaz, no el núcleo.",
         "Computadora: se puede guardar.",
         "Celular: vista rápida, no guarda.",

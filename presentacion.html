@@ -20,7 +20,7 @@
     .slide {
       position: absolute; inset: 0;
       display: none; flex-direction: column;
-      padding: 28px 36px 72px;
+      padding: 28px 36px 88px;
       background:
         radial-gradient(1200px 500px at 80% -10%, rgba(196,163,90,.18), transparent 55%),
         linear-gradient(165deg, #083A1C 0%, #0D5C2C 55%, #1C2B26 100%);
@@ -103,9 +103,32 @@
     }
     .cifras b { display: block; color: #fff; font-size: 22px; margin-top: 4px; }
     .cal {
-      width: min(640px, 100%); margin: 4px 0 10px;
+      width: 100%; margin: 0;
     }
-    .cal svg { width: 100%; height: auto; display: block; }
+    .cal svg { width: 100%; height: auto; display: block; min-height: 132px; }
+    .cargas {
+      display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 12px;
+      font-family: system-ui, sans-serif;
+    }
+    .cargas button {
+      border: 1px solid var(--oro); background: transparent; color: var(--crema);
+      border-radius: 999px; padding: 8px 14px; font-weight: 700; cursor: pointer;
+      font-size: 13px;
+    }
+    .cargas button.on { background: var(--oro); color: var(--verde-oscuro); }
+    .crespin {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 250px);
+      gap: 14px; align-items: stretch; margin: 0 0 8px; max-width: 980px;
+    }
+    .decision {
+      background: var(--crema); color: var(--tierra); border-radius: 14px;
+      padding: 14px 16px; font-family: system-ui, sans-serif;
+      font-size: 15px; line-height: 1.4; border: 1px solid var(--oro);
+    }
+    .decision b {
+      display: block; color: var(--verde); font-size: 12px;
+      letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px;
+    }
     .chips {
       display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px;
       font-family: system-ui, sans-serif;
@@ -132,12 +155,14 @@
     }
     a.sec { color: var(--oro-claro); text-decoration: none; font-size: 13px; font-weight: 700; }
     @media (max-width: 760px) {
-      .slide { padding: 18px 16px 68px; }
+      .slide { padding: 18px 16px 96px; }
       .tres { grid-template-columns: 1fr; }
       .carta { min-height: 84px; }
       h1 { font-size: 28px; }
       .lote { align-self: center; width: min(280px, 90vw); }
       .cifras b { font-size: 18px; }
+      .crespin { grid-template-columns: 1fr; }
+      .chips { display: none; }
     }
   </style>
 </head>
@@ -194,54 +219,19 @@
 
     <section class="slide" data-n="2">
       <header>
-        <small>Diagnóstico · oferta y carga mes a mes</small>
+        <small>El Crespín · 500 ha · Belgrano · modelo de visita</small>
         <img src="assets/logo-sociedad-rural-san-luis.png?v=oficial" alt="" />
       </header>
-      <h1>Cuándo actuar.</h1>
-      <p class="bajada">Verde = pasto. Oro = lo que comen. Rojo = ese mes hay que intervenir.</p>
-      <div class="cifras">
-        <span>Hoy<b>6</b>vacas</span>
-        <span>El suelo cubre el año<b>5</b>en año seco</span>
-        <span>Decisión<b>Bajar 1</b>o diferido</span>
+      <h1>Pasto y carga.</h1>
+      <p class="bajada">Verde = lo que produce el campo (no cambia). Toque una carga: oro = lo que comen; rojo = ese mes hay que intervenir.</p>
+      <div class="cargas" role="tablist" aria-label="Carga animal">
+        <button type="button" class="on" data-vacas="25">25 vacas</button>
+        <button type="button" data-vacas="40">40 vacas · tope INTA</button>
+        <button type="button" data-vacas="70">70 vacas</button>
       </div>
-      <div class="cal" aria-hidden="true">
-        <svg viewBox="0 0 560 150">
-          <rect x="8" y="8" width="544" height="118" rx="8" fill="rgba(247,241,228,.08)"/>
-          <g fill="#1B7A4A">
-            <rect x="22" y="28" width="14" height="86" rx="2"/>
-            <rect x="66" y="36" width="14" height="78" rx="2"/>
-            <rect x="110" y="48" width="14" height="66" rx="2"/>
-            <rect x="154" y="58" width="14" height="56" rx="2"/>
-            <rect x="198" y="70" width="14" height="44" rx="2"/>
-            <rect x="242" y="82" width="14" height="32" rx="2"/>
-            <rect x="286" y="88" width="14" height="26" rx="2"/>
-            <rect x="330" y="80" width="14" height="34" rx="2"/>
-            <rect x="374" y="60" width="14" height="54" rx="2"/>
-            <rect x="418" y="46" width="14" height="68" rx="2"/>
-            <rect x="462" y="36" width="14" height="78" rx="2"/>
-            <rect x="506" y="30" width="14" height="84" rx="2"/>
-          </g>
-          <g>
-            <rect x="38" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
-            <rect x="82" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
-            <rect x="126" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
-            <rect x="170" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
-            <rect x="214" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
-            <rect x="258" y="40" width="14" height="74" rx="2" fill="#B42318"/>
-            <rect x="302" y="40" width="14" height="74" rx="2" fill="#B42318"/>
-            <rect x="346" y="40" width="14" height="74" rx="2" fill="#B42318"/>
-            <rect x="390" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
-            <rect x="434" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
-            <rect x="478" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
-            <rect x="522" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
-          </g>
-          <g fill="#E4C87A" font-size="11" font-family="system-ui" text-anchor="middle">
-            <text x="29" y="140">Ene</text><text x="73" y="140">Feb</text><text x="117" y="140">Mar</text>
-            <text x="161" y="140">Abr</text><text x="205" y="140">May</text><text x="249" y="140">Jun</text>
-            <text x="293" y="140">Jul</text><text x="337" y="140">Ago</text><text x="381" y="140">Sep</text>
-            <text x="425" y="140">Oct</text><text x="469" y="140">Nov</text><text x="513" y="140">Dic</text>
-          </g>
-        </svg>
+      <div class="crespin">
+        <div class="cal" id="svgCrespin" aria-hidden="true"></div>
+        <div class="decision" id="cifCrespin"></div>
       </div>
       <div class="chips">
         <em>Bajar carga o no subir</em>
@@ -249,7 +239,7 @@
         <em>Acercar aguada</em>
         <em>Sembrar 1–2 ha de diferido</em>
       </div>
-      <p class="regla">El cuello de botella es el invierno. Inversión mínima. El monte se usa, no se saca.</p>
+      <p class="regla">El Crespín es el modelo. En el campo del productor se lee su lote, su año y su hacienda.</p>
     </section>
 
     <section class="slide" data-n="3">
@@ -262,7 +252,7 @@
       <div class="pasos">
         <div class="paso" tabindex="0"><i>1</i><div><b>Las 4 esquinas</b><span>Del plano: latitud Sur y longitud Oeste. No las columnas X e Y.</span></div></div>
         <div class="paso" tabindex="0"><i>2</i><div><b>Las aguadas</b><span>Círculo continuo: 400 m (cría). De puntos: 800 m (adulta).</span></div></div>
-        <div class="paso" tabindex="0"><i>3</i><div><b>Manejo</b><span>Inicial, Mejorando e Ideal. El calendario dice hasta dónde subir y en qué mes actuar.</span></div></div>
+        <div class="paso" tabindex="0"><i>3</i><div><b>Manejo</b><span>Inicial, Mejorando e Ideal. En El Crespín, el calendario cruza pasto y carga mes a mes.</span></div></div>
         <div class="paso" tabindex="0"><i>4</i><div><b>El informe</b><span>Puntos críticos. Corto y mediano plazo. Con o sin inversión mínima.</span></div></div>
       </div>
       <a class="cta" href="index.html">Abrir el gemelo</a>
@@ -318,6 +308,52 @@
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
       });
     });
+    const MESES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+    const FORR = [1.18, 1.08, 0.88, 0.72, 0.55, 0.42, 0.38, 0.45, 0.68, 0.88, 1.02, 1.12];
+    const DEMS = { 25: 0.24, 40: 0.38, 70: 0.62 };
+    const TEXTOS = {
+      25: "25 vacas · el pasto cubre el año. Puede subir hacia 40 (tope INTA 12,6 ha/EV).",
+      40: "40 vacas · tope del suelo en El Crespín. Invierno justo. No sume más sin obras.",
+      70: "70 vacas · rojo en invierno. Baje ~30 o rote / diferido 1–2 ha. El pasto no cambió."
+    };
+    function dibujarCrespin(vacas) {
+      const maxF = Math.max(...FORR);
+      const dem = DEMS[vacas];
+      const H = 110, top = 8, left = 8, W = 544, slot = W / 12;
+      let g = `<svg viewBox="0 0 560 150"><rect x="8" y="8" width="544" height="118" rx="8" fill="rgba(247,241,228,.08)"/>`;
+      g += `<g fill="#1B7A4A">`;
+      FORR.forEach((f, i) => {
+        const fh = H * (f / maxF);
+        const x = left + i * slot + 6;
+        const y = top + H - fh;
+        g += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="14" height="${fh.toFixed(1)}" rx="2"/>`;
+      });
+      g += `</g><g>`;
+      FORR.forEach((f, i) => {
+        const dh = H * dem;
+        const x = left + i * slot + 22;
+        const y = top + H - dh;
+        const col = dem > (f / maxF) * 1.02 ? "#B42318" : "#C4A35A";
+        g += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="14" height="${dh.toFixed(1)}" rx="2" fill="${col}"/>`;
+      });
+      g += `</g><g fill="#E4C87A" font-size="11" font-family="system-ui" text-anchor="middle">`;
+      MESES.forEach((m, i) => {
+        g += `<text x="${(left + i * slot + slot / 2).toFixed(1)}" y="140">${m}</text>`;
+      });
+      g += `</g></svg>`;
+      document.getElementById("svgCrespin").innerHTML = g;
+      document.getElementById("cifCrespin").innerHTML = `<b>Decisión</b>${TEXTOS[vacas]}`;
+      document.querySelectorAll(".cargas button").forEach((b) => {
+        b.classList.toggle("on", Number(b.dataset.vacas) === vacas);
+      });
+    }
+    document.querySelectorAll(".cargas button").forEach((b) => {
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dibujarCrespin(Number(b.dataset.vacas));
+      });
+    });
+    dibujarCrespin(25);
   </script>
 </body>
 </html>
