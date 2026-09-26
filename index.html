@@ -51,16 +51,15 @@
       font-size: 18px; font-weight: 700; line-height: 1;
     }
     .mapa-tools {
-      display: flex; position: absolute; z-index: 1100;
-      top: calc(var(--topbar-h) + 8px + env(safe-area-inset-top, 0px));
-      right: calc(52px + env(safe-area-inset-right, 0px));
-      gap: 6px;
+      display: flex; position: static; z-index: auto;
+      top: auto; right: auto; gap: 4px; flex-shrink: 0;
+      pointer-events: auto;
     }
     .mapa-tools button {
       border: 1px solid #8a6a2a; background: linear-gradient(#fff8ea, #e4d4b0);
-      color: var(--verde); border-radius: 8px 8px 6px 6px;
-      font-weight: 800; font-size: 11px; padding: 7px 11px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 3px 0 #8a6a2a, 0 6px 10px rgba(0,0,0,.22);
+      color: var(--verde); border-radius: 10px 10px 6px 6px;
+      font-weight: 800; font-size: 11px; padding: 6px 9px; line-height: 1.2;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 3px 0 #8a6a2a, 0 7px 12px rgba(0,0,0,.24);
     }
     .mapa-tools button.on {
       background: linear-gradient(#1a7340, #0D5C2C); color: #fff; border-color: #08441f;
@@ -208,7 +207,7 @@
       top: calc(var(--topbar-h) + 8px + env(safe-area-inset-top, 0px));
       left: calc(10px + env(safe-area-inset-left, 0px));
       display: flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-start;
-      gap: 6px; width: auto; max-width: calc(100vw - 170px);
+      gap: 4px; width: auto; max-width: calc(100vw - 88px);
       overflow: visible; pointer-events: none;
     }
     .desplegables > details {
@@ -223,13 +222,13 @@
       box-shadow: inset 0 2px 4px rgba(0,0,0,.18), 0 2px 0 #8a6a2a, 0 8px 16px rgba(0,0,0,.22);
     }
     .desplegables summary {
-      list-style: none; cursor: pointer; font-weight: 800; font-size: 12px;
-      color: var(--verde); padding: 8px 28px 8px 12px; position: relative;
+      list-style: none; cursor: pointer; font-weight: 800; font-size: 11px;
+      color: var(--verde); padding: 6px 22px 6px 8px; position: relative;
       white-space: nowrap; line-height: 1.2;
     }
     .desplegables summary::-webkit-details-marker { display: none; }
     .desplegables summary::after {
-      content: "▾"; position: absolute; right: 8px; top: 8px; font-weight: 800; font-size: 11px;
+      content: "▾"; position: absolute; right: 6px; top: 6px; font-weight: 800; font-size: 10px;
     }
     .desplegables details[open] > summary::after { content: "▴"; }
     .desplegables > details > .cuerpo {
@@ -517,14 +516,6 @@
       }
       .tres-sit { gap: 3px; }
       .tres-sit .sit-col { padding: 5px 3px; font-size: 9px; }
-      .mapa-tools {
-        top: auto;
-        right: auto;
-        left: calc(8px + env(safe-area-inset-left, 0px));
-        bottom: calc(58px + env(safe-area-inset-bottom, 0px));
-        z-index: 1100;
-      }
-      body.vista-visor.panel-abierto .mapa-tools { visibility: visible; }
       .leaflet-bottom.leaflet-right {
         bottom: calc(58px + env(safe-area-inset-bottom, 0px));
         right: 8px;
@@ -625,7 +616,7 @@
       <article class="acordeon" id="accVista">
         <button type="button" class="cab" data-acc="accVista"><div><small>1 · Visualizador</small><b>Ver el campo</b></div><i>+</i></button>
         <div class="cuerpo">
-          Satélite y potreros del demostrativo 500 ha, o de su establecimiento si carga coordenadas. Capas y manejo quedan cerrados para no tapar el mapa.
+          Satélite y potreros de su establecimiento. Capas y manejo quedan cerrados para no tapar el mapa.
           <button type="button" id="btnVerDemo">Ir al mapa</button>
         </div>
       </article>
@@ -651,7 +642,7 @@
         </div>
       </article>
     </div>
-    <p class="nota">Las 500 ha de La Calera son el demostrativo. El servicio es para cualquier campo del productor. Capas: satélite, verde NDVI, INTA, OTBN, lluvia y tasa de forraje.</p>
+    <p class="nota">Cada campo se estudia por separado. Capas: satélite, verde NDVI, INTA, OTBN, lluvia y tasa de forraje.</p>
     <p class="nota"><a href="presentacion.html">Presentación para productores (3 diapositivas)</a> · <a href="Gemelo-Digital-Ganadero-productores.pptx">PowerPoint</a> · <a href="instructivo.html">Instructivo</a></p>
   </section>
   <section class="informe" id="informe">
@@ -809,10 +800,6 @@
   </aside>
   <div class="mapa-wrap">
     <div class="cartel-nombre" id="cartelNombre">Gemelo Digital Ganadero</div>
-    <div class="mapa-tools" id="mapaTools">
-      <button type="button" class="on" id="btnVistaCampo">Campo</button>
-      <button type="button" id="btnVistaPueblos">Pueblos</button>
-    </div>
     <div class="desplegables" id="desplegables">
       <details id="dropCapas">
         <summary>Capas</summary>
@@ -895,6 +882,10 @@
           </div>
         </div>
       </details>
+      <div class="mapa-tools" id="mapaTools">
+        <button type="button" class="on" id="btnVistaCampo">Campo</button>
+        <button type="button" id="btnVistaPueblos">Pueblos</button>
+      </div>
       <details id="dropLote" hidden>
         <summary id="sumLote">Potrero</summary>
         <div class="cuerpo info-lote" id="infoLote">Toque un potrero en el mapa.</div>
