@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Gemelo Digital Ganadero · 3 diapositivas</title>
+  <title>Gemelo Digital Ganadero · 4 diapositivas</title>
   <style>
     :root {
       --verde: #0D5C2C;
@@ -38,9 +38,9 @@
     header small { letter-spacing: .12em; text-transform: uppercase; color: var(--oro-claro); font-weight: 700; font-size: 11px; }
     h1 {
       margin: 18px 0 8px; font-size: clamp(32px, 6vw, 58px); line-height: 1.05;
-      font-weight: 700; max-width: 14ch; color: #fff;
+      font-weight: 700; max-width: 16ch; color: #fff;
     }
-    .bajada { font-size: clamp(16px, 2.4vw, 22px); line-height: 1.35; max-width: 34ch; color: var(--crema); opacity: .92; }
+    .bajada { font-size: clamp(16px, 2.4vw, 22px); line-height: 1.35; max-width: 38ch; color: var(--crema); opacity: .92; }
     .hint { margin-top: 18px; font-family: system-ui, sans-serif; font-size: 13px; color: var(--oro-claro); letter-spacing: .04em; }
     .lote {
       margin: auto 0 8px; width: min(340px, 86vw); aspect-ratio: 1.35;
@@ -92,6 +92,29 @@
       background: var(--oro); color: var(--verde-oscuro); font-weight: 800;
       text-decoration: none; border-radius: 10px; padding: 12px 18px;
     }
+    .cifras {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+      margin: 8px 0 12px; max-width: 720px; font-family: system-ui, sans-serif;
+    }
+    .cifras span {
+      display: block; text-align: center; background: rgba(247,241,228,.1);
+      border: 1px solid rgba(196,163,90,.4); border-radius: 12px; padding: 10px 8px;
+      font-size: 12px; color: var(--oro-claro);
+    }
+    .cifras b { display: block; color: #fff; font-size: 22px; margin-top: 4px; }
+    .cal {
+      width: min(640px, 100%); margin: 4px 0 10px;
+    }
+    .cal svg { width: 100%; height: auto; display: block; }
+    .chips {
+      display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px;
+      font-family: system-ui, sans-serif;
+    }
+    .chips em {
+      font-style: normal; font-size: 13px; font-weight: 700;
+      background: rgba(247,241,228,.1); border: 1px solid rgba(196,163,90,.45);
+      border-radius: 999px; padding: 6px 12px; color: var(--crema);
+    }
     nav.ctrl {
       position: absolute; left: 0; right: 0; bottom: 0;
       display: flex; align-items: center; justify-content: space-between;
@@ -111,9 +134,10 @@
     @media (max-width: 760px) {
       .slide { padding: 18px 16px 68px; }
       .tres { grid-template-columns: 1fr; }
-      .carta { min-height: 92px; }
-      h1 { font-size: 30px; }
+      .carta { min-height: 84px; }
+      h1 { font-size: 28px; }
       .lote { align-self: center; width: min(280px, 90vw); }
+      .cifras b { font-size: 18px; }
     }
   </style>
 </head>
@@ -128,7 +152,7 @@
         <img src="assets/logo-sociedad-rural-san-luis.png?v=oficial" alt="SRSL" />
       </header>
       <h1>Su campo.<br>En el mapa.</h1>
-      <p class="bajada">No es un papel. Es su lote en el satélite, con suelo INTA, relieve y aguadas, para decidir.</p>
+      <p class="bajada">No es un papel. Es su lote en el satélite, con suelo INTA, bosque, lluvia y aguadas, para decidir.</p>
       <p class="hint">Toque el lote: se cierra el alambrado.</p>
       <div class="lote" id="lote" role="button" tabindex="0" aria-label="Ver el lote">
         <svg viewBox="0 0 280 200" aria-hidden="true">
@@ -143,26 +167,26 @@
 
     <section class="slide" data-n="1">
       <header>
-        <small>INTA Región III · sin desmonte</small>
+        <small>INTA Región III · año completo</small>
         <img src="assets/logo-sociedad-rural-san-luis.png?v=oficial" alt="" />
       </header>
       <h1>Tres situaciones.</h1>
-      <p class="bajada">Toque cada una. El número es de la zona INTA. En su campo se lee el lote.</p>
+      <p class="bajada">Toque cada una. El invierno limita cuántos animales se mantienen. En su campo se lee el lote.</p>
       <div class="tres">
         <article class="carta" tabindex="0">
-          <b>Hoy</b>
+          <b>Inicial</b>
           <div class="pregunta">¿Cómo está el campo?</div>
-          <div class="num"><strong>12,6 ha/EV</strong><br>Destete ~62 %<br>Casi 6 kg carne/ha</div>
+          <div class="num"><strong>12,6 ha/EV</strong><br>Destete ~62 %<br>~6 kg carne/ha</div>
         </article>
         <article class="carta" tabindex="0">
-          <b>Mejorado 1</b>
+          <b>Mejorando</b>
           <div class="pregunta">¿Qué se gana con manejo?</div>
           <div class="num"><strong>10 ha/EV</strong><br>Destete ~85 %<br>~12 kg/ha · sin desmonte</div>
         </article>
         <article class="carta" tabindex="0">
-          <b>Óptimo</b>
-          <div class="pregunta">¿Y si hay inversión?</div>
-          <div class="num"><strong>Agua cerca</strong><br>Destete ~90 %<br>El monte se usa, no se saca</div>
+          <b>Ideal</b>
+          <div class="pregunta">¿Hasta dónde llega el suelo?</div>
+          <div class="num"><strong>Techo INTA</strong><br>Destete ~90 % en bajo<br>En loma no pasa de Mejorando</div>
         </article>
       </div>
       <p class="regla">No se recorta el agua de bebida. No se desmonta. No es soja.</p>
@@ -170,15 +194,76 @@
 
     <section class="slide" data-n="2">
       <header>
+        <small>Diagnóstico · oferta y carga mes a mes</small>
+        <img src="assets/logo-sociedad-rural-san-luis.png?v=oficial" alt="" />
+      </header>
+      <h1>Cuándo actuar.</h1>
+      <p class="bajada">Verde = pasto. Oro = lo que comen. Rojo = ese mes hay que intervenir.</p>
+      <div class="cifras">
+        <span>Hoy<b>6</b>vacas</span>
+        <span>El suelo cubre el año<b>5</b>en año seco</span>
+        <span>Decisión<b>Bajar 1</b>o diferido</span>
+      </div>
+      <div class="cal" aria-hidden="true">
+        <svg viewBox="0 0 560 150">
+          <rect x="8" y="8" width="544" height="118" rx="8" fill="rgba(247,241,228,.08)"/>
+          <g fill="#1B7A4A">
+            <rect x="22" y="28" width="14" height="86" rx="2"/>
+            <rect x="66" y="36" width="14" height="78" rx="2"/>
+            <rect x="110" y="48" width="14" height="66" rx="2"/>
+            <rect x="154" y="58" width="14" height="56" rx="2"/>
+            <rect x="198" y="70" width="14" height="44" rx="2"/>
+            <rect x="242" y="82" width="14" height="32" rx="2"/>
+            <rect x="286" y="88" width="14" height="26" rx="2"/>
+            <rect x="330" y="80" width="14" height="34" rx="2"/>
+            <rect x="374" y="60" width="14" height="54" rx="2"/>
+            <rect x="418" y="46" width="14" height="68" rx="2"/>
+            <rect x="462" y="36" width="14" height="78" rx="2"/>
+            <rect x="506" y="30" width="14" height="84" rx="2"/>
+          </g>
+          <g>
+            <rect x="38" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
+            <rect x="82" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
+            <rect x="126" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
+            <rect x="170" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
+            <rect x="214" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
+            <rect x="258" y="40" width="14" height="74" rx="2" fill="#B42318"/>
+            <rect x="302" y="40" width="14" height="74" rx="2" fill="#B42318"/>
+            <rect x="346" y="40" width="14" height="74" rx="2" fill="#B42318"/>
+            <rect x="390" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
+            <rect x="434" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
+            <rect x="478" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
+            <rect x="522" y="40" width="14" height="74" rx="2" fill="#C4A35A"/>
+          </g>
+          <g fill="#E4C87A" font-size="11" font-family="system-ui" text-anchor="middle">
+            <text x="29" y="140">Ene</text><text x="73" y="140">Feb</text><text x="117" y="140">Mar</text>
+            <text x="161" y="140">Abr</text><text x="205" y="140">May</text><text x="249" y="140">Jun</text>
+            <text x="293" y="140">Jul</text><text x="337" y="140">Ago</text><text x="381" y="140">Sep</text>
+            <text x="425" y="140">Oct</text><text x="469" y="140">Nov</text><text x="513" y="140">Dic</text>
+          </g>
+        </svg>
+      </div>
+      <div class="chips">
+        <em>Bajar carga o no subir</em>
+        <em>Rotar · dividir el cuadro</em>
+        <em>Acercar aguada</em>
+        <em>Sembrar 1–2 ha de diferido</em>
+      </div>
+      <p class="regla">El cuello de botella es el invierno. Inversión mínima. El monte se usa, no se saca.</p>
+    </section>
+
+    <section class="slide" data-n="3">
+      <header>
         <small>Cómo se usa, en una visita</small>
         <img src="assets/logo-sociedad-rural-san-luis.png?v=oficial" alt="" />
       </header>
-      <h1>Tres pasos.</h1>
-      <p class="bajada">Toque cada paso. En el celular se ve igual; no se guarda el campo.</p>
+      <h1>Cuatro pasos.</h1>
+      <p class="bajada">Toque cada paso. En el celular se ve igual, también el calendario; el campo no se guarda.</p>
       <div class="pasos">
         <div class="paso" tabindex="0"><i>1</i><div><b>Las 4 esquinas</b><span>Del plano: latitud Sur y longitud Oeste. No las columnas X e Y.</span></div></div>
         <div class="paso" tabindex="0"><i>2</i><div><b>Las aguadas</b><span>Círculo continuo: 400 m (cría). De puntos: 800 m (adulta).</span></div></div>
-        <div class="paso" tabindex="0"><i>3</i><div><b>El informe</b><span>Puntos críticos. Corto y mediano plazo. Con o sin inversión.</span></div></div>
+        <div class="paso" tabindex="0"><i>3</i><div><b>Manejo</b><span>Inicial, Mejorando e Ideal. El calendario dice hasta dónde subir y en qué mes actuar.</span></div></div>
+        <div class="paso" tabindex="0"><i>4</i><div><b>El informe</b><span>Puntos críticos. Corto y mediano plazo. Con o sin inversión mínima.</span></div></div>
       </div>
       <a class="cta" href="index.html">Abrir el gemelo</a>
       &nbsp;

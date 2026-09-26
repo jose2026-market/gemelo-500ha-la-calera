@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""PPT interactivo de 3 diapositivas para productores."""
+"""PPT de 4 diapositivas para productores · Sociedad Rural de San Luis."""
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
@@ -238,7 +238,7 @@ def main():
     r.font.name = "Georgia"
 
     bullets = [
-        "Demostrativo: 500 ha · La Calera (SW Belgrano).",
+        "Se abre un campo de ejemplo en Belgrano. Después, el del productor.",
         "Belgrano: 53.117 bovinos · 94,6 % de los campos son pecuarios.",
         "Hoy la zona rinde ~6 kg carne/ha. Con manejo, se puede duplicar.",
         "Sin desmonte. Sin recortar el agua de bebida. No es soja.",
@@ -280,22 +280,22 @@ def main():
     # ——— 2 ———
     s2 = prs.slides.add_slide(blank)
     set_bg(s2, VERDE_OSC)
-    header(s2, "INTA REGIÓN III  ·  ACTUAL  ·  MEJORADO 1  ·  ÓPTIMO")
+    header(s2, "INTA REGIÓN III  ·  INICIAL  ·  MEJORANDO  ·  IDEAL  ·  AÑO COMPLETO")
     title(s2, "Tres situaciones.", top=Inches(0.82))
     sub = s2.shapes.add_textbox(Inches(0.5), Inches(1.55), Inches(12.2), Inches(0.4))
     tf = sub.text_frame
     p = tf.paragraphs[0]
     p.clear()
     r = p.add_run()
-    r.text = "Toque cada recuadro (o clic en presentación). Números de zona INTA; en su campo se lee ese lote."
+    r.text = "El invierno limita cuántos animales se mantienen. Números INTA de zona; en su campo se lee ese lote."
     r.font.size = Pt(15)
     r.font.color.rgb = CREMA
     r.font.name = "Calibri"
 
     cards = [
-        ("HOY", "12,6 ha/EV", "Destete ~62 %\n~5,9 kg carne/ha\nCarga alta, agua a veces lejos."),
-        ("MEJORADO 1", "10 ha/EV", "Destete ~85 %\n~12 kg/ha\nRotar, descansar, bebida cerca.\nSin desmonte."),
-        ("ÓPTIMO", "Agua + manejo", "Destete ~90 %\nHasta 22–25 kg/ha\nInversión de agua. Buffel\nsolo si OTBN lo permite."),
+        ("INICIAL", "12,6 ha/EV", "Destete ~62 %\n~5,9 kg carne/ha\nCómo está hoy el lote."),
+        ("MEJORANDO", "10 ha/EV", "Destete ~85 %\n~12 kg/ha\nRotar, dividir, aguada cerca.\nSembrar 1–2 ha. Sin desmonte."),
+        ("IDEAL", "Techo INTA", "Destete ~90 % en bajo\nEn loma no pasa de Mejorando.\nBuffel solo si OTBN lo permite."),
     ]
     xs = [0.5, 4.7, 8.9]
     card_shapes = []
@@ -348,22 +348,103 @@ def main():
     appear_on_click(s2, card_shapes[1], 2)
     appear_on_click(s2, card_shapes[2], 3)
 
-    # ——— 3 ———
+    # ——— 3 calendario ———
+    s3cal = prs.slides.add_slide(blank)
+    set_bg(s3cal, VERDE_OSC)
+    header(s3cal, "DIAGNÓSTICO  ·  OFERTA Y CARGA MES A MES")
+    title(s3cal, "Cuándo actuar.", top=Inches(0.82))
+    subc = s3cal.shapes.add_textbox(Inches(0.5), Inches(1.55), Inches(12.2), Inches(0.4))
+    tf = subc.text_frame
+    p = tf.paragraphs[0]
+    p.clear()
+    r = p.add_run()
+    r.text = "Verde = pasto del mes.  Oro = lo que comen.  Rojo = ese mes hay que intervenir."
+    r.font.size = Pt(16)
+    r.font.color.rgb = CREMA
+    r.font.name = "Calibri"
+
+    cifras = [
+        ("HOY", "6 vacas"),
+        ("EL SUELO CUBRE EL AÑO", "5 en año seco"),
+        ("DECISIÓN", "Bajar 1  o diferido"),
+    ]
+    cif_shapes = []
+    for i, (lab, val) in enumerate(cifras):
+        c = box(s3cal, Inches(0.5 + i * 4.2), Inches(2.05), Inches(4.0), Inches(1.15), CREMA, ORO)
+        tf = c.text_frame
+        tf.word_wrap = True
+        tf.margin_left = Inches(0.16)
+        tf.margin_top = Inches(0.1)
+        p = tf.paragraphs[0]
+        p.clear()
+        r = p.add_run()
+        r.text = lab
+        r.font.size = Pt(11)
+        r.font.bold = True
+        r.font.color.rgb = VERDE
+        p2 = tf.add_paragraph()
+        r2 = p2.add_run()
+        r2.text = val
+        r2.font.size = Pt(20)
+        r2.font.bold = True
+        r2.font.color.rgb = VERDE_OSC
+        cif_shapes.append(c)
+
+    acc = [
+        "Bajar carga o no subir",
+        "Rotar · dividir el cuadro",
+        "Acercar aguada (si > 400 m)",
+        "Sembrar 1–2 ha de diferido",
+    ]
+    acc_shapes = []
+    for i, line in enumerate(acc):
+        c = box(s3cal, Inches(0.5 + (i % 2) * 6.35), Inches(3.45 + (i // 2) * 1.15), Inches(6.15), Inches(1.02), CREMA, ORO)
+        tf = c.text_frame
+        tf.word_wrap = True
+        tf.margin_left = Inches(0.18)
+        tf.margin_top = Inches(0.22)
+        p = tf.paragraphs[0]
+        p.clear()
+        r = p.add_run()
+        r.text = line
+        r.font.size = Pt(18)
+        r.font.bold = True
+        r.font.color.rgb = VERDE
+        acc_shapes.append(c)
+
+    regl2 = s3cal.shapes.add_textbox(Inches(0.5), Inches(5.85), Inches(12.2), Inches(0.7))
+    tf = regl2.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    p.clear()
+    r = p.add_run()
+    r.text = "El cuello de botella es el invierno. Inversión mínima. OTBN I: no sembrar ni desmontar. El monte se usa, no se saca."
+    r.font.size = Pt(15)
+    r.font.color.rgb = ORO
+    r.font.name = "Calibri"
+
+    btn_backc = nav_btn(s3cal, "←  Atrás", Inches(0.5), Inches(6.92))
+    n3 = nav_btn(s3cal, "Siguiente  →", Inches(11.5), Inches(6.92))
+    for i, sh in enumerate(cif_shapes + acc_shapes):
+        appear_on_click(s3cal, sh, i + 1)
+
+    # ——— 4 ———
     s3 = prs.slides.add_slide(blank)
     set_bg(s3, VERDE_OSC)
     header(s3, "CÓMO SE USA  ·  UNA VISITA AL PRODUCTOR")
-    title(s3, "Tres pasos.", top=Inches(0.82))
+    title(s3, "Cuatro pasos.", top=Inches(0.78))
 
     pasos = [
-        ("1", "Las 4 esquinas", "Plano de mensura: latitud Sur y longitud Oeste (φ y λ).\nNo use X e Y. Si hay 2 vértices, el resto se toca en el satélite."),
-        ("2", "Las aguadas", "Toque cada represa, molino o bebedero. Si se equivoca, toque la gota y Quitar.\n400 m cría · 800 m adulta. No se recorta bebida."),
-        ("3", "El informe", "Puntos críticos: corto plazo (sin plata) y mediano (con agua).\nEn el celular se ve igual; el campo no queda guardado."),
+        ("1", "Las 4 esquinas", "Plano de mensura: latitud Sur y longitud Oeste (φ y λ). No use X e Y."),
+        ("2", "Las aguadas", "Toque cada represa o molino. 400 m cría · 800 m adulta. No se recorta bebida."),
+        ("3", "Manejo", "Inicial, Mejorando e Ideal. El calendario dice hasta dónde subir y en qué mes actuar."),
+        ("4", "El informe", "Puntos críticos. Corto y mediano plazo. En el celular se ve igual; no queda guardado."),
     ]
     step_shapes = []
-    top = 1.85
+    top = 1.72
     for n, tit, body in pasos:
-        c = box(s3, Inches(0.5), Inches(top), Inches(8.55), Inches(1.28), CREMA, ORO)
-        circ = s3.shapes.add_shape(MSO_SHAPE.OVAL, Inches(0.68), Inches(top + 0.34), Inches(0.58), Inches(0.58))
+        c = box(s3, Inches(0.5), Inches(top), Inches(8.55), Inches(1.05), CREMA, ORO)
+        circ = s3.shapes.add_shape(MSO_SHAPE.OVAL, Inches(0.68), Inches(top + 0.24), Inches(0.52), Inches(0.52))
         fill(circ, VERDE)
         tf = circ.text_frame
         p = tf.paragraphs[0]
@@ -371,28 +452,28 @@ def main():
         p.clear()
         r = p.add_run()
         r.text = n
-        r.font.size = Pt(16)
+        r.font.size = Pt(15)
         r.font.bold = True
         r.font.color.rgb = BLANCO
-        tb = s3.shapes.add_textbox(Inches(1.45), Inches(top + 0.12), Inches(7.4), Inches(1.08))
+        tb = s3.shapes.add_textbox(Inches(1.4), Inches(top + 0.08), Inches(7.45), Inches(0.9))
         tf = tb.text_frame
         tf.word_wrap = True
         p = tf.paragraphs[0]
         p.clear()
         r = p.add_run()
         r.text = tit
-        r.font.size = Pt(18)
+        r.font.size = Pt(17)
         r.font.bold = True
         r.font.color.rgb = VERDE
         p2 = tf.add_paragraph()
         r2 = p2.add_run()
         r2.text = body
-        r2.font.size = Pt(13)
+        r2.font.size = Pt(12)
         r2.font.color.rgb = TIERRA
         step_shapes.append(c)
-        top += 1.42
+        top += 1.12
 
-    side = box(s3, Inches(9.25), Inches(1.85), Inches(3.6), Inches(4.05), CREMA, ORO)
+    side = box(s3, Inches(9.25), Inches(1.72), Inches(3.6), Inches(4.18), CREMA, ORO)
     tf = side.text_frame
     tf.word_wrap = True
     tf.margin_left = Inches(0.18)
@@ -405,10 +486,10 @@ def main():
     r.font.bold = True
     r.font.color.rgb = VERDE
     for line in [
-        "Capas: satélite, suelos INTA, OTBN.",
-        "Manejo: Actual / M1 / Óptimo.",
+        "Capas: satélite, INTA, OTBN, lluvia, forraje.",
+        "Manejo: Inicial / Mejorando / Ideal.",
+        "Calendario: verde pasto, rojo actuar.",
         "IA: interfaz, no el núcleo.",
-        "Demostrativo ≠ su padrón.",
         "Computadora: se puede guardar.",
         "Celular: vista rápida, no guarda.",
     ]:
@@ -423,15 +504,17 @@ def main():
     link.click_action.hyperlink.address = URL
     btn_back3 = nav_btn(s3, "←  Atrás", Inches(0.5), Inches(6.92))
 
-    # Wire next/prev after all slides exist
     n1.click_action.target_slide = s2
-    n2.click_action.target_slide = s3
+    n2.click_action.target_slide = s3cal
+    n3.click_action.target_slide = s3
     btn_back2.click_action.target_slide = s1
-    btn_back3.click_action.target_slide = s2
+    btn_backc.click_action.target_slide = s2
+    btn_back3.click_action.target_slide = s3cal
 
     appear_on_click(s3, step_shapes[0], 1)
     appear_on_click(s3, step_shapes[1], 2)
     appear_on_click(s3, step_shapes[2], 3)
+    appear_on_click(s3, step_shapes[3], 4)
 
     prs.save(str(OUT))
     print(OUT)

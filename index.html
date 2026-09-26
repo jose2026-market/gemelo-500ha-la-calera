@@ -578,13 +578,24 @@
       .tres-sit { gap: 3px; }
       .tres-sit .sit-col { padding: 5px 3px; font-size: 9px; }
       #dropManejo > .cuerpo {
-        width: min(300px, calc(100vw - 18px));
-        max-width: min(300px, calc(100vw - 18px));
+        position: fixed;
+        left: calc(8px + env(safe-area-inset-left, 0px));
+        right: calc(8px + env(safe-area-inset-right, 0px));
+        top: calc(var(--topbar-h) + 48px + env(safe-area-inset-top, 0px));
+        width: auto;
+        max-width: none;
         min-width: 0;
-        max-height: calc(100dvh - var(--topbar-h) - 118px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-        padding: 6px 7px 8px;
+        max-height: calc(100dvh - var(--topbar-h) - 108px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        padding: 8px 10px 12px;
+        z-index: 1250;
+        border-radius: 10px;
       }
       #dropManejo .hint { display: none; }
+      #dropManejo .escenas { flex-direction: row; gap: 4px; }
+      #dropManejo .escenas button { flex: 1; width: auto; padding: 7px 4px; font-size: 11px; }
+      #dropManejo .diag-cif b { font-size: 16px; }
+      #dropManejo .diag-ano svg { min-height: 108px; }
+      #dropManejo .diag-acc li { font-size: 12px; }
       .leaflet-bottom.leaflet-right {
         bottom: calc(58px + env(safe-area-inset-bottom, 0px));
         right: 8px;
@@ -712,7 +723,7 @@
       </article>
     </div>
     <p class="nota">Cada campo se estudia por separado. Capas: satélite, verde NDVI, INTA, OTBN, lluvia y tasa de forraje.</p>
-    <p class="nota"><a href="presentacion.html">Presentación para productores (3 diapositivas)</a> · <a href="Gemelo-Digital-Ganadero-productores.pptx">PowerPoint</a> · <a href="instructivo.html">Instructivo</a></p>
+    <p class="nota"><a href="presentacion.html">Presentación para productores (4 diapositivas)</a> · <a href="Gemelo-Digital-Ganadero-productores.pptx">PowerPoint</a> · <a href="instructivo.html">Instructivo</a></p>
   </section>
   <section class="informe" id="informe">
     <article class="papel" id="cuerpoInforme"></article>

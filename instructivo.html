@@ -49,6 +49,14 @@
     }
     a.sec { background: #fff; color: var(--verde); border: 1px solid var(--oro); }
     ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
+    .ley { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0 0; }
+    .ley span {
+      display: inline-block; font-size: 12px; font-weight: 700;
+      padding: 4px 8px; border-radius: 6px; background: #f4eee0;
+    }
+    .ley .v { background: #E8F0E4; color: #0D5C2C; }
+    .ley .o { background: #FFF6E5; color: #6A4B12; }
+    .ley .r { background: #FDECEC; color: #8A1F16; }
     @media print {
       header { box-shadow: none; }
       a.btn { display: none; }
@@ -65,27 +73,28 @@
   </header>
   <main>
     <h1>Cómo se usa, en una visita</h1>
-    <p class="lead">Es una copia de su campo en el satélite para decidir. Suelo INTA, relieve y aguadas. No se recorta el agua de bebida. No se desmonta.</p>
+    <p class="lead">Es una copia de su campo en el satélite para decidir. Suelo INTA, bosque, lluvia y pasto. No se recorta el agua de bebida. No se desmonta.</p>
 
     <article class="paso">
       <h2><span class="nro">1</span> Abrir</h2>
       <p>En la computadora o el celular:</p>
       <p><b>jose2026-market.github.io/gemelo-500ha-la-calera/</b></p>
-      <p>Toque <b>Ir al mapa</b>. Primero se ve el demostrativo de 500 ha (La Calera).</p>
+      <p>Toque <b>Mapa</b>. Se abre un campo de ejemplo en Belgrano. Después se carga el del productor.</p>
     </article>
 
     <article class="paso">
       <h2><span class="nro">2</span> Cargar su campo</h2>
-      <p>Menú → <b>Mi campo</b>.</p>
+      <p>Toque <b>Mi campo</b>.</p>
       <p>En el plano de mensura use la tabla de <b>coordenadas geográficas</b> (latitud y longitud, o φ y λ). Ejemplo: <b>33°15'20" S</b> y <b>66°48'10" O</b>.</p>
       <p class="aviso">No use las columnas X e Y (números grandes de 7 cifras). Eso es otro sistema.</p>
       <p>Pegue las 4 esquinas y toque <b>Ver mi campo en el satélite</b>.</p>
       <p>Si el plano trae solo 2 vértices, péguelos igual: las otras esquinas se marcan tocando el alambrado en el satélite.</p>
+      <p>Complete el nombre, cuántos lotes tiene y cuántos animales hay ahora (vacas, ovejas o cabras).</p>
     </article>
 
     <article class="paso">
       <h2><span class="nro">3</span> Marcar las aguadas</h2>
-      <p>Cuando cierra el alambrado, toque cada represa, molino o bebedero.</p>
+      <p>Capas → <b>Aguadas</b>. Toque cada represa, molino o bebedero.</p>
       <ul>
         <li><b>Círculo continuo:</b> 400 m. Alcance de cría (vaca con ternero).</li>
         <li><b>Círculo de puntos:</b> 800 m. Hacienda adulta.</li>
@@ -95,21 +104,43 @@
 
     <article class="paso">
       <h2><span class="nro">4</span> Leer el campo</h2>
-      <p><b>Capas:</b> satélite, suelos INTA, OTBN (bosque), aguadas.</p>
-      <p><b>Manejo:</b> Actual (lo que lee INTA en ese lote), Mejorado 1 y Óptimo (lo que se puede hacer).</p>
+      <p><b>Capas:</b> satélite, suelos INTA, OTBN (bosque), lluvia, forraje (verde y kg de pasto).</p>
+      <p>El color legal del OTBN no cambia en el año (I rojo · II amarillo · III verde). El margen de pastoreo de cada estación sí: primavera, verano, otoño, invierno.</p>
       <p><b>Campo / Pueblos:</b> encuadre del lote o de la zona.</p>
     </article>
 
     <article class="paso">
-      <h2><span class="nro">5</span> Salir con el informe</h2>
-      <p>El informe muestra puntos críticos: corto plazo (sin plata) y mediano plazo (con inversión de agua). Buffel solo si OTBN lo permite.</p>
+      <h2><span class="nro">5</span> Manejo: hasta dónde subir y cuándo actuar</h2>
+      <p>Toque <b>Manejo</b>. En el celular la solapa baja y se lee de ancho, hasta el calendario.</p>
+      <p>Tres columnas del <b>año completo</b> (el invierno limita; no es solo el verano):</p>
+      <ul>
+        <li><b>Inicial:</b> cómo está hoy (lectura INTA de ese lote).</li>
+        <li><b>Mejorando:</b> con manejo y obras mínimas (dividir lote, aguadas, sembrar 1–2 ha).</li>
+        <li><b>Ideal:</b> techo INTA. En loma no pasa de Mejorando. En bajo, solo si el OTBN lo permite.</li>
+      </ul>
+      <p>El <b>calendario</b> dice la decisión:</p>
+      <div class="ley">
+        <span class="v">Verde = pasto del mes</span>
+        <span class="o">Oro = lo que comen</span>
+        <span class="r">Rojo = hay que actuar</span>
+      </div>
+      <ul>
+        <li><b>Hoy / el suelo cubre / subir o bajar:</b> hasta dónde puede aumentar la carga, o si debe bajarla.</li>
+        <li>Si el mes queda rojo: rotar, dividir el cuadro, acercar bebida (si hay más de 400 m) o sembrar 1–2 ha de diferido. En OTBN I no se siembra ni se desmonta.</li>
+        <li>Cargue las cabezas y toque el punto verde <b>Actualizar este dato</b>. El gráfico se recalcula.</li>
+      </ul>
     </article>
 
-    <p class="ok"><b>En el celular</b> funciona igual para una vista rápida. Al cerrar o recargar, el campo no queda guardado. En la computadora sí se puede guardar.</p>
+    <article class="paso">
+      <h2><span class="nro">6</span> Salir con el informe</h2>
+      <p>El informe lleva las tres situaciones, el calendario de diagnóstico y los puntos críticos: corto plazo (sin plata) y mediano plazo (con inversión mínima de agua o diferido). Buffel solo si el OTBN lo permite. No es soja.</p>
+    </article>
+
+    <p class="ok"><b>En el celular</b> se usa igual, también el calendario. Al cerrar o recargar, el campo no queda guardado. En la computadora sí se puede guardar.</p>
 
     <p>
       <a class="btn" href="index.html">Abrir el mapa</a>
-      <a class="btn sec" href="presentacion.html">Presentación (3 diapositivas)</a>
+      <a class="btn sec" href="presentacion.html">Presentación (4 diapositivas)</a>
       <a class="btn sec" href="Gemelo-Digital-Ganadero-productores.pptx">PowerPoint</a>
     </p>
   </main>
