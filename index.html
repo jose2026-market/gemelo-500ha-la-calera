@@ -168,7 +168,7 @@
     .tres-sit .sit-col .subir { color: #1B7A4A; font-weight: 800; }
     .tres-sit .sit-col .bajar { color: #B42318; font-weight: 800; }
     .diag-ano {
-      margin: 8px 0 4px; padding: 8px; border-radius: 8px;
+      margin: 4px 0 4px; padding: 6px 7px; border-radius: 8px;
       background: #fffdf8; border: 1px solid #c4a35a;
     }
     .diag-ano .diag-tit { margin: 0 0 6px; font-size: 11px; font-weight: 800; color: var(--verde); line-height: 1.3; }
@@ -287,6 +287,20 @@
       border: 1px solid #8a6a2a; border-radius: 0 10px 10px 10px;
       box-shadow: 0 10px 22px rgba(0,0,0,.28);
     }
+    #dropManejo > .cuerpo {
+      max-height: calc(100dvh - var(--topbar-h) - 108px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      width: min(360px, calc(100vw - 20px));
+      max-width: min(360px, calc(100vw - 16px));
+      min-width: 280px;
+      padding: 8px 8px 10px;
+    }
+    #dropManejo .hint { margin: 0 0 4px; font-size: 9px; line-height: 1.25; }
+    #dropManejo .cruz-est { margin: 2px 0 4px; }
+    #dropManejo .cruz-est button { padding: 4px 2px; font-size: 8px; }
+    #dropManejo .tres-sit { margin: 2px 0 4px; }
+    #dropManejo .tres-sit .sit-col { padding: 4px 4px; font-size: 9px; gap: 1px; }
+    #dropManejo .tres-sit .sit-col b { font-size: 10px; }
+    #dropManejo .eq-solapa { height: 12px; margin: 4px 0; }
     .desplegables details.sub > .cuerpo {
       position: static; max-width: none; max-height: none; min-width: 0;
       width: auto; overflow: visible; padding: 0 8px 8px;
@@ -563,6 +577,14 @@
       }
       .tres-sit { gap: 3px; }
       .tres-sit .sit-col { padding: 5px 3px; font-size: 9px; }
+      #dropManejo > .cuerpo {
+        width: min(300px, calc(100vw - 18px));
+        max-width: min(300px, calc(100vw - 18px));
+        min-width: 0;
+        max-height: calc(100dvh - var(--topbar-h) - 118px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        padding: 6px 7px 8px;
+      }
+      #dropManejo .hint { display: none; }
       .leaflet-bottom.leaflet-right {
         bottom: calc(58px + env(safe-area-inset-bottom, 0px));
         right: 8px;
@@ -923,7 +945,7 @@
       <details id="dropManejo">
         <summary>Manejo</summary>
         <div class="cuerpo">
-          <p class="hint">Toque Inicial, Mejorando o Ideal: el calendario dice <b>hasta dónde subir</b> y <b>en qué mes actuar</b>. El invierno limita el año.</p>
+          <p class="hint">Toque una columna: el calendario dice hasta dónde subir.</p>
           <div class="cruz-est" data-cruz-est></div>
           <div class="tres-sit" id="tresSit"></div>
           <div class="diag-ano" id="diagAno"></div>
@@ -1042,27 +1064,21 @@
       }
       const p = potreros.find((x) => x.n === pSel) || potreros[0];
       const esp = especieAct();
-      el.innerHTML = "<p class='tres-sit-nota'>Año completo · el invierno limita. Toque una columna: el calendario dice hasta dónde subir y en qué mes actuar.</p>" +
+      el.innerHTML = "<p class='tres-sit-nota'>Año completo · invierno limita.</p>" +
         ["actual", "m1", "optimo"].map((esc) => {
         const d = datoEscena(p, esc);
-        const der = diasDeCarga(p, Object.assign({}, d, { _esc: esc }));
         const cal = calendarioCarga(p, esc);
         const cab = cal.cab;
-        const dias = d.diasRestan != null && d.diasRestan !== "" ? d.diasRestan : der.maxDias;
         const vacio = esc !== "actual" && d._sinCarga;
         const linea = cal.bajar > 0
           ? "<span class='bajar'>bajar " + cal.bajar + "</span>"
           : "<span class='subir'>subir " + cal.subir + "</span>";
         return "<button type='button' class='sit-col" + (escSel === esc ? " on" : "") + "' data-esc-col='" + esc + "'>" +
           "<b>" + nomEscena(esc) + "</b>" +
-          "<span class='muted'>año completo</span>" +
-          (vacio ? "<span class='muted'>sin cargar aún</span>" : "") +
+          (vacio ? "<span class='muted'>sin cargar</span>" : "") +
           "<span>" + cab + " " + esp.plural + "</span>" +
-          "<span>suelo cubre " + cal.topePaso + "</span>" +
+          "<span>suelo " + cal.topePaso + "</span>" +
           linea +
-          "<span>" + (der.haUnidad || d.haUnidad || "—") + " " + esp.unidadHa + "</span>" +
-          "<span>" + (dias || "—") + " días (invierno)</span>" +
-          "<span>destete " + Math.round(Number(d.destete) || 0) + " %</span>" +
           "</button>";
       }).join("");
       try { pintarDiagAno(); } catch (e) {}
@@ -4781,6 +4797,10 @@
         }
         document.querySelectorAll("#desplegables > details").forEach((o) => { if (o !== d) o.open = false; });
         setPanel(false);
+        if (d.id === "dropManejo") {
+          const cal = document.getElementById("diagAno");
+          if (cal) requestAnimationFrame(() => { try { cal.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {} });
+        }
       });
     });
     function syncCapaAbierta() {
