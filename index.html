@@ -101,11 +101,13 @@
       background: #FFF6E5; border: 1px solid #E6C989; color: #6A4B12;
       font-size: 11px; padding: 6px 8px; border-radius: 8px; margin: 0 0 8px;
     }
-    .eq-box { font-size: 11px; line-height: 1.4; padding: 8px 10px; border-radius: 8px; margin: 8px 0; }
-    .eq-box b.tit { display: block; margin-bottom: 4px; }
-    .eq-box.verde { background: #E7F3EC; border: 1px solid #9FCBB0; color: #0D5C2C; }
-    .eq-box.amarillo { background: #FFF6E5; border: 1px solid #E6C989; color: #6A4B12; }
-    .eq-box.rojo { background: #FDECEC; border: 1px solid #E8A0A0; color: #8A1F16; }
+    .eq-solapa {
+      height: 28px; border-radius: 8px; margin: 6px 0;
+      border: 1px solid; padding: 0; font-size: 0; line-height: 0;
+    }
+    .eq-solapa.verde { background: #1B7A4A; border-color: #0D5C2C; }
+    .eq-solapa.amarillo { background: #C4A035; border-color: #8a6a2a; }
+    .eq-solapa.rojo { background: #B42318; border-color: #8A1F16; }
     label { display: block; font-size: 11px; color: #5C564F; margin: 6px 0 2px; }
     input, textarea, select {
       width: 100%; box-sizing: border-box; border: 1px solid #c5cdc8;
@@ -769,7 +771,7 @@
       <p class="aviso" id="topeEscena"></p>
       <p class="ok" id="msg" hidden></p>
       <div hidden>
-        <div class="eq-box amarillo" id="eqBox"></div>
+        <div class="eq-solapa amarillo" id="eqBox" hidden></div>
         <select id="fTipo">
           <option value="ganadero">Ganadero de cría</option>
           <option value="monte">Monte (MBGI, también cría)</option>
@@ -855,7 +857,7 @@
         <div class="cuerpo">
           <p class="hint">Cargue el dato en la solapa y toque el punto verde para actualizar. No se cambia hasta ese clic.</p>
           <div class="tres-sit" id="tresSit"></div>
-          <div class="eq-box amarillo" id="eqBoxManejo">Punto de equilibrio: se actualiza al tocar el punto verde.</div>
+          <div class="eq-solapa amarillo" id="eqBoxManejo" aria-label="Equilibrio"></div>
           <div class="escenas" role="tablist" aria-label="Escena">
             <button type="button" class="on" data-esc="actual">Inicial</button>
             <button type="button" data-esc="m1">Mejorando</button>
@@ -2414,60 +2416,28 @@
       let ratio;
       if (dias && evC) ratio = oferta / (evC * kgDia * dias);
       else ratio = 1;
-      let sem = "verde", tit = "En equilibrio", puedeEstirar = false;
+      let sem = "verde", puedeEstirar = false;
       if (ratio < 0.85) {
         sem = "rojo";
-        tit = "Se pasó del equilibrio";
       } else if (ratio < 1.05) {
         sem = "amarillo";
-        tit = "Justo en el equilibrio";
       } else {
         sem = "verde";
-        tit = "Hay margen";
         puedeEstirar = ot.estira !== false && est.id !== "invierno";
       }
       if (ot.estira === false && dias && maxDias && dias > maxDias * 0.9) {
         sem = "rojo";
-        tit = "OTBN no deja estirar";
         puedeEstirar = false;
       }
       if (est.id === "invierno" && dias && maxDias && dias > maxDias) {
         sem = "rojo";
-        tit = "Invierno: no estirar";
         puedeEstirar = false;
       }
       if (desc != null && n > 1 && desc < descMin * 0.8) {
         if (sem === "verde") sem = "amarillo";
-        tit = "El descanso quedó corto para este OTBN";
       }
-      const fijo = "No cambian: " + p.ha.toFixed(1) + " ha y la oferta de la zona (~" + Math.round(foZona) + " kg MS/ha).";
-      const movil = "Sí cambian: días, cabezas, lotes y la época. Si suma animales, se acortan los días. Si alarga el consumo, no suma carga.";
-      let decision;
-      if (!dias) {
-        decision = "Con " + (+cabezas.toFixed(1)) + " " + esp.unidad + " en " + est.nombre + " y OTBN " + ot.id +
-          ", el equilibrio ronda <b>" + maxDias + " días</b> de ocupación. " +
-          (n > 1 ? ("Descanso entre lotes ~" + descSug + " días. ") : "Un lote: el descanso es sacar la hacienda. ") +
-          (puedeEstirar
-            ? "Hay margen: puede alargar un poco los días o sumar algo de carga, no las dos cosas."
-            : "No conviene estirar el pastoreo en esta época / OTBN. Si quiere más cabezas, recorte días.");
-      } else {
-        decision = "Usted cargó " + dias + " días y " + (+cabezas.toFixed(1)) + " " + esp.unidad + ". " +
-          "El equilibrio de esta visita es ~" + maxDias + " días o ~" + maxCab + " " + esp.unidad + ". " +
-          (ratio >= 1.05
-            ? (puedeEstirar
-              ? "Puede estirar el pastoreo un poco o incorporar algo de hacienda, eligiendo una sola palanca."
-              : "La oferta da, pero OTBN o el invierno no recomiendan alargar. Mejor no sumar carga.")
-            : ratio >= 0.85
-              ? "Está en el punto de equilibrio. No alargue días y no sume animales a la vez."
-              : "Se desequilibró: recorte días o baje cabezas. La superficie y la oferta de la zona no se agrandan.");
-      }
-      const html = "<b class='tit'>" + tit + " · " + est.nombre + " · OTBN " + ot.id + "</b>" +
-        fijo + " " + movil + "<br>" +
-        est.nota + " " + ot.nota + "<br>" +
-        decision +
-        (n > 1 ? (" Rotación: descanso sugerido ~" + descSug + " días (ocupación × " + (n - 1) + " × OTBN).") : "");
       return {
-        sem: sem, tit: tit, html: html, ratio: ratio, puedeEstirar: puedeEstirar,
+        sem: sem, ratio: ratio, puedeEstirar: puedeEstirar,
         maxDias: maxDias, maxCab: maxCab, descSug: descSug, descMin: descMin,
         kgHaEstacion: Math.round(kgHaEstacion), foZona: foZona
       };
@@ -2480,8 +2450,8 @@
       ["eqBox", "eqBoxManejo"].forEach((id) => {
         const el = document.getElementById(id);
         if (!el) return;
-        el.className = "eq-box " + eq.sem;
-        el.innerHTML = eq.html;
+        el.className = "eq-solapa " + eq.sem;
+        el.textContent = "";
       });
       return eq;
     }
