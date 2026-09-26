@@ -3,7 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Gemelo Digital Ganadero · Sociedad Rural de San Luis</title>
+  <title>Campo Gemelo Digital SL</title>
+  <meta name="application-name" content="Campo Gemelo Digital SL" />
+  <meta name="apple-mobile-web-app-title" content="Campo Gemelo Digital SL" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0D5C2C" />
+  <meta name="description" content="Sociedad Rural de San Luis. Ver su lote, leer la situación y salir con un informe. Sin desmonte y sin recortar el agua de bebida." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_AR" />
+  <meta property="og:site_name" content="Campo Gemelo Digital SL" />
+  <meta property="og:title" content="Campo Gemelo Digital SL" />
+  <meta property="og:description" content="Sociedad Rural de San Luis. Su lote en el mapa, para decidir." />
+  <meta property="og:url" content="https://jose2026-market.github.io/campo-gemelo-digital-sl/" />
+  <meta property="og:image" content="https://jose2026-market.github.io/campo-gemelo-digital-sl/assets/og-campo-gemelo-digital-sl.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Campo Gemelo Digital SL" />
+  <meta name="twitter:description" content="Sociedad Rural de San Luis. Su lote en el mapa, para decidir." />
+  <meta name="twitter:image" content="https://jose2026-market.github.io/campo-gemelo-digital-sl/assets/og-campo-gemelo-digital-sl.png" />
+  <link rel="canonical" href="https://jose2026-market.github.io/campo-gemelo-digital-sl/" />
+  <link rel="icon" href="assets/logo-sociedad-rural-san-luis.png" />
+  <link rel="apple-touch-icon" href="assets/logo-sociedad-rural-san-luis.png" />
+  <link rel="manifest" href="site.webmanifest" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root {
@@ -676,7 +699,7 @@
     </div>
     <div class="who">
       <small>Sociedad Rural de San Luis</small>
-      <b>Gemelo Digital Ganadero</b>
+      <b>Campo Gemelo Digital SL</b>
     </div>
     <div class="topbar-end">
       <img class="logo" src="assets/logo-sociedad-rural-san-luis.png?v=oficial" alt="Sociedad Rural de San Luis" />
@@ -742,7 +765,7 @@
   <div class="velo" id="velo"></div>
   <aside class="bar" id="bar">
     <div class="bar-head">
-      <b class="title">Gemelo Digital Ganadero</b>
+      <b class="title">Campo Gemelo Digital SL</b>
       <button type="button" class="btn-cerrar" id="btnCerrar" aria-label="Cerrar menú">×</button>
     </div>
     <p class="lead">Consulta: identificar el campo y leer la situación actual de este lugar (INTA, suelos, OTBN, potreros y animales de ahora). La prueba de carga y días va en la solapa Manejo.</p>
@@ -2401,7 +2424,7 @@
       store.nombreCampo = n;
       saveStore(store);
       document.querySelector(".title").textContent = n;
-      document.title = "Gemelo Digital Ganadero";
+      document.title = "Campo Gemelo Digital SL";
       document.getElementById("cartelNombre").textContent = n;
       pintarCartelCampo();
       const prod = document.getElementById("fProd");

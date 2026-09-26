@@ -1,0 +1,17 @@
+{
+  "name": "Campo Gemelo Digital SL",
+  "short_name": "Campo Gemelo SL",
+  "description": "Sociedad Rural de San Luis. Su lote en el mapa, para decidir.",
+  "lang": "es-AR",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#083A1C",
+  "theme_color": "#0D5C2C",
+  "icons": [
+    {
+      "src": "assets/logo-sociedad-rural-san-luis.png",
+      "sizes": "480x480",
+      "type": "image/png"
+    }
+  ]
+}
