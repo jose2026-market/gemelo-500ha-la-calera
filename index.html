@@ -165,6 +165,30 @@
     .tres-sit .sit-col b { color: var(--verde); font-size: 11px; }
     .tres-sit .sit-col.on { border-color: var(--verde); background: var(--verde-suave); }
     .tres-sit .sit-col .muted { color: #8a7a62; font-weight: 500; font-size: 9px; }
+    .tres-sit .sit-col .subir { color: #1B7A4A; font-weight: 800; }
+    .tres-sit .sit-col .bajar { color: #B42318; font-weight: 800; }
+    .diag-ano {
+      margin: 8px 0 4px; padding: 8px; border-radius: 8px;
+      background: #fffdf8; border: 1px solid #c4a35a;
+    }
+    .diag-ano .diag-tit { margin: 0 0 6px; font-size: 11px; font-weight: 800; color: var(--verde); line-height: 1.3; }
+    .diag-ano .diag-cif { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin: 0 0 8px; }
+    .diag-ano .diag-cif span {
+      display: block; text-align: center; background: #f4eee0; border-radius: 6px;
+      padding: 5px 3px; font-size: 9px; line-height: 1.25; color: #5C564F;
+    }
+    .diag-ano .diag-cif b { display: block; color: var(--verde); font-size: 13px; }
+    .diag-ano .diag-cif .alerta b { color: #B42318; }
+    .diag-ano svg { display: block; width: 100%; height: auto; }
+    .diag-ano .diag-ley { margin: 4px 0 6px; font-size: 9px; color: #5C564F; }
+    .diag-ano .diag-acc { margin: 0; padding: 0; list-style: none; }
+    .diag-ano .diag-acc li {
+      margin: 0 0 5px; padding: 5px 7px; border-radius: 6px;
+      background: #fff; border-left: 3px solid var(--oro);
+      font-size: 10px; line-height: 1.35; color: #1C2B26;
+    }
+    .diag-ano .diag-acc li b { color: var(--verde); }
+    .diag-ano .ok-ano { border-left-color: #1B7A4A; }
     .lab em { display: none; }
     .pueblo { background: none; border: 0; }
     .pueblo span {
@@ -426,6 +450,7 @@
     .informe .sit { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0 0 12px; }
     @media (min-width: 640px) { .informe .sit { grid-template-columns: 1fr 1fr 1fr; } }
     .informe .sit .item { margin: 0; }
+    .informe .diag-ano { margin: 0 0 12px; }
     .informe .num { font-size: 18px; font-weight: 800; color: var(--verde); display: block; }
     .informe .tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin: 0 0 4px; }
     .tag.sin { background: var(--verde-suave); color: var(--verde); }
@@ -898,9 +923,10 @@
       <details id="dropManejo">
         <summary>Manejo</summary>
         <div class="cuerpo">
-          <p class="hint">Inicial, Mejorando e Ideal son del <b>año completo</b> (el invierno limita). El OTBN no cambia de color; el margen de cada estación sí.</p>
+          <p class="hint">Toque Inicial, Mejorando o Ideal: el calendario dice <b>hasta dónde subir</b> y <b>en qué mes actuar</b>. El invierno limita el año.</p>
           <div class="cruz-est" data-cruz-est></div>
           <div class="tres-sit" id="tresSit"></div>
+          <div class="diag-ano" id="diagAno"></div>
           <div class="eq-solapa amarillo" id="eqBoxManejo" aria-label="Equilibrio"></div>
           <div class="escenas" role="tablist" aria-label="Escena">
             <button type="button" class="on" data-esc="actual">Inicial</button>
@@ -1008,27 +1034,190 @@
       if (!el) return;
       if (!potreros.length) {
         el.innerHTML = "<p class='hint' style='grid-column:1/-1;margin:0'>Cargue el campo para ver Inicial, Mejorando e Ideal (año completo).</p>";
+        try { pintarDiagAno(); } catch (e) {}
         return;
       }
       const p = potreros.find((x) => x.n === pSel) || potreros[0];
       const esp = especieAct();
-      el.innerHTML = "<p class='tres-sit-nota'>Año completo · el invierno limita cuántos animales se mantienen. No es solo el verano.</p>" +
+      el.innerHTML = "<p class='tres-sit-nota'>Año completo · el invierno limita. Toque una columna: el calendario dice hasta dónde subir y en qué mes actuar.</p>" +
         ["actual", "m1", "optimo"].map((esc) => {
         const d = datoEscena(p, esc);
         const der = diasDeCarga(p, Object.assign({}, d, { _esc: esc }));
-        const cab = nAnimales(d.cabezas != null ? d.cabezas : der.cabezas);
+        const cal = calendarioCarga(p, esc);
+        const cab = cal.cab;
         const dias = d.diasRestan != null && d.diasRestan !== "" ? d.diasRestan : der.maxDias;
         const vacio = esc !== "actual" && d._sinCarga;
+        const linea = cal.bajar > 0
+          ? "<span class='bajar'>bajar " + cal.bajar + "</span>"
+          : "<span class='subir'>subir " + cal.subir + "</span>";
         return "<button type='button' class='sit-col" + (escSel === esc ? " on" : "") + "' data-esc-col='" + esc + "'>" +
           "<b>" + nomEscena(esc) + "</b>" +
           "<span class='muted'>año completo</span>" +
           (vacio ? "<span class='muted'>sin cargar aún</span>" : "") +
           "<span>" + cab + " " + esp.plural + "</span>" +
+          "<span>suelo cubre " + cal.topePaso + "</span>" +
+          linea +
           "<span>" + (der.haUnidad || d.haUnidad || "—") + " " + esp.unidadHa + "</span>" +
           "<span>" + (dias || "—") + " días (invierno)</span>" +
           "<span>destete " + Math.round(Number(d.destete) || 0) + " %</span>" +
           "</button>";
       }).join("");
+      try { pintarDiagAno(); } catch (e) {}
+    }
+    function mesesForraje() {
+      return [
+        { nom: "Ene", est: "verano", d: 31, w: 1.18 },
+        { nom: "Feb", est: "verano", d: 28, w: 1.08 },
+        { nom: "Mar", est: "otono", d: 31, w: 0.88 },
+        { nom: "Abr", est: "otono", d: 30, w: 0.72 },
+        { nom: "May", est: "otono", d: 31, w: 0.55 },
+        { nom: "Jun", est: "invierno", d: 30, w: 0.42 },
+        { nom: "Jul", est: "invierno", d: 31, w: 0.38 },
+        { nom: "Ago", est: "invierno", d: 31, w: 0.45 },
+        { nom: "Sep", est: "primavera", d: 30, w: 0.68 },
+        { nom: "Oct", est: "primavera", d: 31, w: 0.88 },
+        { nom: "Nov", est: "primavera", d: 30, w: 1.02 },
+        { nom: "Dic", est: "verano", d: 31, w: 1.12 }
+      ];
+    }
+    function pesoMesForraje(m, L) {
+      const mmEst = Number((L && L.estaciones || {})[m.est]);
+      return mmEst > 0 ? mmEst * m.w : m.w;
+    }
+    function calendarioCarga(p, esc) {
+      const tipo = (store[p.n] && store[p.n].tipo) || "ganadero";
+      const ot = otbnAct();
+      const esp = especieAct();
+      const d = datoEscena(p, esc);
+      const dAct = datoEscena(p, "actual");
+      const cab = nAnimales((esc !== "actual" && d._sinCarga)
+        ? (dAct.cabezas != null ? dAct.cabezas : 0)
+        : (d.cabezas != null ? d.cabezas : 0));
+      const mej = extraMejoras(esc === "actual" ? "m1" : esc);
+      const rue = rueForraje();
+      const L = store.lluvia || {};
+      const fLl = typeof factorLluvia === "function" ? factorLluvia() : 1;
+      const kgAnio0 = (store.forraje && store.forraje.kgAnio)
+        || Math.round((Number(L.anual) || 400) * rue * (ot.fo || 1));
+      const fMej = (esc === "m1" || esc === "actual") ? (mej.f || 1) : 1;
+      const kgAnio = Math.round(kgAnio0 * (esc === "m1" ? fMej : 1));
+      const extraInvHa = (esc === "m1" ? (mej.kg || 0) : 0) / Math.max(p.ha, 0.1);
+      const meses = mesesForraje();
+      const sumW = meses.reduce((s, m) => s + pesoMesForraje(m, L), 0);
+      const ev = esp.evPorCabeza || 1;
+      const filas = meses.map((m) => {
+        let oferta = kgAnio * (pesoMesForraje(m, L) / sumW);
+        if (m.est === "invierno") oferta += extraInvHa / 3;
+        const demanda = cab > 0 ? (cab * ev * 12 * m.d) / p.ha : 0;
+        const cubre = ev > 0 ? nAnimales((oferta * p.ha) / (12 * m.d * ev)) : 0;
+        const deficit = demanda > oferta * 1.02 && cab > 0;
+        return {
+          nom: m.nom, est: m.est, d: m.d, oferta: +oferta.toFixed(0), demanda: +demanda.toFixed(0),
+          cubre: cubre, deficit: deficit, ratio: oferta > 0 ? demanda / oferta : 0
+        };
+      });
+      const cubreAnio = filas.reduce((min, f) => Math.min(min, f.cubre || 0), filas[0] ? filas[0].cubre : 0);
+      const tAct = techoEscena(p, tipo, "actual");
+      const tM1 = techoEscena(p, tipo, "m1");
+      const tOp = techoEscena(p, tipo, "optimo");
+      const extraCab = nAnimales((esc === "m1" ? (mej.kg || 0) : 0) / (365 * 12 * ev));
+      const topeM1 = Math.min(cubreAnio, nAnimales(tM1.cabezasMax * (esc === "m1" ? fMej : 1) + extraCab));
+      const topeIni = Math.min(cubreAnio, nAnimales(tAct.cabezasMax));
+      const topeOp = Math.min(cubreAnio, nAnimales(tOp.cabezasMax));
+      const topePaso = esc === "optimo" ? topeOp : (esc === "m1" ? topeM1 : Math.min(cubreAnio, topeM1));
+      const topeSuelo = topeOp;
+      const bajar = Math.max(0, cab - cubreAnio, cab - topePaso);
+      const subir = bajar > 0 ? 0 : Math.max(0, topePaso - cab);
+      const anioTxt = fLl < 0.95 ? "año seco" : (fLl > 1.05 ? "año húmedo" : "año medio");
+      return {
+        cab: cab, kgAnio: kgAnio, filas: filas, cubreAnio: cubreAnio,
+        topeSuelo: topeSuelo, topePaso: topePaso, topeM1: topeM1, topeIni: topeIni, topeOp: topeOp,
+        subir: subir, bajar: bajar, esp: esp, ot: ot, n: potreros.length, dist: p.dist, ha: p.ha,
+        mm: Math.round(Number(L.anual) || 0), anioTxt: anioTxt, mej: mej, sit: sitioDe(p)
+      };
+    }
+    function accionesCalendario(cal, esc) {
+      const def = cal.filas.filter((f) => f.deficit);
+      const acc = [];
+      if (cal.bajar > 0) {
+        acc.push({ ok: false, t: "Decisión: no aumente. Baje " + cal.bajar + " " + cal.esp.plural + " o haga las obras de abajo. Hoy " + cal.cab + " · el suelo cubre " + cal.cubreAnio + " el año (" + cal.anioTxt + ")." });
+      } else if (cal.subir > 0) {
+        const hacia = esc === "optimo" ? "Ideal" : "Mejorando";
+        acc.push({ ok: true, t: "Decisión: puede subir hasta " + cal.subir + " " + cal.esp.plural + " más, hacia " + hacia + ". No pase de " + cal.topePaso + " en este paso ni de " + cal.topeOp + " en el Ideal." });
+      } else {
+        acc.push({ ok: true, t: "Decisión: está en el tope de este paso (" + cal.topePaso + " " + cal.esp.plural + "). El Ideal del suelo es " + cal.topeOp + ". No sume más sin obras." });
+      }
+      if (def.length) {
+        acc.push({ ok: false, t: "Falta pasto en " + def.map((f) => f.nom).join(", ") + ". Esos meses hay que intervenir." });
+        if (def.some((f) => f.est === "invierno")) {
+          acc.push({ ok: false, t: "Invierno (jun–ago): no estirar días. Sacar hacienda, diferido o suplemento corto. El cuello de botella es el frío, no el verano." });
+        }
+      }
+      if (cal.n <= 1) acc.push({ ok: false, t: "Un solo lote: dividir el cuadro (inversión mínima) para rotar y dejar descansar." });
+      else acc.push({ ok: true, t: cal.n + " lotes: rotar a tiempo. Descanso ≈ ocupación × " + (cal.n - 1) + " días. No dejar cría todo el año en el mismo cuadro." });
+      if (cal.dist != null && cal.dist > 400) acc.push({ ok: false, t: "Aguada a " + cal.dist + " m: acercar bebida (cañería o bebedero). No se recorta agua." });
+      if (cal.ot.id === "I") acc.push({ ok: false, t: "OTBN I: no sembrar ni desmontar. La medida es bajar carga y más descanso del monte." });
+      else if (def.some((f) => f.est === "invierno") || cal.bajar > 0) {
+        acc.push({ ok: false, t: "Sembrar 1–2 ha de diferido para pasar el invierno (mínima inversión, si el OTBN lo permite). En loma no hay M2 ni soja." });
+      }
+      if (esc === "optimo" && cal.sit && !cal.sit.bajo) {
+        acc.push({ ok: false, t: "Este lote no es bajo: el Ideal no pasa de Mejorando. No cargue el techo de 5,9 ha/EV." });
+      }
+      return acc.slice(0, 6);
+    }
+    function svgCalendario(cal) {
+      const W = 240, H = 108, l = 2, r = 2, t = 8, b = 18;
+      const inner = W - l - r;
+      const slot = inner / 12;
+      const maxV = Math.max(1, ...cal.filas.map((f) => Math.max(f.oferta, f.demanda)));
+      const hBar = H - t - b;
+      let bars = "";
+      cal.filas.forEach((f, i) => {
+        const x = l + i * slot;
+        const ho = Math.max(1, (f.oferta / maxV) * hBar);
+        const hd = Math.max(f.demanda ? 1 : 0, (f.demanda / maxV) * hBar);
+        const colD = f.deficit ? "#B42318" : "#C4A35A";
+        bars += "<rect x='" + (x + 1).toFixed(1) + "' y='" + (t + hBar - ho).toFixed(1) +
+          "' width='" + (slot * 0.38).toFixed(1) + "' height='" + ho.toFixed(1) + "' rx='1' fill='#1B7A4A'/>";
+        if (f.demanda) {
+          bars += "<rect x='" + (x + slot * 0.46).toFixed(1) + "' y='" + (t + hBar - hd).toFixed(1) +
+            "' width='" + (slot * 0.38).toFixed(1) + "' height='" + hd.toFixed(1) + "' rx='1' fill='" + colD + "'/>";
+        }
+        bars += "<text x='" + (x + slot / 2).toFixed(1) + "' y='" + (H - 5) +
+          "' text-anchor='middle' font-size='6.5' fill='#5C564F'>" + f.nom + "</text>";
+      });
+      return "<svg viewBox='0 0 " + W + " " + H + "' role='img' aria-label='Oferta forrajera y carga mes a mes'>" + bars + "</svg>";
+    }
+    function htmlDiagAno() {
+      if (!potreros.length) {
+        return "<p class='diag-tit'>Calendario de diagnóstico</p><p class='diag-ley'>Cargue el campo y la hacienda: aparece hasta dónde subir y en qué mes intervenir.</p>";
+      }
+      const p = potreros.find((x) => x.n === pSel) || potreros[0];
+      const cal = calendarioCarga(p, escSel);
+      const acc = accionesCalendario(cal, escSel);
+      const tit = cal.bajar > 0
+        ? "No suba la carga · baje o mejore"
+        : (cal.subir > 0 ? "Puede subir con cuidado" : "Está en el tope de este paso");
+      return "<p class='diag-tit'>" + tit + " · " + nomEscena(escSel) + "</p>" +
+        "<div class='diag-cif'>" +
+        "<span>Hoy<b>" + cal.cab + "</b>" + cal.esp.plural + "</span>" +
+        "<span>El suelo cubre el año<b>" + cal.cubreAnio + "</b>" + cal.esp.plural + "</span>" +
+        "<span class='" + (cal.bajar ? "alerta" : "") + "'>" +
+          (cal.bajar ? ("Bajar<b>" + cal.bajar + "</b>") : ("Puede subir<b>" + cal.subir + "</b>")) +
+          cal.esp.plural + "</span>" +
+        "</div>" +
+        svgCalendario(cal) +
+        "<p class='diag-ley'>Verde = pasto del mes (" + (cal.mm ? cal.mm + " mm · " : "") + cal.anioTxt +
+          "). Oro = lo que comen. Rojo = hay que actuar. Tope de este paso " + cal.topePaso +
+          " · Ideal " + cal.topeOp + " " + cal.esp.plural + ".</p>" +
+        "<ul class='diag-acc'>" + acc.map((a) =>
+          "<li class='" + (a.ok ? "ok-ano" : "") + "'>" + a.t + "</li>"
+        ).join("") + "</ul>";
+    }
+    function pintarDiagAno() {
+      const el = document.getElementById("diagAno");
+      if (!el) return;
+      el.innerHTML = htmlDiagAno();
     }
     function marcarEscena(id) {
       escSel = id;
@@ -4267,6 +4456,16 @@
       return chequeo;
     }
     document.getElementById("btnActualizarManejo").addEventListener("click", () => aplicarCargaManejo());
+    ["mejLotes", "mejAgua", "mejSiembra"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("change", () => {
+        leerMejoras();
+        const p = potreros.find((x) => x.n === pSel) || potreros[0];
+        pintarTopeMejora(p);
+        pintarTresSit();
+      });
+    });
     document.getElementById("btnGuardar").addEventListener("click", () => {
       const chequeo = aplicarCargaManejo();
       const p = potreros.find((x) => x.n === pSel);
@@ -4465,6 +4664,8 @@
             (hayOp ? ("Destete ~" + op.destete + " % · " + op.kgHa + " kg/ha. ") : "Aún no cargó el camino; el límite lo pone INTA. ") +
             "En loma no se pasa de Mejorando. En bajo, M2 solo si OTBN lo permite. Agua de " + esp.nombre + " ~" + esp.aguaL + " L/día.</div>" +
         "</div>" +
+        "<h2>Calendario de diagnóstico · cuándo actuar</h2>" +
+        "<div class='diag-ano'>" + htmlDiagAno() + "</div>" +
         "<h2>Suelo, bosque y agua que se ven en el mapa</h2>" +
         "<div class='item'><b>Suelos</b>" + (esDemoCalera
           ? "Carta INTA Peña Zubiate 1:500.000 · UCSV 4 Torriortente típico, somero, poca reserva de agua, aptitud VII: pastoreo extensivo, no agrícola. Lomas P1–P5; P6 es el bajo más húmedo."
@@ -4506,11 +4707,16 @@
         "<div class='item'><span class='tag med'>Mediano</span><b>Ideal de suelo</b>En loma el techo es Mejorando. Buffel ~30 % solo en bajos y si el OTBN lo permite. Soja o campo limpio no es escenario de este territorio.</div>" +
         "<p class='meta'>Este es el informe que se entrega al productor: situación actual (lectura INTA), situación mejorando (datos que carga con el productor) e ideal (techo INTA). Hacienda: " +
           escHtml(esp.plural) + ". Fuente: INTA San Luis, GeoINTA Nodo 15, MAyDS OTBN 2016. Orientación de consulta; no reemplaza análisis de agua ni mensura.</p>";
+      const calW = potreros[0] ? calendarioCarga(potreros[0], escSel || "actual") : null;
       const textoWA = encodeURIComponent(
         "Informe Gemelo Digital Ganadero · Sociedad Rural de San Luis\n" +
         campo + " · " + esp.plural + "\nActual: " + txtCifras(act) + ".\n" +
         "Mejorando: " + (hayM1 ? txtCifras(m1) : "aún no cargada") + ".\n" +
         "Ideal (techo INTA): " + (tOp ? tOp.haUnidad + " " + tOp.unidadHa + " · destete " + tOp.destete + " %" : txtCifras(op)) + ".\n" +
+        (calW
+          ? ("Hoy " + calW.cab + " " + esp.plural + " · el suelo cubre " + calW.cubreAnio +
+            " el año · " + (calW.bajar ? ("bajar " + calW.bajar) : ("puede subir " + calW.subir)) + ".\n")
+          : "") +
         "Corto plazo: rotar, estacionar servicio, no desmontar, no recortar bebida. Agua de " + esp.nombre + " ~" + esp.aguaL + " L/día."
       );
       const wa = document.getElementById("btnWhatsapp");
