@@ -882,7 +882,6 @@
           <div id="avisoManejo" class="ok" hidden></div>
           <button type="button" class="punto-act" id="btnActualizarManejo"><span class="punto"></span> Actualizar este dato</button>
           <div class="acciones">
-            <button type="button" class="sec" id="btnEstimar">Ver INTA / carta</button>
             <button type="button" class="sec" id="btnKml">Ver en Google Earth</button>
             <button type="button" id="btnGuardar">Guardar este manejo</button>
           </div>
@@ -3670,7 +3669,6 @@
       });
       document.getElementById("btnGuardar").disabled = false;
       document.getElementById("btnGuardar").textContent = "Guardar este manejo";
-      document.getElementById("btnEstimar").textContent = "Ver datos INTA / carta";
       pintarMejorasUI();
       pintarTopeMejora(p, d);
       const info = document.getElementById("infoLote");
@@ -3904,11 +3902,6 @@
       marcarDatoActualizado(chequeo);
       return chequeo;
     }
-    document.getElementById("btnEstimar").addEventListener("click", () => {
-      refrescarMapa();
-      document.getElementById("msg").hidden = false;
-      document.getElementById("msg").textContent = "INTA de este lugar (suelo, destete, kg/ha). Los animales y los días los prueba en Manejo: se ven al cambiar.";
-    });
     document.getElementById("btnActualizarManejo").addEventListener("click", () => aplicarCargaManejo());
     document.getElementById("btnGuardar").addEventListener("click", () => {
       const chequeo = aplicarCargaManejo();
