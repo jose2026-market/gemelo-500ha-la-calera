@@ -91,7 +91,16 @@
     }
     .panel { margin-top: 8px; border-top: 1px solid #e2e8e4; padding-top: 8px; }
     .panel[hidden] { display: none; }
-    .sit-tit { color: var(--verde); font-size: 13px; display: block; margin: 0 0 6px; }
+    .sit-tit { color: var(--verde); font-size: 14px; display: block; margin: 0 0 8px; }
+    .resumen-actual {
+      background: linear-gradient(#fffdf8, #f3ead4);
+      border: 1px solid var(--oro); border-radius: 10px;
+      padding: 12px 12px 10px; margin: 0;
+    }
+    .resumen-actual p { margin: 0 0 8px; font-size: 13px; line-height: 1.45; color: #1C2B26; }
+    .resumen-actual p:last-child { margin: 0; }
+    .resumen-actual .res-nom { font-size: 15px; color: var(--verde); line-height: 1.3; }
+    .resumen-actual .res-cierre { color: #5C564F; font-size: 12px; }
     #cifrasActuales, #cifrasVivas { font-size: 12px; line-height: 1.4; }
     #cifrasVivas b, #cifrasActuales b { color: var(--verde); }
     .hechos { font-size: 11px; color: #5C564F; line-height: 1.4; margin: 0 0 8px; }
@@ -789,15 +798,18 @@
       <div class="lista-campos" id="listaCampos"></div>
     </div>
     <div id="panel" class="panel">
-      <b class="sit-tit">Situación actual de este lugar</b>
-      <p class="hechos" id="hechos">Identifique el campo (Mi campo) para leer INTA, suelos y OTBN de estas coordenadas.</p>
+      <b class="sit-tit">Situación actual del campo</b>
       <div class="pills" id="pills"></div>
-      <div class="aviso" id="aviso"></div>
-      <div class="ficha-oficial" id="cifrasActuales"></div>
-      <p class="aviso" id="topeEscena"></p>
+      <div class="resumen-actual" id="resumenActual">
+        <p>Complete las letras A a E y toque el punto verde de cada una. Acá va a leer, en corto, cómo está el campo hoy.</p>
+      </div>
       <p class="ok" id="msg" hidden></p>
       <div hidden>
-        <div class="eq-solapa amarillo" id="eqBox" hidden></div>
+        <p class="hechos" id="hechos"></p>
+        <div class="aviso" id="aviso"></div>
+        <div class="ficha-oficial" id="cifrasActuales"></div>
+        <p class="aviso" id="topeEscena"></p>
+        <div class="eq-solapa amarillo" id="eqBox"></div>
         <select id="fTipo">
           <option value="ganadero">Ganadero de cría</option>
           <option value="monte">Monte (MBGI, también cría)</option>
@@ -1667,27 +1679,73 @@
       if (el) el.innerHTML = html;
     }
     function pintarCifrasActuales() {
-      const el = document.getElementById("cifrasActuales");
+      const el = document.getElementById("resumenActual") || document.getElementById("cifrasActuales");
       if (!el) return;
-      if (!potreros.length) {
-        el.innerHTML = "Todavía no hay un lote leído. Complete Mi campo y toque Ver el campo.";
+      const nom = ((document.getElementById("fProd") || {}).value || "").trim()
+        || (store.nombreCampo && store.nombreCampo !== DEMO_NOMBRE ? store.nombreCampo : "");
+      const hayCampo = !esDemoCalera && store.anilloCampo && store.anilloCampo.length >= 3;
+      if (!hayCampo && !esDemoCalera) {
+        el.innerHTML = "<p class='res-nom'><b>Situación actual</b></p>" +
+          "<p>Todavía no hay un campo leído. Complete A (nombre), B (dónde está) y E (hacienda), y toque el punto verde de cada letra.</p>";
         return;
       }
       const ha = haTotal();
-      const act = resumenEscena("actual");
+      const n = Math.max(1, potreros.length || nLotesAct());
       const esp = especieAct();
-      const n = potreros.length;
-      const lotes = n <= 1
-        ? "Un solo cuadro, sin divisiones."
-        : (n + " potreros dentro del alambrado: " + potreros.map((p) => nomPotrero(p) + " " + p.ha.toFixed(1) + " ha").join(" · ") + ".");
-      el.innerHTML =
-        "<b>" + escHtml(store.nombreCampo || "Campo") + "</b> · " + ha.toFixed(0) + " ha<br>" +
-        lotes + "<br>" +
-        "Animales actuales: <b>" + act.cabezas + " " + esp.plural + "</b> (" + act.ev + " " + act.unidad + ") · " +
-        act.haUnidad + " " + act.unidadHa + ".<br>" +
-        "Año completo (el invierno limita). OTBN " + otbnAct().id + " · visita: " + estacionAct().nombre +
-        " · destete carta ~" + act.destete + " % · " + act.kgHa + " kg carne/ha.<br>" +
-        "Carga y días se recalcan solos. Lluvia del predio: solapa Capas → Lluvia.";
+      const p = potreros.find((x) => x.n === pSel) || potreros[0];
+      const d = p ? datoEscena(p, "actual") : null;
+      const cabEl = document.getElementById("fCabezas");
+      const cargoCab = (cabEl && cabEl.value !== "") || (store.cabezas != null && store.cabezas !== "");
+      const cab = cargoCab
+        ? nAnimales((cabEl && cabEl.value !== "") ? cabEl.value : store.cabezas)
+        : (d ? nAnimales(d.cabezas) : 0);
+      const ot = otbnAct();
+      const otFrase = {
+        I: "bosque de máxima protección: se pastorea con más descanso, no se desmonta",
+        II: "bosque con ganadería integrada: se usa, no se limpia",
+        III: "más pastizal: sigue sin desmonte"
+      }[ot.id] || "bosque con ganadería integrada";
+      const tipo = (p && store[p.n] && store[p.n].tipo) || "ganadero";
+      const inv = (typeof margenEstacionOtbn === "function")
+        ? margenEstacionOtbn("invierno", ot.id, tipo)
+        : { sem: "amarillo" };
+      const invTxt = inv.sem === "rojo"
+        ? "el invierno es el tramo más justo: conviene no sobrecargar"
+        : (inv.sem === "amarillo"
+          ? "el invierno pide no alargar el pastoreo"
+          : "el invierno entra con más holgura");
+      const L = store.lluvia;
+      const F = store.forraje;
+      const t = p ? techoEscena(p, tipo, "optimo") : null;
+      const tope = t ? nAnimales(t.cabezasMax) : 0;
+      let html = "<p class='res-nom'><b>" + escHtml(nom || "Este campo") + "</b>" +
+        (ha ? (" · " + Math.round(ha) + " ha") : "") +
+        (n <= 1 ? " · un lote" : (" · " + n + " lotes")) + "</p>";
+      if (cargoCab) {
+        html += "<p>Hoy hay <b>" + cab + " " + esp.plural + "</b>" +
+          (ha && cab ? (" · " + (ha / cab).toFixed(1) + " ha por animal") : "") + ".</p>";
+        if (tope && cab > tope) {
+          html += "<p>Esa hacienda es más de la que este campo sostiene el año (alrededor de " + tope + " " + esp.plural + "). Hay que bajar carga o mejorar en Manejo.</p>";
+        } else if (p) {
+          const der = diasDeCarga(p, Object.assign({}, d || {}, { cabezas: cab, _esc: "actual" }));
+          html += "<p>Con esta carga el cuadro aguanta alrededor de <b>" + der.maxDias + " días</b> en invierno" +
+            (n > 1 ? (" y unos " + der.descSug + " de descanso entre lotes") : "") + ".</p>";
+        }
+      } else {
+        html += "<p>Falta cargar cuántos animales hay (letra E) para cerrar el diagnóstico.</p>";
+      }
+      html += "<p>OTBN " + ot.id + ": " + otFrase + ". En el año, " + invTxt + ".</p>";
+      if (L && L.anual) {
+        html += "<p>Lluvia ~" + Math.round(L.anual) + " mm en 12 meses" +
+          (F && F.kgDia ? (". El pasto ahora crece ~" + F.kgDia + " kg de materia seca por ha y por día") : "") + ".</p>";
+      }
+      if (p && p.dist != null && p.dist > 400) {
+        html += "<p>El agua más cercana está a " + p.dist + " m. Las crías convienen a menos de 400 m.</p>";
+      } else if (p && p.dist != null && p.dist <= 400) {
+        html += "<p>El agua de bebida está a " + p.dist + " m, a mano para la cría.</p>";
+      }
+      html += "<p class='res-cierre'>Para probar mejoras (dividir lote, aguadas, sembrar 1–2 ha) abra la solapa Manejo.</p>";
+      el.innerHTML = html;
     }
     function pintarCifrasVivas(p, extra) {
       try { pintarTresSit(); pintarCartelCampo(); } catch (e) {}
@@ -3467,11 +3525,13 @@
         store.consulta = Object.assign({}, store.consulta || {}, { prod: nom, propietario: prop, tel: tel });
         saveStore(store);
         flashActualizar(btn, av, "Nombre y contacto actualizados.");
+        try { pintarCifrasActuales(); } catch (e) {}
         return;
       }
       if (letra === "B") {
         cargarCampoProductor();
         flashActualizar(btn, av, "Ubicación actualizada en el satélite.");
+        try { pintarCifrasActuales(); } catch (e) {}
         return;
       }
       if (letra === "C") {
@@ -3489,11 +3549,13 @@
         flashActualizar(btn, av, n <= 1
           ? "Un lote. Actualizado."
           : (n + " lotes actualizados."));
+        try { pintarCifrasActuales(); } catch (e) {}
         return;
       }
       if (letra === "D") {
         onCambioEstacionOtbn();
         flashActualizar(btn, av, "Época y OTBN actualizados.");
+        try { pintarCifrasActuales(); } catch (e) {}
         return;
       }
       if (letra === "E") {
@@ -3507,6 +3569,7 @@
         flashActualizar(btn, av, n
           ? (n + " " + especieAct().plural + " actualizadas.")
           : "Tipo de hacienda actualizado.");
+        try { pintarCifrasActuales(); } catch (e) {}
       }
     }
     const cajaCampoEl = document.getElementById("cajaCampo");
@@ -3945,20 +4008,20 @@
       set("fDest", d.destete);
       set("fPre", d.prenhez);
       set("fServ", d.servicio);
-      document.getElementById("aviso").innerHTML = "<span class='sema' style='background:" + v.color + "'></span><b>" +
-        (v.sem === "rojo" ? "No posible / actuar" : v.sem === "amarillo" ? "Vigilar esta semana" : v.sem === "descanso" ? "En descanso" : "Posible y en equilibrio") +
-        "</b> · " + v.accion;
+      document.getElementById("aviso").innerHTML = "";
       const sit = sitioDe(p);
-      document.getElementById("hechos").innerHTML =
-        "<b>" + (esDemoCalera ? ("P" + p.n) : (store.nombreCampo || "Este lote")) + " · " + p.ha.toFixed(1) + " ha</b> · " +
-        sit.paisaje + (p.z ? " · " + p.z + " m" : "") + ".";
+      const hechosEl = document.getElementById("hechos");
+      if (hechosEl) {
+        hechosEl.innerHTML =
+          "<b>" + (esDemoCalera ? ("P" + p.n) : (store.nombreCampo || "Este lote")) + " · " + p.ha.toFixed(1) + " ha</b> · " +
+          sit.paisaje + (p.z ? " · " + p.z + " m" : "") + ".";
+      }
       const t = techoEscena(p, store[p.n].tipo || "ganadero", escSel);
       const val = validarCarga(p, store[p.n].tipo || "ganadero", d, escSel);
       const topeEl = document.getElementById("topeEscena");
-      topeEl.style.background = val.posible ? "#E7F3EC" : "#FDECEC";
-      topeEl.style.borderColor = val.posible ? "#9FCBB0" : "#E8A0A0";
-      topeEl.style.color = val.posible ? "#0D5C2C" : "#8A1F16";
-      topeEl.textContent = val.posible ? t.texto : ("Semáforo rojo: " + val.motivos.join(" "));
+      if (topeEl) {
+        topeEl.textContent = val.posible ? t.texto : (val.motivos[0] || "");
+      }
       const lockInta = { fDest: 1, fPre: 1, fKg: 1, fCat: 1, fServ: 1, fSup: 1, fCc: 1 };
       const derivado = { fHaEv: 1, fAguaRodeo: 1, fDist: 1, fAgua: 1 };
       document.querySelectorAll("#campos input, #fLote, #fAccion").forEach((el) => {
