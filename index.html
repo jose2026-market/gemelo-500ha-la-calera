@@ -696,7 +696,7 @@
       <article class="acordeon" id="accVista">
         <button type="button" class="cab" data-acc="accVista"><div><small>1 · Visualizador</small><b>Ver el campo</b></div><i>+</i></button>
         <div class="cuerpo">
-          Satélite y potreros de su establecimiento. Capas y manejo quedan cerrados para no tapar el mapa.
+          Satélite y potreros de su establecimiento. <span class="solo-escritorio">Capas y manejo quedan cerrados para no tapar el mapa.</span><span class="solo-celular">En el celular no se abre el campo de ejemplo: se ve cómo se cargan los datos.</span>
           <button type="button" id="btnVerDemo">Ir al mapa</button>
         </div>
       </article>
@@ -749,7 +749,7 @@
     <div class="consulta">
       <b>Servicio de consulta</b>
       <p>Se carga su establecimiento, se leen suelos + OTBN + INTA, y se entrega el informe de puntos críticos (corto y mediano plazo).</p>
-      <p class="aviso solo-celular">En el celular funciona igual: puede cargar un campo para verlo. Al cerrar o recargar no queda guardado.</p>
+      <p class="aviso solo-celular">En el celular no se abre el campo de ejemplo. Sirve para ver cómo se preguntan y cargan los datos. Al cerrar o recargar no queda guardado.</p>
       <button type="button" id="btnPedirConsulta">Pedir consulta</button>
       <button type="button" id="btnInformeMenu" class="sec" style="background:#fff;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Ver informe ahora</button>
       <p class="aviso" id="msgConsulta" hidden></p>
@@ -760,7 +760,7 @@
     <div id="cajaCampo" class="caja-nombre" hidden>
       <p class="aviso"><b>Preguntas al productor · primero el establecimiento, al final la hacienda</b><br>
         Hasta que no esté el lote en el satélite, no se lee la situación actual.</p>
-      <p class="aviso solo-celular">Vista rápida: el campo se ve en esta sesión y no queda guardado en el teléfono.</p>
+      <p class="aviso solo-celular">Acá se ve cómo se carga un campo (letras A a E). En el teléfono no queda guardado.</p>
 
       <div class="paso">
         <p><b class="nro">A</b> <b>¿Cómo se llama el establecimiento?</b></p>
@@ -1001,6 +1001,7 @@
     const MARCA = "Gemelo Digital Ganadero";
     const DEMO_NOMBRE = "Gemelo Digital Ganadero";
     const KEY = "gemelo-500ha-manejo-v1";
+    function esMovil() { return window.matchMedia("(max-width: 900px)").matches; }
     const SEM = { verde: "#1B7A4A", amarillo: "#C4A035", rojo: "#B42318", descanso: "#5C7A8A" };
     const ESPECIE = {
       cria: {
@@ -1055,8 +1056,14 @@
     function pintarCartelCampo() {
       const el = document.getElementById("cartelNombre");
       if (!el) return;
+      if (!potreros.length) {
+        el.textContent = "";
+        el.hidden = true;
+        return;
+      }
+      el.hidden = false;
       const nom = store.nombreCampo || DEMO_NOMBRE;
-      const ha = potreros.length ? Math.round(haTotal()) : 0;
+      const ha = Math.round(haTotal());
       el.innerHTML = escHtml(nom) + (ha ? (" <small>" + ha + " ha · " + nomEscena(escSel) + "</small>") : "");
     }
     function htmlPopupCampo(p) {
@@ -1306,6 +1313,11 @@
     const DEMO_AGUADAS = JSON.parse(JSON.stringify(aguadas));
     let esDemoCalera = true;
     let diagnosticoLote = null;
+    if (esMovil()) {
+      potreros = [];
+      aguadas = [];
+      esDemoCalera = false;
+    }
 
     function loadStore() {
       try {
@@ -1322,7 +1334,9 @@
     }
     let zmin = 917, zmax = 1023;
     const store = loadStore();
-    if (!store.nombreCampo || /500\s*ha|demostrativo|Campo gemelo ·/i.test(store.nombreCampo)) store.nombreCampo = DEMO_NOMBRE;
+    if (!store.nombreCampo || /500\s*ha|demostrativo|Campo gemelo ·/i.test(store.nombreCampo)) {
+      store.nombreCampo = esMovil() ? "" : DEMO_NOMBRE;
+    }
     if (!Array.isArray(store.camposGuardados)) store.camposGuardados = [];
     if (!store.especie) store.especie = "cria";
     if (!store.mejoras) store.mejoras = { lotes: false, agua: false, siembra: false };
@@ -1346,7 +1360,7 @@
     };
     if (!store.estacion) store.estacion = estacionPorFecha();
     if (!store.otbn) store.otbn = "II";
-    if (!store.lluvia) {
+    if (!store.lluvia && !esMovil()) {
       store.lluvia = {
         anual: 307.7, mm30: 0,
         estaciones: { verano: 145, otono: 62, invierno: 18, primavera: 83 },
@@ -2175,8 +2189,8 @@
 
     let modSel = "pastoreo", escSel = "actual", pSel = 1;
     const MAX_Z = 18;
-    const map = L.map("map", { zoomControl: true, minZoom: 5, maxZoom: MAX_Z }).setView([-32.9110, -66.8816], 14);
-    function esMovil() { return window.matchMedia("(max-width: 900px)").matches; }
+    const map = L.map("map", { zoomControl: true, minZoom: 5, maxZoom: MAX_Z })
+      .setView(esMovil() ? [-33.30, -66.35] : [-32.9110, -66.8816], esMovil() ? 8 : 14);
     map.zoomControl.setPosition(esMovil() ? "bottomright" : "topright");
     function setPanel(abierto) {
       document.body.classList.toggle("panel-abierto", abierto);
@@ -3867,7 +3881,7 @@
 
     const capaRelieveLocal = L.featureGroup();
     const tints = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
-    try {
+    if (esDemoCalera) try {
       const S = window.SUPERFICIE, g = S.grid;
       zmin = g.zmin; zmax = g.zmax;
       capaRelieveLocal.addTo(map);
@@ -4578,7 +4592,8 @@
     document.getElementById("btnKml").addEventListener("click", exportarKml);
 
     pintarCampos();
-    aplicarNombre(store.nombreCampo);
+    if (!esMovil()) aplicarNombre(store.nombreCampo);
+    else pintarCartelCampo();
     const ultimoCampo = esMovil() ? null : (store.campoActivo || ((store.camposGuardados || []).slice(-1)[0]));
     if (ultimoCampo && (ultimoCampo.lat || ultimoCampo.limites)) {
       aplicarFormCampo(ultimoCampo);
@@ -4587,6 +4602,11 @@
       cargarCampoProductor.silencio = false;
       refrescarMapa();
       abrir(1);
+    } else if (esMovil()) {
+      refrescarMapa();
+      document.getElementById("cajaCampo").hidden = false;
+      document.getElementById("btnMiCampo").classList.add("on");
+      document.getElementById("btnMiCampo").setAttribute("aria-expanded", "true");
     } else {
       refrescarMapa();
       abrir(1);
@@ -4600,10 +4620,16 @@
       });
       if (id === "visor") {
         setFondo("sat");
+        if (esMovil() && !potreros.length) {
+          document.getElementById("cajaCampo").hidden = false;
+          document.getElementById("btnMiCampo").classList.add("on");
+          document.getElementById("btnMiCampo").setAttribute("aria-expanded", "true");
+          setPanel(true);
+        }
         setTimeout(() => {
           map.invalidateSize();
           try { sat.redraw(); } catch (e) {}
-          if (!enfocarCampo.activo) verCampo();
+          if (!enfocarCampo.activo && potreros.length) verCampo();
         }, 280);
       }
       if (id === "informe") pintarInforme();
