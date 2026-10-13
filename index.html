@@ -258,6 +258,7 @@
     .chk-plano { font-size: 12px; color: #1C2B26; margin: 8px 0 0; }
     .chk-plano input { width: auto; margin-right: 6px; }
     .cartel-nombre { display: none; }
+    .ficha-celular { display: none; }
     .aviso-sat {
       position: absolute; z-index: 500;
       left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
@@ -269,7 +270,7 @@
       text-align: center; pointer-events: none;
       box-shadow: 0 2px 12px rgba(0,0,0,.28);
     }
-    body.vista-inicio .aviso-sat, body.vista-informe .aviso-sat { display: none !important; }
+    body.vista-inicio .aviso-sat, body.vista-informe .aviso-sat, body.vista-ubicar .aviso-sat, body.vista-sanidad .aviso-sat, body.vista-carbono .aviso-sat, body.vista-alerta .aviso-sat, body.vista-hacienda .aviso-sat, body.perimetro-listo .aviso-sat { display: none !important; }
     body.marcando-esquinas #map { cursor: crosshair; }
     .desplegables {
       position: absolute; z-index: 1100;
@@ -318,6 +319,36 @@
       padding: 8px 10px 12px;
     }
     #dropManejo .hint { margin: 0 0 4px; font-size: 9px; line-height: 1.25; }
+    #pastizal {
+      margin: 0 0 8px; padding: 8px; border: 1px solid var(--oro); border-radius: 10px; background: #fff;
+    }
+    #pastizal .pasto-nota { margin: 0; font-size: 11px; line-height: 1.35; color: #1C2B26; }
+    #pastizal .pasto-campo { margin: 6px 0 0; font-size: 12px; font-weight: 800; color: var(--verde); }
+    #pastizal .pasto-tipo, #pastizal .pasto-acciones {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;
+    }
+    #pastizal button {
+      width: 100%; margin: 0; border-radius: 8px; font-weight: 800; font-size: 12px;
+      padding: 8px 6px; border: 1px solid var(--verde); background: var(--verde); color: #fff;
+    }
+    #pastizal .pasto-tipo button, #pastizal button.sec {
+      background: #fff; color: var(--verde); border-color: var(--oro);
+    }
+    #pastizal .pasto-tipo button.on { background: var(--oro); color: var(--verde-oscuro); }
+    #pastizal #pastoInforme { margin-top: 8px; }
+    #pastizal button:disabled { opacity: .55; }
+    #pastizal .sanidad-fotos { margin-top: 8px; }
+    #pastizal .sanidad-fotos button { margin-top: 4px; padding: 4px 0; font-size: 11px; }
+    #pastizal .sanidad-lectura {
+      margin-top: 8px; white-space: pre-wrap; font-size: 12px; line-height: 1.4;
+      background: var(--verde-suave); border: 1px solid var(--oro-claro); border-radius: 8px; padding: 8px;
+    }
+    #pastizal .sanidad-lectura[hidden] { display: none; }
+    #pastizal .aviso, #pastizal .ok { margin-top: 8px; font-size: 12px; }
+    #pastizal .pasto-clave { margin-top: 8px; font-size: 11px; color: #5C564F; }
+    #pastizal .pasto-clave summary { cursor: pointer; font-weight: 700; color: var(--verde); }
+    #pastizal .pasto-clave input { width: 100%; margin-top: 6px; }
+    #pastizal .pasto-clave button { margin-top: 6px; }
     #dropManejo .cruz-est { margin: 2px 0 4px; }
     #dropManejo .cruz-est button { padding: 4px 2px; font-size: 8px; }
     #dropManejo .tres-sit { margin: 2px 0 4px; }
@@ -537,7 +568,7 @@
       display: flex; background: var(--crema); border-top: 2px solid var(--oro);
       padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
     }
-    .nav-bajo button { flex: 1; border: 0; background: none; color: #5C564F; font-weight: 700; font-size: 11px; padding: 8px 4px; border-radius: 8px; }
+    .nav-bajo button { flex: 1; border: 0; background: none; color: #5C564F; font-weight: 700; font-size: 13px; padding: 8px 4px; border-radius: 8px; }
     .nav-bajo button.on { color: var(--verde); background: var(--verde-suave); }
     .bienvenida {
       position: fixed; inset: 0; z-index: 4000;
@@ -569,14 +600,169 @@
       width: 100%; border: 1px solid var(--verde); background: var(--verde);
       color: #fff; border-radius: 8px; font-weight: 800; font-size: 15px; padding: 12px 14px;
     }
-    body.vista-inicio .btn-menu, body.vista-informe .btn-menu { display: none; }
+    body.vista-inicio .btn-menu, body.vista-informe .btn-menu, body.vista-ubicar .btn-menu, body.vista-sanidad .btn-menu, body.vista-carbono .btn-menu, body.vista-alerta .btn-menu, body.vista-hacienda .btn-menu { display: none; }
     body.vista-visor .bar { padding-top: calc(var(--topbar-h) + 14px + env(safe-area-inset-top, 0px)); }
-    body.vista-inicio .mapa-wrap { pointer-events: none; }
+    body.vista-inicio .mapa-wrap, body.vista-ubicar .mapa-wrap, body.vista-sanidad .mapa-wrap, body.vista-carbono .mapa-wrap, body.vista-alerta .mapa-wrap, body.vista-hacienda .mapa-wrap { pointer-events: none; }
     body.vista-informe .mapa-wrap { visibility: hidden; pointer-events: none; }
     .leaflet-container { background: #1c2b26; }
     .leaflet-tile-pane { z-index: 200; }
-    body.vista-visor .inicio, body.vista-informe .inicio { display: none; }
-    body.vista-visor .informe, body.vista-inicio .informe { display: none; }
+    body.vista-visor .inicio, body.vista-informe .inicio, body.vista-ubicar .inicio, body.vista-sanidad .inicio, body.vista-carbono .inicio, body.vista-alerta .inicio, body.vista-hacienda .inicio { display: none; }
+    body.vista-visor .informe, body.vista-inicio .informe, body.vista-ubicar .informe, body.vista-sanidad .informe, body.vista-carbono .informe, body.vista-alerta .informe, body.vista-hacienda .informe { display: none; }
+    .ubicar { display: none; }
+    body.vista-ubicar .ubicar {
+      display: block; position: absolute; inset: 0; z-index: 1500;
+      background: var(--crema); color: var(--tierra);
+      overflow: auto; -webkit-overflow-scrolling: touch;
+      padding: calc(var(--topbar-h) + 22px + env(safe-area-inset-top, 0px)) 14px calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+    .ubicar .hero, .ubicar-caja { max-width: 720px; margin: 0 auto 16px; }
+    .ubicar .hero h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.15; color: var(--verde); }
+    .ubicar .hero p { margin: 0; font-size: 15px; line-height: 1.4; color: #5C564F; }
+    .ubicar-caja {
+      background: #fff; border: 1px solid var(--oro-claro); border-radius: 12px; padding: 14px;
+    }
+    .ubicar-caja label { display: block; margin: 0 0 4px; font-size: 13px; font-weight: 700; color: var(--verde); }
+    .ubicar-caja textarea { width: 100%; min-height: 72px; }
+    .ubicar-caja button {
+      width: 100%; margin-top: 12px; border-radius: 8px; font-weight: 800; font-size: 15px;
+      padding: 12px 14px; border: 1px solid var(--verde); background: var(--verde); color: #fff;
+    }
+    #ubicarAqui { background: #fff; color: var(--verde); border-color: var(--oro); }
+    .sanidad { display: none; }
+    body.vista-sanidad .sanidad {
+      display: block; position: absolute; inset: 0; z-index: 1500;
+      background: var(--crema); color: var(--tierra);
+      overflow: auto; -webkit-overflow-scrolling: touch;
+      padding: calc(var(--topbar-h) + 22px + env(safe-area-inset-top, 0px)) 14px calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+    .sanidad .hero, .sanidad-caja { max-width: 720px; margin: 0 auto 16px; }
+    .sanidad .hero h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.15; color: var(--verde); }
+    .sanidad .hero p { margin: 0; font-size: 15px; line-height: 1.4; color: #5C564F; }
+    .sanidad-caja {
+      background: #fff; border: 1px solid var(--oro-claro); border-radius: 12px; padding: 14px;
+    }
+    .sanidad-caja .etiq { margin: 0 0 6px; font-size: 13px; font-weight: 700; color: var(--verde); }
+    .sanidad-caja .especies, .sanidad-caja .foto-acciones { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    .sanidad-caja .modo { grid-template-columns: 1fr 1fr; margin-top: 12px; }
+    .sanidad-fotos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .sanidad-fotos figure { margin: 0; width: 76px; }
+    .sanidad-fotos img { width: 76px; height: 76px; object-fit: cover; border-radius: 8px; display: block; background: #1c2b26; }
+    .sanidad-caja .sanidad-fotos button { margin-top: 4px; padding: 4px 0; font-size: 11px; }
+    #sanidadNombre { margin: 0 0 10px; font-size: 15px; }
+    .sanidad-caja .foto-acciones { grid-template-columns: 1fr 1fr; }
+    .sanidad-caja button {
+      width: 100%; margin-top: 12px; border-radius: 8px; font-weight: 800; font-size: 15px;
+      padding: 12px 10px; border: 1px solid var(--verde); background: var(--verde); color: #fff;
+    }
+    .sanidad-caja .especies button, .sanidad-caja .foto-acciones button { margin-top: 0; }
+    .sanidad-caja button.sec, .sanidad-caja .especies button {
+      background: #fff; color: var(--verde); border-color: var(--oro);
+    }
+    .sanidad-caja .especies button.on { background: var(--oro); color: var(--verde-oscuro); border-color: var(--oro); }
+    .sanidad-caja button:disabled { opacity: .55; }
+    #sanidadPreview {
+      display: block; width: 100%; max-height: 280px; object-fit: contain;
+      margin-top: 12px; border-radius: 10px; background: #1c2b26;
+    }
+    #sanidadPreview[hidden] { display: none; }
+    .sanidad-lectura {
+      margin-top: 12px; white-space: pre-wrap; font-size: 14px; line-height: 1.45;
+      background: var(--verde-suave); border: 1px solid var(--oro); border-radius: 10px; padding: 10px 12px;
+    }
+    .sanidad-lectura[hidden] { display: none; }
+    #sanidadPc { margin-top: 12px; }
+    #sanidadPc[hidden] { display: none; }
+    #sanidadPc p { margin: 0; font-size: 13px; line-height: 1.4; color: #1C2B26; }
+    #sanidadPc input { width: 100%; margin-top: 8px; }
+    .sanidad-clave { margin-top: 14px; font-size: 12px; color: #5C564F; }
+    .sanidad-clave summary { cursor: pointer; font-weight: 700; color: var(--verde); }
+    .sanidad-clave p { margin: 8px 0 0; line-height: 1.35; }
+    .sanidad-clave input { width: 100%; margin-top: 8px; }
+    .carbono { display: none; }
+    body.vista-carbono .carbono {
+      display: block; position: absolute; inset: 0; z-index: 1500;
+      background: var(--crema); color: var(--tierra);
+      overflow: auto; -webkit-overflow-scrolling: touch;
+      padding: calc(var(--topbar-h) + 22px + env(safe-area-inset-top, 0px)) 14px calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+    .carbono .hero, .carbono-caja { max-width: 720px; margin: 0 auto 16px; }
+    .carbono .hero h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.15; color: var(--verde); }
+    .carbono .hero p { margin: 0; font-size: 15px; line-height: 1.4; color: #5C564F; }
+    .carbono-caja { background: #fff; border: 1px solid var(--oro-claro); border-radius: 12px; padding: 14px; }
+    .carbono-caja .etiq { margin: 0 0 8px; font-size: 15px; font-weight: 800; color: var(--verde); }
+    .carbono-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .carbono-datos label { display: block; font-size: 12px; font-weight: 700; color: var(--verde); }
+    .carbono-datos input, .carbono-datos select { width: 100%; margin-top: 4px; }
+    .carbono-metricas { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .carbono-metricas div { border: 1px solid var(--oro-claro); border-radius: 10px; padding: 8px; background: var(--crema); }
+    .carbono-metricas small { display: block; font-size: 11px; color: #5C564F; font-weight: 700; }
+    .carbono-metricas b { display: block; margin-top: 4px; font-size: 18px; color: var(--verde); line-height: 1.1; }
+    .carbono-estado { margin: 12px 0 0; border-radius: 10px; padding: 10px 12px; font-weight: 800; line-height: 1.35; }
+    .carbono-estado.capturador { background: #E8F0E4; color: var(--verde); }
+    .carbono-estado.neutro { background: #FFF6E5; color: #6A4B12; }
+    .carbono-estado.emisor { background: #F8E6E4; color: #B42318; }
+    .carbono-barras { margin-top: 12px; display: grid; gap: 8px; }
+    .carbono-barras span { display: block; font-size: 12px; font-weight: 700; color: #5C564F; margin-bottom: 3px; }
+    .carbono-barras i {
+      display: block; height: 22px; border-radius: 6px; min-width: 2px;
+      background: var(--verde);
+    }
+    .carbono-barras .em i { background: #8A6A2A; }
+    .carbono-informe {
+      margin-top: 12px; white-space: pre-wrap; font-size: 13px; line-height: 1.45;
+      background: var(--verde-suave); border: 1px solid var(--oro); border-radius: 10px; padding: 10px 12px;
+    }
+    .carbono-nota { margin: 10px 0 0; font-size: 11px; line-height: 1.35; color: #5C564F; }
+    .alerta { display: none; }
+    body.vista-alerta .alerta {
+      display: block; position: absolute; inset: 0; z-index: 1500;
+      background: var(--crema); color: var(--tierra);
+      overflow: auto; -webkit-overflow-scrolling: touch;
+      padding: calc(var(--topbar-h) + 22px + env(safe-area-inset-top, 0px)) 14px calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+    .alerta .hero, .alerta-caja { max-width: 720px; margin: 0 auto 16px; }
+    .alerta .hero h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.15; color: var(--verde); }
+    .alerta .hero p { margin: 0; font-size: 15px; line-height: 1.4; color: #5C564F; }
+    .alerta-caja { background: #fff; border: 1px solid var(--oro-claro); border-radius: 12px; padding: 14px; }
+    .alerta-caja .etiq { margin: 0 0 8px; font-size: 15px; font-weight: 800; color: var(--verde); }
+    .alerta-caja label { display: block; margin: 0 0 8px; font-size: 12px; font-weight: 700; color: var(--verde); }
+    .alerta-caja input[type="date"] { width: 100%; margin-top: 4px; }
+    .alerta-bloque { border: 1px solid var(--oro-claro); border-radius: 10px; padding: 10px 12px; margin-top: 10px; background: var(--crema); }
+    .alerta-bloque h2 { margin: 0 0 6px; font-size: 15px; color: var(--verde); }
+    .alerta-bloque p { margin: 0 0 6px; font-size: 14px; line-height: 1.4; }
+    .alerta-bloque p:last-child { margin-bottom: 0; }
+    .alerta-bloque .firme { font-weight: 800; }
+    .hacienda { display: none; }
+    body.vista-hacienda .hacienda {
+      display: block; position: absolute; inset: 0; z-index: 1500;
+      background: var(--crema); color: var(--tierra);
+      overflow: auto; -webkit-overflow-scrolling: touch;
+      padding: calc(var(--topbar-h) + 22px + env(safe-area-inset-top, 0px)) 14px calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+    .hacienda .hero, .hacienda-caja { max-width: 720px; margin: 0 auto 16px; }
+    .hacienda .hero h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.15; color: var(--verde); }
+    .hacienda .hero p { margin: 0; font-size: 15px; line-height: 1.4; color: #5C564F; }
+    .hacienda-caja { background: #fff; border: 1px solid var(--oro-claro); border-radius: 12px; padding: 14px; }
+    .hacienda-modulos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .hacienda-modulos button, .hacienda-acciones button, .volver-hacienda, #btnVolverTerritorio {
+      width: 100%; margin: 0; border-radius: 8px; font-weight: 800; font-size: 14px;
+      padding: 12px 8px; border: 1px solid var(--oro); background: #fff; color: var(--verde);
+    }
+    .hacienda-modulos button.on { background: var(--oro); color: var(--verde-oscuro); border-color: var(--oro); }
+    .hacienda-ficha { margin-top: 12px; }
+    .hacienda-ficha h2 { margin: 0 0 6px; font-size: 18px; color: var(--verde); }
+    .hacienda-ficha p { margin: 0 0 8px; font-size: 15px; line-height: 1.4; }
+    .hacienda-respuesta { margin: 4px 0 0; font-size: 16px; font-weight: 800; color: var(--verde); line-height: 1.35; }
+    .hacienda-acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .hacienda-acciones button.pri { background: var(--verde); color: #fff; border-color: var(--verde); }
+    .hacienda-motor { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .hacienda-motor div { border: 1px solid var(--oro-claro); border-radius: 10px; padding: 8px; background: var(--crema); }
+    .hacienda-motor small { display: block; font-size: 11px; color: #5C564F; font-weight: 700; }
+    .hacienda-motor b { display: block; margin-top: 4px; font-size: 16px; color: var(--verde); line-height: 1.15; }
+    .hacienda-nota { margin: 8px 0 0; font-size: 12px; line-height: 1.35; color: #5C564F; }
+    .sanidad-caja .volver-hacienda, .carbono-caja .volver-hacienda, .alerta-caja .volver-hacienda {
+      margin-bottom: 10px; background: #fff; color: var(--verde); border-color: var(--oro);
+    }
     body.vista-visor .btn-menu { top: calc(var(--topbar-h) + 8px + env(safe-area-inset-top, 0px)); }
     body.vista-visor .desplegables {
       top: calc(var(--topbar-h) + 8px + env(safe-area-inset-top, 0px));
@@ -588,8 +774,69 @@
       .topbar .who { max-width: calc(100% - 520px); }
       .nav-bajo { display: none; }
     }
+    body.vista-celular { background: #e7e0d0; }
+    body.vista-celular .topbar,
+    body.vista-celular .mapa-wrap,
+    body.vista-celular .nav-bajo,
+    body.vista-celular .inicio,
+    body.vista-celular .ubicar,
+    body.vista-celular .sanidad,
+    body.vista-celular .carbono,
+    body.vista-celular .alerta,
+    body.vista-celular .hacienda,
+    body.vista-celular .informe {
+      left: 0;
+      right: auto;
+      width: min(420px, 100%);
+    }
+    body.vista-celular .nav-bajo { display: flex; }
+    body.vista-celular .topbar .desk { display: none; }
+    body.vista-celular .topbar .who { max-width: calc(100% - 88px); }
+    body.vista-celular.perimetro-listo.vista-visor .ficha-celular {
+      display: block;
+      position: absolute;
+      z-index: 1300;
+      left: 12px;
+      right: 12px;
+      bottom: calc(62px + env(safe-area-inset-bottom, 0px));
+      background: rgba(255, 255, 255, .95);
+      border: 1px solid #1B7A4A;
+      border-radius: 12px;
+      padding: 10px 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    }
+    body.vista-celular.perimetro-listo.vista-visor .ficha-celular b {
+      display: block; color: #0D5C2C; font-size: 15px; line-height: 1.2;
+    }
+    body.vista-celular.perimetro-listo.vista-visor .ficha-celular span {
+      display: block; margin-top: 2px; color: #1C2B26; font-size: 13px; font-weight: 700;
+    }
+    body.vista-celular.perimetro-listo.vista-visor .btn-menu,
+    body.vista-celular.perimetro-listo.vista-visor .desplegables { display: none !important; }
+    body.vista-celular.perimetro-listo.vista-visor .desplegables {
+      display: flex !important;
+      left: calc(10px + env(safe-area-inset-left, 0px));
+      top: calc(var(--topbar-h) + 8px + env(safe-area-inset-top, 0px));
+    }
+    body.vista-celular.perimetro-listo.vista-visor .desplegables > details:not(#dropManejo) { display: none !important; }
+    body.vista-celular { --topbar-h: 64px; }
+    body.vista-celular .topbar {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) 40px;
+      align-items: center;
+      column-gap: 4px;
+      padding: 0 8px;
+      height: var(--topbar-h);
+    }
+    body.vista-celular .topbar .logo { height: 34px; width: 34px; justify-self: start; }
+    body.vista-celular .topbar .who {
+      position: static; left: auto; top: auto; transform: none;
+      justify-self: center; text-align: center; max-width: none;
+    }
+    body.vista-celular .topbar .who small { font-size: 10px; letter-spacing: .03em; }
+    body.vista-celular .topbar .who b { font-size: 14px; white-space: nowrap; }
     @media print {
-      .topbar, .nav-bajo, .btn-menu, .bar, .velo, .bienvenida, .mapa-wrap, .inicio, .informe-acciones { display: none !important; }
+      .topbar, .nav-bajo, .btn-menu, .bar, .velo, .bienvenida, .mapa-wrap, .inicio, .ubicar, .sanidad, .carbono, .alerta, .hacienda, .informe-acciones { display: none !important; }
       .informe { position: static; padding: 0; background: #fff; display: block !important; }
       .informe .papel { border: 0; }
     }
@@ -607,6 +854,20 @@
     }
     .consulta .aviso, .consulta .ok { margin-top: 8px; }
     .consulta .ok { background: #fff; border: 1px solid var(--oro-claro); padding: 6px 8px; border-radius: 8px; }
+    .conexion-xai {
+      margin-top: 10px; border: 1px solid var(--oro); background: #fff;
+      border-radius: 8px; padding: 8px;
+    }
+    .conexion-xai summary { cursor: pointer; font-weight: 700; color: var(--verde); font-size: 13px; }
+    .conexion-xai p { margin: 8px 0 0; font-size: 11px; line-height: 1.35; color: #1C2B26; }
+    .conexion-xai label { display: block; margin-top: 8px; font-size: 11px; color: #5C564F; }
+    .conexion-xai input { width: 100%; margin-top: 4px; }
+    .conexion-xai button {
+      width: 100%; margin-top: 8px; border-radius: 8px; font-weight: 700; font-size: 13px;
+      padding: 10px 12px; border: 1px solid var(--verde); background: var(--verde); color: #fff;
+    }
+    .conexion-xai .aviso, .conexion-xai .ok { margin-top: 8px; }
+    .conexion-xai .ok { background: var(--verde-suave); border: 1px solid var(--oro-claro); padding: 6px 8px; border-radius: 8px; color: var(--verde); }
     @media (min-width: 900px) {
       body.panel-abierto .desplegables { left: 372px; }
     }
@@ -700,6 +961,35 @@
         max-width: 42vw;
         font-size: 9px;
       }
+      .ficha-celular {
+        display: none;
+      }
+      body.perimetro-listo.vista-visor .ficha-celular {
+        display: block;
+        position: absolute;
+        z-index: 1300;
+        left: 12px;
+        right: 12px;
+        bottom: calc(62px + env(safe-area-inset-bottom, 0px));
+        background: rgba(255, 255, 255, .95);
+        border: 1px solid #1B7A4A;
+        border-radius: 12px;
+        padding: 10px 12px;
+        box-shadow: 0 6px 16px rgba(0,0,0,.18);
+      }
+      body.perimetro-listo.vista-visor .ficha-celular b {
+        display: block; color: #0D5C2C; font-size: 15px; line-height: 1.2;
+      }
+      body.perimetro-listo.vista-visor .ficha-celular span {
+        display: block; margin-top: 2px; color: #1C2B26; font-size: 13px; font-weight: 700;
+      }
+      body.perimetro-listo.vista-visor .btn-menu,
+      body.perimetro-listo.vista-visor .desplegables { display: none !important; }
+      body.perimetro-listo.vista-visor .desplegables {
+        display: flex !important;
+        left: calc(10px + env(safe-area-inset-left, 0px));
+      }
+      body.perimetro-listo.vista-visor .desplegables > details:not(#dropManejo) { display: none !important; }
       body.vista-visor .bar {
         top: calc(var(--topbar-h) + 48px + env(safe-area-inset-top, 0px));
         left: 8px;
@@ -775,7 +1065,8 @@
     <div class="topbar-end">
       <nav class="desk" aria-label="Servicios">
         <button type="button" class="on" data-vista="inicio">Inicio</button>
-        <button type="button" data-vista="visor">Mapa</button>
+        <button type="button" data-vista="visor">Territorio</button>
+        <button type="button" data-vista="hacienda">Hacienda</button>
         <button type="button" data-vista="informe">Informe</button>
       </nav>
     </div>
@@ -789,7 +1080,7 @@
       <article class="acordeon" id="accVista">
         <button type="button" class="cab" data-acc="accVista"><div><small>1 · Visualizador</small><b>Ver el campo</b></div><i>+</i></button>
         <div class="cuerpo">
-          Satélite y potreros de su establecimiento. <span class="solo-escritorio">Capas y manejo quedan cerrados para no tapar el mapa.</span><span class="solo-celular">En el celular no se abre el campo de ejemplo: se ve cómo se cargan los datos.</span>
+          Satélite y potreros de su establecimiento. <span class="solo-escritorio">Capas y manejo quedan cerrados para no tapar el mapa.</span><span class="solo-celular">En el celular se ve el campo guardado en la computadora. Acá no se guarda.</span>
           <button type="button" id="btnVerDemo">Ir al mapa</button>
         </div>
       </article>
@@ -798,6 +1089,7 @@
         <div class="cuerpo">
           Un punto, las esquinas, o una foto JPG del plano de mensura. <span class="solo-escritorio">Puede guardar más de un campo y cambiar.</span> El límite declarado no es el padrón.
           <button type="button" id="btnIrConsulta">Ir a Mi campo</button>
+          <button type="button" id="btnIrUbicar">Ubicar por WhatsApp</button>
         </div>
       </article>
       <article class="acordeon" id="accCapas">
@@ -815,7 +1107,115 @@
         </div>
       </article>
     </div>
-    <p class="nota">Cada campo se estudia por separado. Capas: satélite, verde NDVI, INTA, OTBN, lluvia y tasa de forraje.</p>
+    <p class="nota">Tres pasos: el territorio en el mapa, la hacienda de a una especie, y el informe. Capas: satélite, INTA, OTBN y agua.</p>
+  </section>
+  <section class="ubicar" id="ubicar">
+    <div class="hero">
+      <h1>Ubicar el predio</h1>
+      <p>Pegue la ubicación que le mandaron por WhatsApp, o use la de este teléfono. El punto queda en el mapa.</p>
+    </div>
+    <div class="ubicar-caja">
+      <label for="ubicarTexto">Ubicación de WhatsApp</label>
+      <textarea id="ubicarTexto" placeholder="Pegue el mensaje o el enlace"></textarea>
+      <button type="button" id="ubicarMapa">Ver en el mapa</button>
+      <button type="button" id="ubicarAqui">Usar la ubicación de este teléfono</button>
+      <button type="button" class="sec" id="btnVolverTerritorio">Volver al territorio</button>
+      <p class="aviso" id="ubicarEstado" hidden></p>
+    </div>
+  </section>
+  <section class="sanidad" id="sanidad">
+    <div class="hero">
+      <h1>Sanidad</h1>
+      <p>Abra su campo y saque la foto. Vale para bovino, ovino y caprino, un animal o el rodeo. Grok 4.7 estima la condición corporal de 1 a 5 y la guarda en ese productor.</p>
+    </div>
+    <div class="sanidad-caja">
+      <button type="button" class="sec volver-hacienda">Volver a la hacienda</button>
+      <p class="etiq" id="sanidadNombre">Abra su campo para guardar el informe ahí.</p>
+      <p class="etiq">Especie</p>
+      <div class="especies" role="group" aria-label="Especie">
+        <button type="button" data-especie="bovino">Bovino</button>
+        <button type="button" data-especie="ovino">Ovino</button>
+        <button type="button" data-especie="caprino">Caprino</button>
+      </div>
+      <div class="especies modo" role="group" aria-label="Cantidad">
+        <button type="button" class="on" data-modo="uno">Un animal</button>
+        <button type="button" data-modo="rodeo">Rodeo</button>
+      </div>
+      <p class="etiq" id="sanidadModoTxt">Una foto, de perfil o de atrás.</p>
+      <div class="foto-acciones">
+        <button type="button" id="sanidadTomar">Tomar foto</button>
+        <button type="button" class="sec" id="sanidadCargar">Cargar foto</button>
+      </div>
+      <input id="sanidadCamara" type="file" accept="image/jpeg,image/png" capture="environment" hidden />
+      <input id="sanidadArchivo" type="file" accept="image/jpeg,image/png,image/webp" hidden />
+      <div class="sanidad-fotos" id="sanidadFotos"></div>
+      <button type="button" id="sanidadAnalizar" disabled>Hacer el informe</button>
+      <p class="aviso" id="sanidadEstado" hidden></p>
+      <div class="sanidad-lectura" id="sanidadLectura" hidden></div>
+      <details class="sanidad-clave">
+        <summary>Clave de esta visita</summary>
+        <p>Hace falta la clave de api.x.ai. Queda solo en este navegador, durante esta visita. No se guarda con el productor.</p>
+        <input id="sanidadClave" type="password" autocomplete="off" placeholder="xai-..." />
+        <button type="button" class="sec" id="sanidadClaveUsar">Usar en esta visita</button>
+      </details>
+    </div>
+  </section>
+  <section class="carbono" id="carbono">
+    <div class="hero">
+      <h1>Balance de carbono</h1>
+      <p>Se calcula con las hectáreas y la hacienda de este campo, sea vaca, oveja o cabra: la cuenta es por EV. No cambia la carga ni el agua.</p>
+    </div>
+    <div class="carbono-caja">
+      <button type="button" class="sec volver-hacienda">Volver a la hacienda</button>
+      <p class="etiq" id="carbonoNombre">Abra el campo para calcular el balance.</p>
+      <div class="carbono-datos">
+        <label>Diésel del año (litros)
+          <input id="carbonoDiesel" type="number" min="0" step="10" inputmode="decimal" value="0" />
+        </label>
+        <label>Pastoreo
+          <select id="carbonoPastoreo">
+            <option value="1">Continuo</option>
+            <option value="1.2">Rotativo (+20%)</option>
+          </select>
+        </label>
+      </div>
+      <div class="carbono-metricas" id="carbonoMetricas"></div>
+      <p class="carbono-estado" id="carbonoEstado" hidden></p>
+      <div class="carbono-barras" id="carbonoBarras"></div>
+      <div class="carbono-informe" id="carbonoInforme"></div>
+      <p class="carbono-nota">Cuenta de San Luis: 0,75 t CO2eq por EV (fermentación y deyecciones), 2,68 kg CO2eq por litro de diésel, 0,50 t/ha/año en monte arbolado y 0,40 t/ha/año en pastura, por el factor de pastoreo. El campo limpio no captura.</p>
+    </div>
+  </section>
+  <section class="alerta" id="alerta">
+    <div class="hero">
+      <h1>Estado diario</h1>
+      <p>Para el sistema caprino mixto, monte y pastura. Lee el campo abierto: potrero, días, forraje, agua y la condición corporal de la última foto. Si la hacienda es ovina, usa la misma hoja. No cambia la carga ni recorta la bebida.</p>
+    </div>
+    <div class="alerta-caja">
+      <button type="button" class="sec volver-hacienda">Volver a la hacienda</button>
+      <p class="etiq" id="alertaNombre">Elija cabras u ovejas en Mi campo.</p>
+      <label>Inicio de parición
+        <input id="alertaParicion" type="date" />
+      </label>
+      <div id="alertaCuerpo"></div>
+    </div>
+  </section>
+  <section class="hacienda" id="hacienda">
+    <div class="hero">
+      <h1>Hacienda</h1>
+      <p>Elija una especie. Abajo queda la lectura del campo: pasto, agua y carbono. La foto y el detalle se abren solo si hace falta.</p>
+    </div>
+    <div class="hacienda-caja">
+      <div class="hacienda-modulos" role="group" aria-label="Especie">
+        <button type="button" data-mod="cria">Bovino</button>
+        <button type="button" data-mod="cabra">Caprino</button>
+        <button type="button" data-mod="oveja">Ovino</button>
+      </div>
+      <div id="haciendaFicha"></div>
+      <div class="hacienda-motor" id="haciendaMotor"></div>
+      <p class="hacienda-respuesta" id="haciendaRespuesta"></p>
+      <p class="hacienda-nota">Estas tres cifras las calcula el gemelo. La foto la lee Grok 4.7. No se recorta el agua y no se desmonta.</p>
+    </div>
   </section>
   <section class="informe" id="informe">
     <article class="papel" id="cuerpoInforme"></article>
@@ -827,7 +1227,8 @@
   </section>
   <nav class="nav-bajo" aria-label="Navegación">
     <button type="button" class="on" data-vista="inicio">Inicio</button>
-    <button type="button" data-vista="visor">Mapa</button>
+    <button type="button" data-vista="visor">Territorio</button>
+    <button type="button" data-vista="hacienda">Hacienda</button>
     <button type="button" data-vista="informe">Informe</button>
   </nav>
   <button type="button" class="btn-menu" id="btnMenu" aria-expanded="false" aria-controls="bar">Menú</button>
@@ -841,18 +1242,26 @@
     <div class="consulta">
       <b>Servicio de consulta</b>
       <p>Se carga su establecimiento, se leen suelos + OTBN + INTA, y se entrega el informe de puntos críticos (corto y mediano plazo).</p>
-      <p class="aviso solo-celular">En el celular no se abre el campo de ejemplo. Sirve para ver cómo se preguntan y cargan los datos. Al cerrar o recargar no queda guardado.</p>
+      <p class="aviso solo-celular">En el celular se ve el perímetro guardado en la computadora. Lo que se cargue acá no queda guardado.</p>
       <button type="button" id="btnPedirConsulta">Pedir consulta</button>
       <button type="button" id="btnInformeMenu" class="sec" style="background:#fff;color:#0D5C2C;margin-top:6px;border-color:#C4A35A">Ver informe ahora</button>
       <p class="aviso" id="msgConsulta" hidden></p>
     </div>
+    <details class="conexion-xai" id="conexionXai">
+      <summary>Conexión para solapas nuevas</summary>
+      <p>Usa api.x.ai. La clave queda solo en este navegador, en esta visita. No se guarda en el gemelo ni en el informe. Las cuentas del lote las sigue haciendo el gemelo.</p>
+      <label for="xaiClave">Clave de api.x.ai</label>
+      <input id="xaiClave" type="password" autocomplete="off" spellcheck="false" placeholder="xai-..." />
+      <button type="button" id="xaiProbar">Probar conexión</button>
+      <p class="aviso" id="xaiEstado" hidden></p>
+    </details>
     <div class="nombres-fila">
       <button type="button" id="btnMiCampo" aria-expanded="false">Mi campo</button>
     </div>
     <div id="cajaCampo" class="caja-nombre" hidden>
       <p class="aviso"><b>Preguntas al productor · primero el establecimiento, al final la hacienda</b><br>
         Hasta que no esté el lote en el satélite, no se lee la situación actual.</p>
-      <p class="aviso solo-celular">Acá se ve cómo se carga un campo (letras A a E). En el teléfono no queda guardado.</p>
+      <p class="aviso solo-celular">En el teléfono se mira el campo. Lo que se escriba acá no queda guardado.</p>
 
       <div class="paso">
         <p><b class="nro">A</b> <b>¿Cómo se llama el establecimiento?</b></p>
@@ -944,6 +1353,11 @@
 
       <button type="button" id="btnVerCampo">Ver el campo y leer la situación actual</button>
       <button type="button" id="btnGuardarCampo" class="sec">Guardar este campo</button>
+      <div id="enlaceCelular" class="solo-escritorio" hidden>
+        <p class="hint">Guardado en esta computadora. En el celular se ve el perímetro y no se guarda.</p>
+        <input id="enlaceCelularUrl" type="text" readonly />
+        <button type="button" id="btnCopiarCelular" class="sec">Copiar enlace para el celular</button>
+      </div>
       <label class="solo-escritorio">Campos guardados</label>
       <div class="lista-campos" id="listaCampos"></div>
     </div>
@@ -988,6 +1402,10 @@
   </aside>
   <div class="mapa-wrap">
     <div class="cartel-nombre" id="cartelNombre">Gemelo Digital Ganadero</div>
+    <div class="ficha-celular" id="fichaCelular">
+      <b id="fichaCelularTitulo">Campo</b>
+      <span id="fichaCelularHa"></span>
+    </div>
     <div class="desplegables" id="desplegables">
       <details id="dropCapas">
         <summary>Capas</summary>
@@ -1049,6 +1467,29 @@
       <details id="dropManejo">
         <summary>Manejo</summary>
         <div class="cuerpo">
+          <div id="pastizal">
+            <p class="pasto-nota">Foto del pastizal de este lote, natural o implantado. Grok 4.7 estima cobertura, suelo desnudo, altura, estado y la especie que predomina. Queda en el informe. No cambia la carga ni la tasa de forraje.</p>
+            <p class="pasto-campo" id="pastoCampo">Abra su campo para guardar el informe ahí.</p>
+            <div class="pasto-tipo" role="group" aria-label="Tipo de pastizal">
+              <button type="button" data-pasto="natural">Natural</button>
+              <button type="button" data-pasto="implantado">Implantado</button>
+            </div>
+            <div class="pasto-acciones">
+              <button type="button" id="pastoTomar">Tomar foto</button>
+              <button type="button" class="sec" id="pastoCargar">Cargar foto</button>
+            </div>
+            <input id="pastoCamara" type="file" accept="image/jpeg,image/png" capture="environment" hidden />
+            <input id="pastoArchivo" type="file" accept="image/jpeg,image/png,image/webp" hidden />
+            <div class="sanidad-fotos" id="pastoFotos"></div>
+            <button type="button" id="pastoInforme" disabled>Hacer el informe del pastizal</button>
+            <p class="aviso" id="pastoEstado" hidden></p>
+            <div class="sanidad-lectura" id="pastoLectura" hidden></div>
+            <details class="pasto-clave">
+              <summary>Clave de esta visita</summary>
+              <input id="pastoClave" type="password" autocomplete="off" placeholder="xai-..." />
+              <button type="button" class="sec" id="pastoClaveUsar">Usar en esta visita</button>
+            </details>
+          </div>
           <p class="hint">Toque una columna: el calendario dice hasta dónde subir.</p>
           <div class="cruz-est" data-cruz-est></div>
           <div class="tres-sit" id="tresSit"></div>
@@ -1090,11 +1531,30 @@
 </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="superficie.js"></script>
+  <script src="xai.js"></script>
   <script>
     const MARCA = "Gemelo Digital Ganadero";
     const DEMO_NOMBRE = "Gemelo Digital Ganadero";
     const KEY = "gemelo-500ha-manejo-v1";
     function esMovil() { return window.matchMedia("(max-width: 900px)").matches; }
+    function codificarVer(obj) {
+      return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+    }
+    function decodificarVer(s) {
+      return JSON.parse(decodeURIComponent(escape(atob(s))));
+    }
+    function payloadVer() {
+      try {
+        const q = new URLSearchParams(location.search).get("ver");
+        if (!q) return null;
+        const data = decodificarVer(q);
+        if (!data || !Array.isArray(data.r) || data.r.length < 3) return null;
+        return data;
+      } catch (e) { return null; }
+    }
+    const vistoCelular = payloadVer();
+    let vistaCelular = !!(vistoCelular);
+    if (vistaCelular) document.body.classList.add("vista-celular");
     const SEM = { verde: "#1B7A4A", amarillo: "#C4A035", rojo: "#B42318", descanso: "#5C7A8A" };
     const ESPECIE = {
       cria: {
@@ -1233,6 +1693,9 @@
       const b = document.getElementById("fEspeciePanel");
       if (a) a.value = eid;
       if (b) b.value = eid;
+      if (document.body.classList.contains("vista-hacienda") && typeof pintarHacienda === "function") pintarHacienda();
+      if (document.body.classList.contains("vista-alerta") && typeof pintarAlerta === "function") pintarAlerta();
+      if (document.body.classList.contains("vista-carbono") && typeof pintarCarbono === "function") pintarCarbono();
     }
     function nomEscena(esc) {
       return { actual: "Inicial", m1: "Mejorando", optimo: "Ideal" }[esc] || esc;
@@ -1249,6 +1712,15 @@
       const nom = store.nombreCampo || DEMO_NOMBRE;
       const ha = Math.round(haTotal());
       el.innerHTML = escHtml(nom) + (ha ? (" <small>" + ha + " ha · " + nomEscena(escSel) + "</small>") : "");
+      const ficha = document.getElementById("fichaCelular");
+      const listo = (esMovil() || vistaCelular) && store.anilloCampo && store.anilloCampo.length >= 3;
+      document.body.classList.toggle("perimetro-listo", !!listo);
+      if (!ficha) return;
+      if (!listo) return;
+      const titulo = document.getElementById("fichaCelularTitulo");
+      const linea = document.getElementById("fichaCelularHa");
+      if (titulo) titulo.textContent = nom;
+      if (linea) linea.textContent = (ha ? (ha + " ha") : "Campo") + " · San Luis";
     }
     function htmlPopupCampo(p) {
       const ha = p && p.ha != null ? p.ha : haTotal();
@@ -1508,7 +1980,7 @@
       } catch (e) { return {}; }
     }
     function saveStore(s) {
-      if (esMovil()) return;
+      if (esMovil() || vistaCelular) return;
       try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* cuota */ }
     }
     let zmin = 917, zmax = 1023;
@@ -3014,7 +3486,8 @@
       }
       box.innerHTML = lista.map((c, i) =>
         "<div class='fila-campo'><span>" + escHtml(c.nombre || ("Campo " + (i + 1))) +
-        (c.ha ? " · " + Math.round(c.ha) + " ha" : "") + "</span>" +
+        (c.ha ? " · " + Math.round(c.ha) + " ha" : "") +
+        (c.sanidad && c.sanidad.length ? " · condición corporal" : "") + "</span>" +
         "<button type='button' data-usar='" + i + "'>Usar</button>" +
         "<button type='button' class='sec' data-borrar='" + i + "'>Quitar</button></div>"
       ).join("");
@@ -3590,13 +4063,23 @@
       const cy = hayAnillo ? (west + east) / 2 : lon;
       limiteReal.clearLayers();
       if (hayAnillo) {
+        const verMovil = esMovil() || vistaCelular;
         L.polygon(ring, {
-          pane: "alambrado", color: "#E4C87A", weight: 4, fill: false, dashArray: "8 6"
+          pane: "alambrado",
+          color: verMovil ? "#1B7A4A" : "#E4C87A",
+          weight: verMovil ? 3 : 4,
+          fill: !!verMovil,
+          fillColor: "#1B7A4A",
+          fillOpacity: verMovil ? 0.22 : 0,
+          dashArray: verMovil ? null : "8 6"
         }).bindPopup("Alambrado cerrado · " + fmtHa(ha) + " (según las esquinas del plano, no es el padrón).").addTo(limiteReal);
         ring.forEach((p, i) => {
           L.circleMarker(p, {
-            pane: "alambrado", radius: 6, color: "#C4A35A", weight: 2,
-            fillColor: "#fff", fillOpacity: 1
+            pane: "alambrado", radius: 6,
+            color: verMovil ? "#ffffff" : "#C4A35A",
+            weight: 2,
+            fillColor: verMovil ? "#1B7A4A" : "#fff",
+            fillOpacity: 1
           }).bindPopup("Vértice " + (i + 1)).addTo(limiteReal);
         });
         esDemoCalera = false;
@@ -4017,7 +4500,7 @@
       document.querySelectorAll("#desplegables details").forEach((d) => { d.open = false; });
     }
     map.on("click", (ev) => {
-      if (document.body.classList.contains("vista-inicio") || document.body.classList.contains("vista-informe")) return;
+      if (document.body.classList.contains("vista-inicio") || document.body.classList.contains("vista-informe") || document.body.classList.contains("vista-ubicar") || document.body.classList.contains("vista-sanidad") || document.body.classList.contains("vista-carbono") || document.body.classList.contains("vista-alerta") || document.body.classList.contains("vista-hacienda")) return;
       cerrarSolapasMapa();
       setPanel(false);
       if (agregarEsquinaSat(ev.latlng)) return;
@@ -4173,8 +4656,36 @@
       if (store.camposGuardados.length > 8) store.camposGuardados = store.camposGuardados.slice(-8);
       saveStore(store);
       pintarListaCampos();
-      decirPlano("Campo guardado. Puede cargar otro y cambiar con Usar.");
+      const cajaEnlace = document.getElementById("enlaceCelular");
+      const inputEnlace = document.getElementById("enlaceCelularUrl");
+      if (snap.anillo && snap.anillo.length >= 3 && cajaEnlace && inputEnlace) {
+        const url = location.origin + location.pathname + "?ver=" + encodeURIComponent(codificarVer({
+          n: snap.nombre,
+          ha: snap.ha || "",
+          r: snap.anillo.map((p) => [Math.round(p[0] * 1e5) / 1e5, Math.round(p[1] * 1e5) / 1e5]),
+          p: snap.propietario || ""
+        }));
+        inputEnlace.value = url;
+        cajaEnlace.hidden = false;
+        decirPlano("Campo guardado en esta computadora. El enlace abre el perímetro en el celular, sin guardar.");
+      } else {
+        decirPlano("Campo guardado. Para ver el perímetro en el celular, primero cierre el alambrado con las esquinas.");
+      }
     });
+    const btnCopiarCelular = document.getElementById("btnCopiarCelular");
+    if (btnCopiarCelular) {
+      btnCopiarCelular.addEventListener("click", async () => {
+        const url = (document.getElementById("enlaceCelularUrl").value || "").trim();
+        if (!url) return;
+        try {
+          await navigator.clipboard.writeText(url);
+          decirPlano("Enlace copiado. Ábralo en el celular: se ve el perímetro y no se guarda.");
+        } catch (e) {
+          document.getElementById("enlaceCelularUrl").focus();
+          decirPlano("Seleccione el enlace y cópielo. En el celular se ve el perímetro y no se guarda.");
+        }
+      });
+    }
     document.getElementById("listaCampos").addEventListener("click", (ev) => {
       const usar = ev.target.closest("[data-usar]");
       const borrar = ev.target.closest("[data-borrar]");
@@ -4331,7 +4842,12 @@
     }
     function pintar(p) {
       const v = decision(p);
-      if (polyByN[p.n]) polyByN[p.n].setStyle({ fillColor: v.color, color: "#fff", weight: 3, fillOpacity: 0.22 });
+      if (polyByN[p.n]) {
+        const ver = esMovil() || vistaCelular;
+        polyByN[p.n].setStyle(ver
+          ? { fillColor: "#1B7A4A", color: "#1B7A4A", weight: 3, fillOpacity: 0.34 }
+          : { fillColor: v.color, color: "#fff", weight: 3, fillOpacity: 0.22 });
+      }
       (tints[p.n] || []).forEach((c) => {
         c.poly.setStyle({ fillColor: v.color, fillOpacity: 0.08 + 0.16 * c.hs });
       });
@@ -4956,8 +5472,23 @@
     pintarCampos();
     if (!esMovil()) aplicarNombre(store.nombreCampo);
     else pintarCartelCampo();
-    const ultimoCampo = esMovil() ? null : (store.campoActivo || ((store.camposGuardados || []).slice(-1)[0]));
-    if (ultimoCampo && (ultimoCampo.lat || ultimoCampo.limites)) {
+    const ultimoCampo = (esMovil() || vistaCelular) ? null : (store.campoActivo || ((store.camposGuardados || []).slice(-1)[0]));
+    if (vistaCelular) {
+      document.getElementById("fProd").value = vistoCelular.n || "";
+      const elPropVer = document.getElementById("fPropietario");
+      if (elPropVer && vistoCelular.p) elPropVer.value = vistoCelular.p;
+      if (vistoCelular.ha) document.getElementById("fHaCampo").value = vistoCelular.ha;
+      document.getElementById("fLat").value = Math.abs(vistoCelular.r[0][0]).toFixed(5).replace(".", ",") + " S";
+      document.getElementById("fLon").value = Math.abs(vistoCelular.r[0][1]).toFixed(5).replace(".", ",") + " O";
+      document.getElementById("fLimites").value = vistoCelular.r.map((p) => lineaGeo(p[0], p[1])).join("\n");
+      store.anilloCampo = vistoCelular.r.map((p) => [Number(p[0]), Number(p[1])]);
+      cargarCampoProductor.silencio = true;
+      cargarCampoProductor();
+      cargarCampoProductor.silencio = false;
+      refrescarMapa();
+      mostrarVista("visor");
+      setPanel(false);
+    } else if (ultimoCampo && (ultimoCampo.lat || ultimoCampo.limites)) {
       aplicarFormCampo(ultimoCampo);
       cargarCampoProductor.silencio = true;
       cargarCampoProductor();
@@ -4975,10 +5506,11 @@
     }
 
     function mostrarVista(id) {
-      document.body.classList.remove("vista-inicio", "vista-visor", "vista-informe");
+      document.body.classList.remove("vista-inicio", "vista-visor", "vista-informe", "vista-ubicar", "vista-sanidad", "vista-carbono", "vista-alerta", "vista-hacienda");
       document.body.classList.add("vista-" + id);
+      const marca = { sanidad: "hacienda", carbono: "hacienda", alerta: "hacienda", ubicar: "visor" }[id] || id;
       document.querySelectorAll(".topbar .desk button, .nav-bajo button").forEach((b) => {
-        b.classList.toggle("on", b.dataset.vista === id);
+        b.classList.toggle("on", b.dataset.vista === marca);
       });
       if (id === "visor") {
         setFondo("sat");
@@ -4995,6 +5527,10 @@
         }, 280);
       }
       if (id === "informe") pintarInforme();
+      if (id === "sanidad" && typeof window.mostrarSanidadGuardada === "function") window.mostrarSanidadGuardada();
+      if (id === "carbono") pintarCarbono();
+      if (id === "alerta") pintarAlerta();
+      if (id === "hacienda") pintarHacienda();
     }
     function irConsulta() {
       mostrarVista("visor");
@@ -5026,6 +5562,404 @@
     }
     function escHtml(s) {
       return String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]));
+    }
+    const SANIDAD_KEY = "gemelo-sanidad-campo-v1";
+    function idSanidadCampo() {
+      const nombre = (((typeof vistoCelular !== "undefined" && vistoCelular && vistoCelular.n) || (document.getElementById("fProd") && document.getElementById("fProd").value) || store.nombreCampo || "")).trim().toLowerCase();
+      const r = (typeof vistoCelular !== "undefined" && vistoCelular && vistoCelular.r) || store.anilloCampo;
+      const p = (r && r[0]) ? (Number(r[0][0]).toFixed(3) + "," + Number(r[0][1]).toFixed(3)) : "";
+      return nombre + "|" + p;
+    }
+    function leerSanidadLocal() {
+      try { return JSON.parse(localStorage.getItem(SANIDAD_KEY) || "{}"); } catch (e) { return {}; }
+    }
+    function guardarSanidadLocal(item) {
+      const id = idSanidadCampo();
+      if (!id || id.charAt(0) === "|") return false;
+      const all = leerSanidadLocal();
+      if (!Array.isArray(all[id])) all[id] = [];
+      all[id].push(item);
+      if (all[id].length > 12) all[id] = all[id].slice(-12);
+      try { localStorage.setItem(SANIDAD_KEY, JSON.stringify(all)); } catch (e) { return false; }
+      store.sanidadUltima = {
+        campo: ((document.getElementById("fProd") && document.getElementById("fProd").value) || (vistoCelular && vistoCelular.n) || "").trim(),
+        propietario: ((document.getElementById("fPropietario") && document.getElementById("fPropietario").value) || (vistoCelular && vistoCelular.p) || "").trim(),
+        especie: item.especie, texto: item.texto, fecha: item.fecha, modelo: item.modelo || "grok-4.7",
+        modo: item.modo, animales: item.animales
+      };
+      return true;
+    }
+    function condicionGuardada() {
+      const nombre = ((document.getElementById("fProd") && document.getElementById("fProd").value) || store.nombreCampo || "").trim().toLowerCase();
+      const local = leerSanidadLocal()[idSanidadCampo()];
+      if (local && local.length) {
+        const ult = local[local.length - 1];
+        const prop = (document.getElementById("fPropietario") && document.getElementById("fPropietario").value) || (vistoCelular && vistoCelular.p) || "";
+        return {
+          campo: (document.getElementById("fProd") && document.getElementById("fProd").value) || (vistoCelular && vistoCelular.n) || "",
+          propietario: prop, especie: ult.especie, texto: ult.texto, fecha: ult.fecha,
+          modelo: ult.modelo, modo: ult.modo, animales: ult.animales
+        };
+      }
+      const campo = (store.camposGuardados || []).find((c) => String(c.nombre || c.prod || "").trim().toLowerCase() === nombre);
+      const arr = campo && campo.sanidad;
+      if (arr && arr.length) {
+        const ult = arr[arr.length - 1];
+        return { campo: campo.nombre || campo.prod, propietario: campo.propietario || "", especie: ult.especie, texto: ult.texto, fecha: ult.fecha, modelo: ult.modelo, modo: ult.modo, animales: ult.animales };
+      }
+      if (store.sanidadUltima && store.sanidadUltima.texto && (!nombre || String(store.sanidadUltima.campo || "").trim().toLowerCase() === nombre)) return store.sanidadUltima;
+      return null;
+    }
+    function bloqueCondicion() {
+      const cc = condicionGuardada();
+      if (!cc || !cc.texto) {
+        return "<div class='item'>Todavía no hay informe de fotos en este campo. En Sanidad se saca la foto, de un animal o del rodeo, y queda acá. No cambia la carga ni el agua.</div>";
+      }
+      const cuando = cc.fecha ? new Date(cc.fecha).toLocaleString("es-AR") : "";
+      const titulo = (cc.modo === "rodeo" ? "Rodeo" : "Un animal") + (cc.animales ? " · " + cc.animales + (cc.animales > 1 ? " fotos" : " foto") : "");
+      return "<div class='item'><b>" + escHtml(cc.campo || "") +
+        (cc.propietario ? " · " + escHtml(cc.propietario) : "") +
+        (cc.especie ? " · " + escHtml(cc.especie) : "") +
+        " · " + escHtml(titulo) +
+        (cuando ? " · " + escHtml(cuando) : "") + "</b>" +
+        escHtml(cc.texto).replace(/\n/g, "<br>") +
+        "<br>Informe de " + escHtml(cc.modelo || "grok-4.7") + ". No cambia las hectáreas por animal ni el agua. No es un diagnóstico.</div>";
+    }
+    const PASTO_KEY = "gemelo-pastizal-campo-v1";
+    function leerPastizalLocal() {
+      try { return JSON.parse(localStorage.getItem(PASTO_KEY) || "{}"); } catch (e) { return {}; }
+    }
+    function guardarPastizalLocal(item) {
+      const id = idSanidadCampo();
+      if (!id || id.charAt(0) === "|") return false;
+      const all = leerPastizalLocal();
+      if (!Array.isArray(all[id])) all[id] = [];
+      all[id].push(item);
+      if (all[id].length > 12) all[id] = all[id].slice(-12);
+      try { localStorage.setItem(PASTO_KEY, JSON.stringify(all)); } catch (e) { return false; }
+      store.pastizalUltima = {
+        campo: ((document.getElementById("fProd") && document.getElementById("fProd").value) || (vistoCelular && vistoCelular.n) || "").trim(),
+        propietario: ((document.getElementById("fPropietario") && document.getElementById("fPropietario").value) || (vistoCelular && vistoCelular.p) || "").trim(),
+        tipo: item.tipo, texto: item.texto, fecha: item.fecha, modelo: item.modelo || "grok-4.7"
+      };
+      return true;
+    }
+    function pastizalGuardado() {
+      const nombre = ((document.getElementById("fProd") && document.getElementById("fProd").value) || store.nombreCampo || "").trim().toLowerCase();
+      const local = leerPastizalLocal()[idSanidadCampo()];
+      if (local && local.length) {
+        const ult = local[local.length - 1];
+        const prop = (document.getElementById("fPropietario") && document.getElementById("fPropietario").value) || (vistoCelular && vistoCelular.p) || "";
+        return {
+          campo: (document.getElementById("fProd") && document.getElementById("fProd").value) || (vistoCelular && vistoCelular.n) || "",
+          propietario: prop, tipo: ult.tipo, texto: ult.texto, fecha: ult.fecha, modelo: ult.modelo
+        };
+      }
+      const campo = (store.camposGuardados || []).find((c) => String(c.nombre || c.prod || "").trim().toLowerCase() === nombre);
+      const arr = campo && campo.pastizal;
+      if (arr && arr.length) {
+        const ult = arr[arr.length - 1];
+        return { campo: campo.nombre || campo.prod, propietario: campo.propietario || "", tipo: ult.tipo, texto: ult.texto, fecha: ult.fecha, modelo: ult.modelo };
+      }
+      if (store.pastizalUltima && store.pastizalUltima.texto && (!nombre || String(store.pastizalUltima.campo || "").trim().toLowerCase() === nombre)) return store.pastizalUltima;
+      return null;
+    }
+    function bloquePastizal() {
+      const p = pastizalGuardado();
+      if (!p || !p.texto) {
+        return "<div class='item'>Todavía no hay foto de pastizal en este campo. En Manejo se saca la foto del lote, natural o implantado, y queda acá. No cambia la carga ni la tasa de forraje del gemelo.</div>";
+      }
+      const cuando = p.fecha ? new Date(p.fecha).toLocaleString("es-AR") : "";
+      const tipo = p.tipo === "implantado" ? "Implantado" : (p.tipo === "natural" ? "Natural" : "Pastizal");
+      return "<div class='item'><b>" + escHtml(p.campo || "") +
+        (p.propietario ? " · " + escHtml(p.propietario) : "") +
+        " · " + escHtml(tipo) +
+        (cuando ? " · " + escHtml(cuando) : "") + "</b>" +
+        escHtml(p.texto).replace(/\n/g, "<br>") +
+        "<br>Lectura de " + escHtml(p.modelo || "grok-4.7") + " sobre una foto. No reemplaza un corte de forraje ni la tasa del gemelo. No cambia las hectáreas por animal ni el agua.</div>";
+    }
+    function redondeoCarbono(n, dec) {
+      const f = Math.pow(10, dec);
+      return Math.round((Number(n) + Number.EPSILON) * f) / f;
+    }
+    function fmtT(n) {
+      const v = Number(n) || 0;
+      const abs = Math.abs(v).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (v < 0) return "−" + abs;
+      if (v > 0) return "+" + abs;
+      return abs;
+    }
+    function fmtPos(n) {
+      return (Number(n) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function fmtT3(n) {
+      const v = Number(n) || 0;
+      const abs = Math.abs(v).toLocaleString("es-AR", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+      if (v < 0) return "−" + abs;
+      if (v > 0) return "+" + abs;
+      return abs;
+    }
+    function fmtHa(n) {
+      return (Number(n) || 0).toLocaleString("es-AR", { maximumFractionDigits: 1 });
+    }
+    function datosCarbono() {
+      let monte = 0, pastura = 0, limpio = 0;
+      potreros.forEach((p) => {
+        const tipo = (store[p.n] && store[p.n].tipo) || "ganadero";
+        const ha = Number(p.ha) || 0;
+        if (tipo === "monte") monte += ha;
+        else if (tipo === "agricola") limpio += ha;
+        else pastura += ha;
+      });
+      const esp = especieAct();
+      const cabezas = typeof cabezasTablero === "function" ? cabezasTablero("actual") : 0;
+      const ev = redondeoCarbono((Number(cabezas) || 0) * (esp.evPorCabeza || 1), 2);
+      return { monte: redondeoCarbono(monte, 2), pastura: redondeoCarbono(pastura, 2), limpio: redondeoCarbono(limpio, 2), ev: ev, cabezas: cabezas, especie: esp };
+    }
+    function balanceCarbono(haMonte, haPastura, ev, litros, eficiencia) {
+      const ganado = redondeoCarbono(ev * 0.75, 2);
+      const combustible = redondeoCarbono((litros * 2.68) / 1000, 2);
+      const totalEmisiones = redondeoCarbono(ganado + combustible, 2);
+      const monte = redondeoCarbono(haMonte * 0.50, 2);
+      const pastura = redondeoCarbono(haPastura * 0.40 * eficiencia, 2);
+      const totalCaptura = redondeoCarbono(monte + pastura, 2);
+      const neto = redondeoCarbono(totalCaptura - totalEmisiones, 2);
+      const ha = haMonte + haPastura;
+      const porHa = ha > 0 ? redondeoCarbono(neto / ha, 3) : 0;
+      let estado = "emisor";
+      if (neto > 0) estado = "capturador";
+      else if (neto === 0) estado = "neutro";
+      return { ganado: ganado, combustible: combustible, totalEmisiones: totalEmisiones, capturaMonte: monte, capturaPastura: pastura, totalCaptura: totalCaptura, neto: neto, porHa: porHa, estado: estado };
+    }
+    function lecturaCarbono() {
+      const d = datosCarbono();
+      const dieselEl = document.getElementById("carbonoDiesel");
+      const pastoEl = document.getElementById("carbonoPastoreo");
+      const litros = Math.max(0, Number(dieselEl ? dieselEl.value : store.carbonoLitros) || 0);
+      const eficiencia = Number(pastoEl && pastoEl.value) === 1.2 ? 1.2 : 1;
+      return Object.assign(balanceCarbono(d.monte, d.pastura, d.ev, litros, eficiencia), d, { litros: litros, eficiencia: eficiencia });
+    }
+    function estadoCarbono(id) {
+      return {
+        capturador: "CAPTURADOR NETO (Carbono positivo)",
+        neutro: "CARBONO NEUTRO",
+        emisor: "EMISOR NETO"
+      }[id] || "EMISOR NETO";
+    }
+    function oportunidadCarbono(L) {
+      if (!(L.monte + L.pastura > 0)) return "Falta el campo. El balance usa las hectáreas de monte y de pastura ya cargadas, y la hacienda actual.";
+      if (L.estado === "capturador") {
+        return "Excedente de " + fmtT3(L.porHa) + " t CO2eq/ha/año. Este balance orienta el ingreso a un programa de carne carbono neutro certificada y la comercialización de hasta " + Math.floor(L.neto) + " bonos anuales. Es una estimación del gemelo: no es un certificado ni un bono ya emitido. El monte queda en pie.";
+      }
+      if (L.estado === "neutro") return "El campo empata emisiones y captura. Para un excedente hace falta sostener el monte y el pastoreo rotativo. No se desmonta y no se recorta el agua.";
+      return "El campo emite más de lo que captura con esta hacienda. El camino es sostener el monte y pasar a pastoreo rotativo. No se desmonta, no se pasa a soja y no se recorta el agua.";
+    }
+    function textoBalanceCarbono(L) {
+      const nombre = (document.getElementById("fProd") && document.getElementById("fProd").value) || store.nombreCampo || DEMO_NOMBRE;
+      const ha = L.monte + L.pastura + L.limpio;
+      const partes = [];
+      if (L.monte) partes.push(fmtHa(L.monte) + " ha monte");
+      if (L.pastura) partes.push(fmtHa(L.pastura) + " ha pastura");
+      if (L.limpio) partes.push(fmtHa(L.limpio) + " ha campo limpio");
+      const lineaHa = partes.length ? partes.join(" + ") : "sin hectáreas cargadas";
+      return "INFORME DE BALANCE DE CARBONO\n" +
+        "Establecimiento: " + nombre + "\n" +
+        "Hacienda: " + fmtHa(L.cabezas) + " " + (L.especie ? L.especie.plural : "animales") + " (" + fmtHa(L.ev) + " EV). La cuenta es por EV, para vacas, ovejas y cabras.\n" +
+        "Período: anual · San Luis · " + fmtHa(ha) + " ha (" + lineaHa + ")\n" +
+        "\nEMISIONES (egresos): " + fmtT(-L.totalEmisiones) + " t CO2eq/año\n" +
+        "  Fermentación y deyecciones (" + fmtHa(L.ev) + " EV): " + fmtT(-L.ganado) + " t\n" +
+        "  Diésel y maquinaria (" + fmtHa(L.litros) + " L): " + fmtT(-L.combustible) + " t\n" +
+        "\nCAPTURA (ingresos): " + fmtT(L.totalCaptura) + " t CO2eq/año\n" +
+        "  Monte nativo (" + fmtHa(L.monte) + " ha): " + fmtT(L.capturaMonte) + " t\n" +
+        "  Pastura y pastizal (" + fmtHa(L.pastura) + " ha · factor " + String(L.eficiencia).replace(".", ",") + "): " + fmtT(L.capturaPastura) + " t\n" +
+        (L.limpio ? "  Campo limpio: no suma captura.\n" : "") +
+        "\nBALANCE NETO: " + fmtT(L.neto) + " t CO2eq/año\n" +
+        "Por hectárea de monte y pastura: " + fmtT3(L.porHa) + " t CO2eq/ha/año\n" +
+        "ESTADO: " + estadoCarbono(L.estado) + "\n" +
+        "\nOPORTUNIDAD\n" + oportunidadCarbono(L);
+    }
+    function bloqueCarbono() {
+      const L = lecturaCarbono();
+      if (!(L.monte + L.pastura + L.limpio > 0)) {
+        return "<div class='item'>Todavía no hay hectáreas para el balance. Se calcula con los lotes del campo: monte, pastura y la hacienda actual.</div>";
+      }
+      return "<div class='item'><b>" + escHtml(store.nombreCampo || "") + " · " + escHtml(estadoCarbono(L.estado)) + "</b>" +
+        escHtml(textoBalanceCarbono(L)).replace(/\n/g, "<br>") +
+        "<br>No cambia las hectáreas por animal ni el agua. No certifica la carne ni emite el bono.</div>";
+    }
+    function notaCcMenor(quiere) {
+      const cc = condicionGuardada();
+      if (!cc || cc.especie !== quiere || !cc.texto) return "";
+      const m = String(cc.texto).match(/Condición corporal estimada:\s*(.+)/i) || String(cc.texto).match(/Promedio:\s*(.+)/i);
+      return m ? m[1].trim() : "";
+    }
+    function armarAlerta() {
+      const esp = especieAct();
+      const menor = esp.id === "cabra" || esp.id === "oveja";
+      if (!menor) {
+        return {
+          titulo: "Estado diario · sistema caprino mixto",
+          listo: false,
+          texto: "Esta hoja es de la majada caprina, o de la ovina, en monte y pastura.\nEn Mi campo elija Cabras u Ovejas. La condición corporal se saca en Sanidad, con Caprino u Ovino. El balance de carbono usa los EV de esa hacienda."
+        };
+      }
+      const cab = typeof cabezasTablero === "function" ? cabezasTablero("actual") : 0;
+      const ev = redondeoCarbono((Number(cab) || 0) * (esp.evPorCabeza || 1), 2);
+      const sup = datosCarbono();
+      const p = potreros.find((x) => x.n === pSel) || potreros[0];
+      const tipo = (p && store[p.n] && store[p.n].tipo) || "ganadero";
+      const sit = p && typeof sitioDe === "function" ? sitioDe(p) : { paisaje: "Lote" };
+      let dias = null;
+      try { if (p) dias = diasDeCarga(p, datoEscena(p, "actual")); } catch (e) { dias = null; }
+      const pas = typeof pastizalGuardado === "function" ? pastizalGuardado() : null;
+      const of = pas && String(pas.texto || "").match(/Oferta estimada kg MS\/ha:\s*(.+)/i);
+      const ms = of
+        ? (of[1].trim() + " kg MS/ha, lectura de la foto")
+        : (store.forraje && store.forraje.kgAnio ? (store.forraje.kgAnio + " kg MS/ha/año, tasa del gemelo") : "se lee al ubicar el lote");
+      let reco = "Rote al terminar la ocupación de este cuadro. No deje la hacienda todo el año en el mismo lote.";
+      if (!potreros.length) reco = "Falta el alambrado del campo para nombrar el sector activo.";
+      else if (potreros.length <= 1) reco = "Hay un solo lote. Dividir el cuadro permite rotar y dejar descansar.";
+      else if (tipo === "monte") reco = "Monte en pie: no estire los días en este cuadro. Pase la majada al lote que sigue para no sobre-ramonear. El monte no se limpia.";
+      else if (otbnId() === "I" || otbnId() === "II") reco = "Este cuadro es pastura y el campo tiene monte. Rote al lote que sigue y no limpie el monte.";
+      else if (dias && dias.maxDias > 0 && dias.maxDias <= 7) reco = "Este cuadro aguanta cerca de " + dias.maxDias + " días. Rote al terminar, antes de dejar el suelo pelado.";
+      else reco = potreros.length + " lotes. Descanso ≈ ocupación × " + (potreros.length - 1) + " días.";
+      const litros = Math.round((Number(cab) || 0) * (esp.aguaL || 0));
+      const quiere = esp.id === "cabra" ? "caprino" : "ovino";
+      const cc = notaCcMenor(quiere);
+      const ccLinea = cc
+        ? ("CC de la última foto (" + quiere + "): " + cc + " / 5.")
+        : ("Todavía no hay foto. En Sanidad elija " + (quiere === "caprino" ? "Caprino" : "Ovino") + " y saque la foto, de perfil o de atrás.");
+      const fecha = (document.getElementById("alertaParicion") && document.getElementById("alertaParicion").value) || store.alertaParicion || "";
+      let paricion = "Cargue la fecha de inicio de parición para el recordatorio de sombra y abrigo.";
+      if (fecha) {
+        const falta = Math.round((new Date(fecha + "T12:00:00") - new Date(new Date().toDateString())) / 86400000);
+        if (falta > 21) paricion = "Faltan " + falta + " días para el inicio de parición.";
+        else if (falta > 1) paricion = "Quedan " + falta + " días para el inicio de parición. Revise sombra y abrigo del corral nocturno.";
+        else if (falta >= 0) paricion = "La parición es hoy o en estos días. Revise sombra y abrigo del corral nocturno.";
+        else paricion = "La fecha de inicio de parición ya pasó.";
+      }
+      const sector = p
+        ? ("P" + p.n + " · " + (sit.paisaje || "lote") + (tipo === "monte" ? " · monte" : " · pastura"))
+        : "Sin potrero cargado";
+      const titulo = esp.id === "cabra" ? "ESTADO DIARIO · SECTOR CAPRINO" : "ESTADO DIARIO · SECTOR OVINO";
+      const texto = titulo + "\n" +
+        ((document.getElementById("fProd") && document.getElementById("fProd").value) || store.nombreCampo || DEMO_NOMBRE) + " · San Luis\n" +
+        "Stock: " + fmtHa(cab) + " " + esp.plural + " (" + fmtHa(ev) + " EV)\n" +
+        "Monte " + fmtHa(sup.monte) + " ha · pastura " + fmtHa(sup.pastura) + " ha\n\n" +
+        "1. Pastoreo y rotación\n" +
+        "Sector activo: " + sector + ".\n" +
+        "Días de ocupación que aguanta este cuadro: " + (dias && dias.maxDias ? dias.maxDias : "—") + ".\n" +
+        "Disponibilidad estimada: " + ms + ".\n" +
+        reco + "\n\n" +
+        "2. Agua\n" +
+        "Consumo estimado (" + fmtHa(cab) + " " + esp.plural + "): " + litros.toLocaleString("es-AR") + " L/día (~" + String(esp.aguaL).replace(".", ",") + " L por animal, rango " + esp.aguaMin + "–" + esp.aguaMax + ").\n" +
+        "No se recorta la bebida. Esta hoja no mide el tanque.\n\n" +
+        "3. Condición corporal y parición\n" +
+        ccLinea + "\n" +
+        paricion;
+      return { titulo: titulo, listo: true, texto: texto, sector: sector, reco: reco, litros: litros, ccLinea: ccLinea, paricion: paricion, ms: ms, dias: dias, cab: cab, ev: ev, esp: esp };
+    }
+    function bloqueAlerta() {
+      const esp = especieAct();
+      if (esp.id !== "cabra" && esp.id !== "oveja") return "";
+      const a = armarAlerta();
+      return "<h2>Estado diario</h2><div class='item'><b>" + escHtml(a.titulo) + "</b>" +
+        escHtml(a.texto).replace(/\n/g, "<br>") +
+        "<br>Lee la hacienda y el potrero de hoy. No cambia la carga ni el agua.</div>";
+    }
+    function pintarAlerta() {
+      const caja = document.getElementById("alertaCuerpo");
+      const nombre = document.getElementById("alertaNombre");
+      const fecha = document.getElementById("alertaParicion");
+      if (!caja) return;
+      if (fecha && !fecha.value && store.alertaParicion) fecha.value = store.alertaParicion;
+      const a = armarAlerta();
+      if (nombre) nombre.textContent = a.listo ? a.titulo : "Estado diario · sistema caprino mixto";
+      if (!a.listo) {
+        caja.innerHTML = "<div class='alerta-bloque'><p>" + escHtml(a.texto).replace(/\n/g, "<br>") + "</p></div>";
+        return;
+      }
+      caja.innerHTML =
+        "<div class='alerta-bloque'><h2>1. Pastoreo y rotación</h2>" +
+        "<p>Sector activo: " + escHtml(a.sector) + ".</p>" +
+        "<p>Días de ocupación que aguanta este cuadro: " + (a.dias && a.dias.maxDias ? a.dias.maxDias : "—") + ".</p>" +
+        "<p>Disponibilidad estimada: " + escHtml(a.ms) + ".</p>" +
+        "<p class='firme'>" + escHtml(a.reco) + "</p></div>" +
+        "<div class='alerta-bloque'><h2>2. Agua</h2>" +
+        "<p>Consumo estimado (" + fmtHa(a.cab) + " " + escHtml(a.esp.plural) + "): " + a.litros.toLocaleString("es-AR") + " L/día (~" + String(a.esp.aguaL).replace(".", ",") + " L por animal).</p>" +
+        "<p class='firme'>No se recorta la bebida. Esta hoja no mide el tanque.</p></div>" +
+        "<div class='alerta-bloque'><h2>3. Condición corporal y parición</h2>" +
+        "<p>" + escHtml(a.ccLinea) + "</p>" +
+        "<p class='firme'>" + escHtml(a.paricion) + "</p></div>";
+    }
+    function fraseCampo(L, agua) {
+      const aguaTxt = agua.toLocaleString("es-AR") + " L de agua hoy. No se recorta.";
+      if (!(L.monte + L.pastura + L.limpio > 0)) return "Falta el campo para cerrar pasto, agua y carbono. " + aguaTxt;
+      if (L.estado === "capturador") return "El campo captura más de lo que emite. " + aguaTxt;
+      if (L.estado === "neutro") return "El campo empata emisiones y captura. " + aguaTxt;
+      return "El campo emite más de lo que captura. Sostenga el monte y rote. " + aguaTxt;
+    }
+    function pintarHacienda() {
+      const ficha = document.getElementById("haciendaFicha");
+      const motor = document.getElementById("haciendaMotor");
+      const respuesta = document.getElementById("haciendaRespuesta");
+      if (!ficha || !motor || !respuesta) return;
+      const esp = especieAct();
+      document.querySelectorAll("#hacienda [data-mod]").forEach((b) => b.classList.toggle("on", b.dataset.mod === esp.id));
+      const cab = typeof cabezasTablero === "function" ? cabezasTablero("actual") : 0;
+      const ev = redondeoCarbono((Number(cab) || 0) * (esp.evPorCabeza || 1), 2);
+      const agua = Math.round((Number(cab) || 0) * (esp.aguaL || 0));
+      const L = lecturaCarbono();
+      const F = store.forraje || {};
+      const pasto = F.kgAnio ? (fmtHa(F.kgAnio) + " kg/ha/año") : (F.kgDia ? (fmtHa(F.kgDia) + " kg/ha/día") : "al ubicar");
+      const cc = notaCcMenor(esp.id === "cabra" ? "caprino" : (esp.id === "oveja" ? "ovino" : "bovino"));
+      const ccTxt = cc ? ("Última foto: " + cc + " / 5.") : "Todavía no hay foto. Escala 1 a 5.";
+      let cuerpo = "";
+      if (esp.id === "cabra") {
+        const a = armarAlerta();
+        cuerpo = "<h2>Caprino</h2><p>" + fmtHa(cab) + " cabras · " + fmtHa(ev) + " EV. Condición 1 a 5.</p><p>" + ccTxt + "</p><p>" + escHtml(a.listo ? a.reco : "") + "</p><p>" + escHtml(a.listo ? a.paricion : "") + "</p>";
+      } else if (esp.id === "oveja") {
+        cuerpo = "<h2>Ovino</h2><p>" + fmtHa(cab) + " ovejas · " + fmtHa(ev) + " EV. Condición 1 a 5.</p><p>" + ccTxt + "</p><p>Al encerrar, revise los perros y el corral nocturno.</p>";
+      } else {
+        cuerpo = "<h2>Bovino de cría</h2><p>" + fmtHa(cab) + " vacas · " + fmtHa(ev) + " EV. Condición 1 a 5.</p><p>" + ccTxt + "</p><p>La lectura es de carne de cría. No pide balanza ni otra escala.</p>";
+      }
+      const acciones = esp.id === "cabra"
+        ? "<button type='button' class='pri' data-hgo='foto'>Sacar foto</button><button type='button' data-hgo='dia'>Ver el día</button>"
+        : "<button type='button' class='pri' data-hgo='foto'>Sacar foto</button><button type='button' data-hgo='carbono'>Ver el carbono</button>";
+      ficha.innerHTML = "<div class='hacienda-ficha'>" + cuerpo + "<div class='hacienda-acciones'>" + acciones + "</div></div>";
+      motor.innerHTML =
+        "<div><small>Pasto</small><b>" + pasto + "</b></div>" +
+        "<div><small>Agua del día</small><b>" + agua.toLocaleString("es-AR") + " L</b></div>" +
+        "<div><small>Carbono neto</small><b>" + ((L.monte + L.pastura + L.limpio > 0) ? fmtT(L.neto) + " t" : "—") + "</b></div>";
+      respuesta.textContent = fraseCampo(L, agua);
+    }
+    function pintarCarbono() {
+      const L = lecturaCarbono();
+      const nombre = document.getElementById("carbonoNombre");
+      const metricas = document.getElementById("carbonoMetricas");
+      const estado = document.getElementById("carbonoEstado");
+      const barras = document.getElementById("carbonoBarras");
+      const informe = document.getElementById("carbonoInforme");
+      if (!metricas || !estado || !barras || !informe) return;
+      const ha = L.monte + L.pastura + L.limpio;
+      if (nombre) {
+        nombre.textContent = ha
+          ? ((store.nombreCampo || DEMO_NOMBRE) + " · " + fmtHa(ha) + " ha · " + fmtHa(L.ev) + " EV")
+          : "Abra el campo para calcular el balance.";
+      }
+      metricas.innerHTML =
+        "<div><small>Emisiones totales</small><b>" + fmtPos(L.totalEmisiones) + " t</b></div>" +
+        "<div><small>Captura total</small><b>" + fmtPos(L.totalCaptura) + " t</b></div>" +
+        "<div><small>Balance neto anual</small><b>" + fmtT(L.neto) + " t</b></div>";
+      estado.hidden = false;
+      estado.className = "carbono-estado " + L.estado;
+      estado.textContent = "Estatus ambiental del campo: " + estadoCarbono(L.estado);
+      const max = Math.max(L.totalEmisiones, L.totalCaptura, 0.01);
+      const ancho = (n) => Math.max(2, Math.round((n / max) * 100));
+      barras.innerHTML =
+        "<div class='em'><span>Emisiones · " + fmtPos(L.totalEmisiones) + " t CO2eq</span><i style='width:" + ancho(L.totalEmisiones) + "%'></i></div>" +
+        "<div><span>Captura · " + fmtPos(L.totalCaptura) + " t CO2eq</span><i style='width:" + ancho(L.totalCaptura) + "%'></i></div>";
+      informe.textContent = textoBalanceCarbono(L);
     }
     function pintarInforme() {
       const campo = store.nombreCampo || DEMO_NOMBRE;
@@ -5112,6 +6046,10 @@
               : (aguadas.length ? "El lote está dentro o cerca de 400 m de una aguada marcada." : "")))
           : "Todavía no hay aguadas marcadas. Toque el satélite en represas o molinos. A futuro: red San Luis Agua y análisis de bebida.") +
           " " + textoLluvia() + " " + textoForraje() + "</div>" +
+        "<h2>Condición corporal de la foto</h2>" + bloqueCondicion() +
+        "<h2>Pastizal de la foto</h2>" + bloquePastizal() +
+        "<h2>Balance de carbono</h2>" + bloqueCarbono() +
+        bloqueAlerta() +
         "<h2>Cada potrero · actual / mejorando / ideal</h2>" +
         filas +
         "<h2>Corto plazo · sin inversión inmediata</h2>" +
@@ -5139,6 +6077,34 @@
           ? ("Hoy " + calW.cab + " " + esp.plural + " · el suelo cubre " + calW.cubreAnio +
             " el año · " + (calW.bajar ? ("bajar " + calW.bajar) : ("puede subir " + calW.subir)) + ".\n")
           : "") +
+        (function () {
+          const cc = condicionGuardada();
+          const nota = cc && String(cc.texto || "").match(/Condición corporal estimada:\s*(.+)/i);
+          return nota ? ("Condición corporal (" + (cc.especie || "foto") + "): " + nota[1].trim() + ". Estimación de una foto, no cambia la carga.\n") : "";
+        })() +
+        (function () {
+          const pas = pastizalGuardado();
+          if (!pas || !pas.texto) return "";
+          const of = String(pas.texto).match(/Oferta estimada kg MS\/ha:\s*(.+)/i);
+          const espP = String(pas.texto).match(/Especie que predomina:\s*(.+)/i);
+          const cob = String(pas.texto).match(/Cobertura %:\s*(.+)/i);
+          const bits = [];
+          if (espP) bits.push(espP[1].trim());
+          if (cob) bits.push("cobertura " + cob[1].trim());
+          if (of) bits.push(of[1].trim() + " kg MS/ha");
+          return bits.length ? ("Pastizal (" + (pas.tipo || "foto") + "): " + bits.join(" · ") + ". Foto, no cambia la carga.\n") : "";
+        })() +
+        (function () {
+          const L = lecturaCarbono();
+          if (!(L.monte + L.pastura + L.limpio > 0)) return "";
+          return "Carbono: balance " + fmtT(L.neto) + " t CO2eq/año · " + estadoCarbono(L.estado) + ". Estimación, no es un certificado.\n";
+        })() +
+        (function () {
+          const espA = especieAct();
+          if (espA.id !== "cabra" && espA.id !== "oveja") return "";
+          const a = armarAlerta();
+          return "Estado diario (" + espA.plural + "): " + (a.dias && a.dias.maxDias ? (a.dias.maxDias + " días en el cuadro. ") : "") + a.reco + "\n";
+        })() +
         "Corto plazo: rotar, estacionar servicio, no desmontar, no recortar bebida. Agua de " + esp.nombre + " ~" + esp.aguaL + " L/día."
       );
       const wa = document.getElementById("btnWhatsapp");
@@ -5240,6 +6206,25 @@
     });
     document.getElementById("btnVerDemo").addEventListener("click", () => mostrarVista("visor"));
     document.getElementById("btnIrConsulta").addEventListener("click", irConsulta);
+    document.getElementById("btnIrUbicar").addEventListener("click", () => mostrarVista("ubicar"));
+    document.querySelectorAll(".volver-hacienda").forEach((b) => b.addEventListener("click", () => mostrarVista("hacienda")));
+    const btnVolverTerritorio = document.getElementById("btnVolverTerritorio");
+    if (btnVolverTerritorio) btnVolverTerritorio.addEventListener("click", () => mostrarVista("visor"));
+    const cajaHacienda = document.getElementById("hacienda");
+    if (cajaHacienda) cajaHacienda.addEventListener("click", (ev) => {
+      const mod = ev.target.closest("[data-mod]");
+      if (mod) {
+        onCambioEspecie(mod.dataset.mod);
+        return;
+      }
+      const go = ev.target.closest("[data-hgo]");
+      if (!go) return;
+      if (go.dataset.hgo === "foto") {
+        if (typeof window.usarEspecieFoto === "function") window.usarEspecieFoto();
+        mostrarVista("sanidad");
+      } else if (go.dataset.hgo === "dia") mostrarVista("alerta");
+      else if (go.dataset.hgo === "carbono") mostrarVista("carbono");
+    });
     document.getElementById("btnCapasOficiales").addEventListener("click", () => {
       mostrarVista("visor");
       const drop = document.getElementById("dropCapas");
@@ -5286,6 +6271,612 @@
         (propietario ? " (contacto: " + propietario + ")" : "") +
         ". Lo contactamos al " + tel + " para ver su campo y armar Actual, Mejorando e Ideal (techo INTA).", true);
     });
+    (function solapaUbicar() {
+      const estado = document.getElementById("ubicarEstado");
+      function decir(texto, bien) {
+        estado.hidden = false;
+        estado.className = bien ? "ok" : "aviso";
+        estado.textContent = texto;
+      }
+      function puntoDeTexto(txt) {
+        const pts = extraerPuntosDeTexto(txt);
+        if (pts.length) return pts[0];
+        const m = String(txt || "").match(/(-?\d{1,2}[.,]\d{3,})\s*[,; ]\s*(-?\d{1,3}[.,]\d{3,})/);
+        if (!m) return null;
+        let lat = Number(m[1].replace(",", "."));
+        let lon = Number(m[2].replace(",", "."));
+        if (Math.abs(lat) > 50 && Math.abs(lon) < 50) {
+          const swap = lat;
+          lat = lon;
+          lon = swap;
+        }
+        if (lat > 0) lat = -Math.abs(lat);
+        if (lon > 0) lon = -Math.abs(lon);
+        return enCuyo(lat, lon) ? [lat, lon] : null;
+      }
+      function irAlMapa(lat, lon) {
+        document.getElementById("fLat").value = Math.abs(lat).toFixed(5).replace(".", ",") + " S";
+        document.getElementById("fLon").value = Math.abs(lon).toFixed(5).replace(".", ",") + " O";
+        document.getElementById("fLimites").value = "";
+        store.anilloCampo = null;
+        mostrarVista("visor");
+        cargarCampoProductor();
+        setPanel(false);
+      }
+      document.getElementById("ubicarMapa").addEventListener("click", () => {
+        const texto = (document.getElementById("ubicarTexto").value || "").trim();
+        if (!texto) {
+          decir("Pegue la ubicación de WhatsApp.", false);
+          return;
+        }
+        const p = puntoDeTexto(texto);
+        if (!p) {
+          decir("Ese mensaje no trae la ubicación. Pida que se la compartan de nuevo, o use la de este teléfono.", false);
+          return;
+        }
+        irAlMapa(p[0], p[1]);
+      });
+      document.getElementById("ubicarAqui").addEventListener("click", () => {
+        if (!navigator.geolocation) {
+          decir("Este teléfono no entrega la ubicación. Pegue la de WhatsApp.", false);
+          return;
+        }
+        decir("Pidiendo la ubicación de este teléfono…", true);
+        navigator.geolocation.getCurrentPosition((pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          if (!enCuyo(lat, lon)) {
+            decir("Esa ubicación no cae en San Luis.", false);
+            return;
+          }
+          irAlMapa(lat, lon);
+        }, () => {
+          decir("No se pudo usar la ubicación de este teléfono. Pegue la de WhatsApp.", false);
+        }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+      });
+    })();
+    (function solapaSanidad() {
+      const estado = document.getElementById("sanidadEstado");
+      const lectura = document.getElementById("sanidadLectura");
+      const analizar = document.getElementById("sanidadAnalizar");
+      const cajaFotos = document.getElementById("sanidadFotos");
+      let especie = "";
+      let modo = "uno";
+      let fotos = [];
+      const sistemaUno = "Estimás condición corporal con una sola foto, para el Campo Gemelo Digital Ganadero de la Sociedad Rural de San Luis. Escala de la Argentina, de 1 a 5, con medios puntos: 1 es muy flaco y 5 es gordo. Bovino: costillas, lomo, inserción de la cola y grupa. Ovino y caprino: lomo, costillar y grupa; si el pelo tapa el flanco, bajá la confianza. No diagnostiques enfermedades. No recetes. No nombres fármacos ni dosis. No cambies la carga ni el agua. El nombre del campo no cambia la nota. Si no hay un animal, o no se ve de perfil o de atrás, decilo. Respondé en español de la Argentina, corto, solo con estas líneas: Especie: / Condición corporal estimada: / Qué se ve: / Confianza: / Decisión: / Esta lectura no reemplaza al veterinario.";
+      const sistemaRodeo = "Mirá las fotos de un mismo rodeo del Campo Gemelo Digital Ganadero de la Sociedad Rural de San Luis. Cada foto es un animal, salvo que en una se vean varios: contá solo los que se distinguen de perfil o de atrás. No inventes animales. Escala de la Argentina, de 1 a 5. No diagnostiques, no recetes, no nombres fármacos ni dosis, no cambies la carga ni el agua. Respondé en español de la Argentina, corto, solo con estas líneas: Animales vistos: / Por animal: / Promedio: / Por debajo de 2,5: / En 3 o más: / Decisión: / Esta lectura no reemplaza al veterinario.";
+      function decir(texto, bien) {
+        estado.hidden = !texto;
+        estado.className = bien ? "ok" : "aviso";
+        estado.textContent = texto || "";
+      }
+      function lista() {
+        analizar.disabled = !(especie && fotos.length && identidadCampo().n);
+        analizar.textContent = (modo === "rodeo" && fotos.length > 1)
+          ? ("Hacer el informe de " + fotos.length + " animales")
+          : "Hacer el informe";
+      }
+      function pintarFotos() {
+        cajaFotos.innerHTML = "";
+        fotos.forEach((src, i) => {
+          const fig = document.createElement("figure");
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = "Animal " + (i + 1);
+          const quitar = document.createElement("button");
+          quitar.type = "button";
+          quitar.className = "sec";
+          quitar.textContent = "Quitar";
+          quitar.addEventListener("click", () => {
+            fotos.splice(i, 1);
+            pintarFotos();
+            lista();
+          });
+          fig.appendChild(img);
+          fig.appendChild(quitar);
+          cajaFotos.appendChild(fig);
+        });
+      }
+      function leerArchivo(file) {
+        if (!file) return;
+        const tipo = (file.type || "").toLowerCase();
+        if (tipo && tipo.indexOf("image/") !== 0) {
+          decir("Use una foto JPG o PNG.", false);
+          return;
+        }
+        if (/heic|heif/.test(tipo) || /\.heic$/i.test(file.name || "")) {
+          decir("Esa foto está en un formato que no se lee. Sáquela de nuevo en JPG.", false);
+          return;
+        }
+        if (modo === "rodeo" && fotos.length >= 8) {
+          decir("Hasta 8 fotos por rodeo. Haga el informe con estas.", false);
+          return;
+        }
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = function () {
+          const max = modo === "rodeo" ? 960 : 1280;
+          const escala = Math.min(1, max / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+          const w = Math.max(1, Math.round((img.naturalWidth || 1) * escala));
+          const h = Math.max(1, Math.round((img.naturalHeight || 1) * escala));
+          const lienzo = document.createElement("canvas");
+          lienzo.width = w;
+          lienzo.height = h;
+          lienzo.getContext("2d").drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          const data = lienzo.toDataURL("image/jpeg", modo === "rodeo" ? 0.72 : 0.82);
+          if (modo === "uno") fotos = [data];
+          else fotos.push(data);
+          lectura.hidden = true;
+          lectura.textContent = "";
+          pintarFotos();
+          decir(modo === "rodeo" ? (fotos.length + " foto" + (fotos.length > 1 ? "s" : "") + " del rodeo.") : "Foto lista.", true);
+          lista();
+        };
+        img.onerror = function () {
+          URL.revokeObjectURL(url);
+          decir("No se pudo leer la foto. Pruebe con un JPG.", false);
+        };
+        img.src = url;
+      }
+      function pintarNombre() {
+        const id = identidadCampo();
+        const el = document.getElementById("sanidadNombre");
+        if (!el) return;
+        el.textContent = id.n
+          ? ("Campo: " + id.n + (id.p ? " · " + id.p : ""))
+          : "Abra su campo para guardar el informe ahí.";
+      }
+      function textoModoSanidad() {
+        const base = modo === "rodeo" ? "Una foto por animal. Puede sumar hasta 8." : "Una foto, de perfil o de atrás.";
+        if (especie === "caprino" || especie === "ovino") return base + " Oveja y cabra: lomo, costillar y grupa. Escala 1 a 5.";
+        if (especie === "bovino") return base + " Bovino: costillas, lomo, cola y grupa. Escala 1 a 5.";
+        return base;
+      }
+      document.querySelectorAll("#sanidad [data-especie]").forEach((b) => {
+        b.addEventListener("click", () => {
+          especie = b.dataset.especie;
+          document.querySelectorAll("#sanidad [data-especie]").forEach((o) => o.classList.toggle("on", o === b));
+          document.getElementById("sanidadModoTxt").textContent = textoModoSanidad();
+          lista();
+        });
+      });
+      document.querySelectorAll("#sanidad [data-modo]").forEach((b) => {
+        b.addEventListener("click", () => {
+          modo = b.dataset.modo;
+          document.querySelectorAll("#sanidad [data-modo]").forEach((o) => o.classList.toggle("on", o === b));
+          if (modo === "uno" && fotos.length > 1) fotos = fotos.slice(-1);
+          document.getElementById("sanidadArchivo").multiple = modo === "rodeo";
+          document.getElementById("sanidadModoTxt").textContent = textoModoSanidad();
+          pintarFotos();
+          lista();
+        });
+      });
+      document.getElementById("sanidadTomar").addEventListener("click", () => document.getElementById("sanidadCamara").click());
+      document.getElementById("sanidadCargar").addEventListener("click", () => document.getElementById("sanidadArchivo").click());
+      document.getElementById("sanidadCamara").addEventListener("change", (ev) => {
+        Array.from(ev.target.files || []).forEach(leerArchivo);
+        ev.target.value = "";
+      });
+      document.getElementById("sanidadArchivo").addEventListener("change", (ev) => {
+        Array.from(ev.target.files || []).forEach(leerArchivo);
+        ev.target.value = "";
+      });
+      document.getElementById("sanidadClaveUsar").addEventListener("click", () => {
+        const clave = (document.getElementById("sanidadClave").value || "").trim();
+        if (!window.GemeloXai) {
+          decir("No está la conexión con api.x.ai.", false);
+          return;
+        }
+        if (!clave && !window.GemeloXai.conectada()) {
+          decir("Pegue la clave de api.x.ai. No queda en el archivo ni con el productor.", false);
+          return;
+        }
+        if (clave) window.GemeloXai.guardarClave(clave);
+        document.getElementById("sanidadClave").value = "";
+        decir("Clave lista en esta visita. No se guarda.", true);
+      });
+      analizar.addEventListener("click", () => {
+        const id = identidadCampo();
+        if (!id.n) {
+          decir("Abra su campo. El informe se guarda en ese productor.", false);
+          return;
+        }
+        if (!especie || !fotos.length) {
+          decir("Elija la especie y saque la foto.", false);
+          return;
+        }
+        if (!window.GemeloXai) {
+          decir("No está la conexión con api.x.ai.", false);
+          return;
+        }
+        analizar.disabled = true;
+        lectura.hidden = true;
+        decir(modo === "rodeo" ? ("Leyendo " + fotos.length + " foto" + (fotos.length > 1 ? "s" : "") + "…") : "Leyendo la foto…", true);
+        window.GemeloXai.consultar({
+          solapa: "Sanidad",
+          sistema: modo === "rodeo" ? sistemaRodeo : sistemaUno,
+          pregunta: "Campo: " + id.n + ". Productor: " + (id.p || id.n) + ". Especie declarada: " + especie + ". Fotos: " + fotos.length + ". " + (modo === "rodeo" ? "Hacé el informe del rodeo." : "Hacé el informe de este animal."),
+          imagenes: fotos.slice(),
+          maxTokens: modo === "rodeo" ? 1100 : 700
+        }).then((res) => {
+          const texto = res.texto || "";
+          const item = {
+            fecha: new Date().toISOString(),
+            especie: especie,
+            texto: texto.slice(0, 1600),
+            modelo: (res && res.modelo) || "grok-4.7",
+            modo: modo,
+            animales: fotos.length
+          };
+          pintarLectura(item, especie);
+          guardarSanidadLocal(item);
+          if (!(esMovil() || vistaCelular)) guardarLecturaPc(id, item);
+          decir("Informe guardado en " + id.n + ". Queda en este campo para decidir. No cambia la carga.", true);
+        }).catch((err) => {
+          const msg = err && err.message ? err.message : "No se pudo leer la foto.";
+          if (/clave/i.test(msg)) {
+            document.querySelector(".sanidad-clave").open = true;
+            decir("Falta la clave. Péguela en Clave de esta visita. Queda solo en este navegador y no se guarda.", false);
+          } else decir(msg, false);
+        }).then(() => { lista(); });
+      });
+      function redondearAnillo(r) {
+        if (!Array.isArray(r)) return null;
+        return r.map((p) => [Math.round(Number(p[0]) * 1e5) / 1e5, Math.round(Number(p[1]) * 1e5) / 1e5]);
+      }
+      function identidadCampo() {
+        const nombre = ((vistoCelular && vistoCelular.n) || (document.getElementById("fProd").value || store.nombreCampo || "")).trim();
+        const prop = ((vistoCelular && vistoCelular.p) || ((document.getElementById("fPropietario") && document.getElementById("fPropietario").value) || "")).trim();
+        const ha = (vistoCelular && vistoCelular.ha) || (document.getElementById("fHaCampo").value || "");
+        const ring = (vistoCelular && vistoCelular.r) || (store.anilloCampo && store.anilloCampo.length >= 3 ? store.anilloCampo : null);
+        return { n: nombre, p: prop, ha: ha, r: redondearAnillo(ring) };
+      }
+      function enlaceLecturaPc(item) {
+        const id = identidadCampo();
+        if (!id.n || !item || !item.texto) return "";
+        return location.origin + location.pathname + "?cc=" + encodeURIComponent(codificarVer({
+          n: id.n, p: id.p, ha: id.ha, r: id.r,
+          s: { e: item.especie, t: item.texto, f: item.fecha, m: item.modelo || "grok-4.7" }
+        }));
+      }
+      function guardarLecturaPc(id, item) {
+        if (esMovil() || vistaCelular) return false;
+        const nombre = String((id && id.n) || "").trim();
+        if (!nombre || !item || !item.texto) return false;
+        let campo = (store.camposGuardados || []).find((c) => String(c.nombre || c.prod || "").trim().toLowerCase() === nombre.toLowerCase());
+        if (!campo) {
+          campo = {
+            nombre: nombre, prod: nombre, propietario: (id && id.p) || "",
+            ha: (id && id.ha) || "", anillo: (id && id.r) || null,
+            fecha: item.fecha, sanidad: []
+          };
+          store.camposGuardados.push(campo);
+          if (store.camposGuardados.length > 8) store.camposGuardados = store.camposGuardados.slice(-8);
+        }
+        if (!Array.isArray(campo.sanidad)) campo.sanidad = [];
+        const ya = campo.sanidad.some((x) => x.fecha === item.fecha && x.texto === item.texto);
+        if (!ya) campo.sanidad.push(item);
+        if (campo.sanidad.length > 8) campo.sanidad = campo.sanidad.slice(-8);
+        if (id && id.p && !campo.propietario) campo.propietario = id.p;
+        if (id && id.r && (!campo.anillo || campo.anillo.length < 3)) campo.anillo = id.r;
+        store.sanidadUltima = {
+          campo: campo.nombre, propietario: campo.propietario || "",
+          especie: item.especie, texto: item.texto, fecha: item.fecha, modelo: item.modelo || "grok-4.7"
+        };
+        if (store.campoActivo && String(store.campoActivo.nombre || store.campoActivo.prod || "").trim().toLowerCase() === nombre.toLowerCase()) {
+          store.campoActivo.sanidad = campo.sanidad.slice();
+        }
+        saveStore(store);
+        try { pintarListaCampos(); } catch (e) {}
+        return true;
+      }
+      function pintarLectura(item, especieNombre) {
+        lectura.textContent = item.texto || "";
+        lectura.hidden = !item.texto;
+        if (especieNombre) {
+          especie = especieNombre;
+          document.querySelectorAll("#sanidad [data-especie]").forEach((o) => o.classList.toggle("on", o.dataset.especie === especieNombre));
+        }
+      }
+      window.usarEspecieFoto = function () {
+        const mapa = { cabra: "caprino", oveja: "ovino", cria: "bovino" };
+        const e = mapa[especieId()] || "bovino";
+        especie = e;
+        document.querySelectorAll("#sanidad [data-especie]").forEach((o) => o.classList.toggle("on", o.dataset.especie === e));
+        document.getElementById("sanidadModoTxt").textContent = textoModoSanidad();
+        lista();
+      };
+      window.mostrarSanidadGuardada = function () {
+        pintarNombre();
+        if (!especie) {
+          const mapa = { cabra: "caprino", oveja: "ovino", cria: "bovino" };
+          const e = mapa[especieId()] || "";
+          if (e) {
+            especie = e;
+            document.querySelectorAll("#sanidad [data-especie]").forEach((o) => o.classList.toggle("on", o.dataset.especie === e));
+            document.getElementById("sanidadModoTxt").textContent = textoModoSanidad();
+            lista();
+          }
+        }
+        if ((lectura.textContent || "").trim()) return;
+        const cc = condicionGuardada();
+        if (!cc) return;
+        pintarLectura(cc, cc.especie);
+        decir("Informe de este campo. Sirve para decidir y no cambia la carga.", true);
+      };
+      pintarNombre();
+      (function llegadaDesdeCelular() {
+        let data = null;
+        try {
+          const q = new URLSearchParams(location.search).get("cc");
+          if (q) data = decodificarVer(q);
+        } catch (e) { data = null; }
+        if (!data || !data.s || !data.s.t || !data.n) return;
+        const item = {
+          fecha: data.s.f || new Date().toISOString(),
+          especie: data.s.e || "",
+          texto: String(data.s.t).slice(0, 1200),
+          modelo: data.s.m || "grok-4.7"
+        };
+        pintarLectura(item, item.especie);
+        mostrarVista("sanidad");
+        if (guardarLecturaPc({ n: data.n, p: data.p || "", ha: data.ha || "", r: data.r || null }, item)) {
+          try {
+            const campo = (store.camposGuardados || []).find((c) => String(c.nombre || "").trim().toLowerCase() === String(data.n).trim().toLowerCase());
+            if (campo) {
+              aplicarFormCampo(campo);
+              cargarCampoProductor.silencio = true;
+              cargarCampoProductor();
+              cargarCampoProductor.silencio = false;
+            }
+          } catch (e) {}
+          decir("Guardado en esta computadora: " + data.n + (data.p ? " · " + data.p : "") + ". El informe lo usa para decidir. La foto no se guardó.", true);
+          try { history.replaceState(null, "", location.pathname); } catch (e) {}
+        } else {
+          decir("Esta lectura es del celular. Ábrala en la computadora para guardarla en el productor.", true);
+        }
+      })();
+    })();
+    (function solapaPastizal() {
+      const estado = document.getElementById("pastoEstado");
+      const lectura = document.getElementById("pastoLectura");
+      const analizar = document.getElementById("pastoInforme");
+      const cajaFotos = document.getElementById("pastoFotos");
+      if (!estado || !analizar) return;
+      let tipo = "";
+      let foto = "";
+      const sistemaPasto = "Estimás un pastizal a partir de una foto, para el Campo Gemelo Digital Ganadero de la Sociedad Rural de San Luis. El productor dijo si es natural o implantado. Es una lectura visual, no un corte de forraje ni un análisis de laboratorio. Si no se ven el suelo y la canopia, decí que la foto no alcanza y pedí una toma vertical o en ángulo, con una referencia de altura si se puede. No inventes especies que no se distinguen. Si predomina buffel, nombralo; no recomiendes implantarlo en loma ni donde el OTBN no lo permita. No propongas desmonte, soja ni recortar el agua de bebida. No cambies la carga animal: eso lo calcula el gemelo. Respondé en español de la Argentina, corto, solo con estas líneas:\nTipo:\nCobertura %:\nSuelo desnudo %:\nEstructura:\nAltura de canopia cm:\nEstado fenológico:\nMateria seca %:\nOferta estimada kg MS/ha:\nEspecie que predomina:\nOtras que se distinguen:\nConfianza:\nDecisión:\nEsta lectura es de una foto y no reemplaza un corte de forraje.";
+      function decir(texto, bien) {
+        estado.hidden = !texto;
+        estado.className = bien ? "ok" : "aviso";
+        estado.textContent = texto || "";
+      }
+      function identidadCampo() {
+        const nombre = ((vistoCelular && vistoCelular.n) || (document.getElementById("fProd").value || store.nombreCampo || "")).trim();
+        const prop = ((vistoCelular && vistoCelular.p) || ((document.getElementById("fPropietario") && document.getElementById("fPropietario").value) || "")).trim();
+        const ha = (vistoCelular && vistoCelular.ha) || (document.getElementById("fHaCampo").value || "");
+        const ring = (vistoCelular && vistoCelular.r) || (store.anilloCampo && store.anilloCampo.length >= 3 ? store.anilloCampo : null);
+        const anillo = Array.isArray(ring)
+          ? ring.map((p) => [Math.round(Number(p[0]) * 1e5) / 1e5, Math.round(Number(p[1]) * 1e5) / 1e5])
+          : null;
+        return { n: nombre, p: prop, ha: ha, r: anillo };
+      }
+      function lista() {
+        analizar.disabled = !(tipo && foto && identidadCampo().n);
+      }
+      function pintarNombre() {
+        const id = identidadCampo();
+        const el = document.getElementById("pastoCampo");
+        if (!el) return;
+        el.textContent = id.n
+          ? ("Campo: " + id.n + (id.ha ? " · " + id.ha + " ha" : "") + (id.p ? " · " + id.p : ""))
+          : "Abra su campo para guardar el informe ahí.";
+      }
+      function pintarFoto() {
+        cajaFotos.innerHTML = "";
+        if (!foto) return;
+        const fig = document.createElement("figure");
+        const img = document.createElement("img");
+        img.src = foto;
+        img.alt = "Pastizal";
+        const quitar = document.createElement("button");
+        quitar.type = "button";
+        quitar.className = "sec";
+        quitar.textContent = "Quitar";
+        quitar.addEventListener("click", () => {
+          foto = "";
+          pintarFoto();
+          lista();
+        });
+        fig.appendChild(img);
+        fig.appendChild(quitar);
+        cajaFotos.appendChild(fig);
+      }
+      function leerArchivo(file) {
+        if (!file) return;
+        const mime = (file.type || "").toLowerCase();
+        if (mime && mime.indexOf("image/") !== 0) {
+          decir("Use una foto JPG o PNG.", false);
+          return;
+        }
+        if (/heic|heif/.test(mime) || /\.heic$/i.test(file.name || "")) {
+          decir("Esa foto está en un formato que no se lee. Sáquela de nuevo en JPG.", false);
+          return;
+        }
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = function () {
+          const max = 1280;
+          const escala = Math.min(1, max / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+          const w = Math.max(1, Math.round((img.naturalWidth || 1) * escala));
+          const h = Math.max(1, Math.round((img.naturalHeight || 1) * escala));
+          const lienzo = document.createElement("canvas");
+          lienzo.width = w;
+          lienzo.height = h;
+          lienzo.getContext("2d").drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          foto = lienzo.toDataURL("image/jpeg", 0.82);
+          lectura.hidden = true;
+          lectura.textContent = "";
+          pintarFoto();
+          decir("Foto del pastizal lista.", true);
+          lista();
+        };
+        img.onerror = function () {
+          URL.revokeObjectURL(url);
+          decir("No se pudo leer la foto. Pruebe con un JPG.", false);
+        };
+        img.src = url;
+      }
+      function guardarPastizalPc(id, item) {
+        if (esMovil() || vistaCelular) return false;
+        const nombre = String((id && id.n) || "").trim();
+        if (!nombre || !item || !item.texto) return false;
+        let campo = (store.camposGuardados || []).find((c) => String(c.nombre || c.prod || "").trim().toLowerCase() === nombre.toLowerCase());
+        if (!campo) {
+          campo = {
+            nombre: nombre, prod: nombre, propietario: (id && id.p) || "",
+            ha: (id && id.ha) || "", anillo: (id && id.r) || null,
+            fecha: item.fecha, pastizal: []
+          };
+          store.camposGuardados.push(campo);
+          if (store.camposGuardados.length > 8) store.camposGuardados = store.camposGuardados.slice(-8);
+        }
+        if (!Array.isArray(campo.pastizal)) campo.pastizal = [];
+        const ya = campo.pastizal.some((x) => x.fecha === item.fecha && x.texto === item.texto);
+        if (!ya) campo.pastizal.push(item);
+        if (campo.pastizal.length > 8) campo.pastizal = campo.pastizal.slice(-8);
+        if (id && id.p && !campo.propietario) campo.propietario = id.p;
+        if (id && id.r && (!campo.anillo || campo.anillo.length < 3)) campo.anillo = id.r;
+        store.pastizalUltima = {
+          campo: campo.nombre, propietario: campo.propietario || "",
+          tipo: item.tipo, texto: item.texto, fecha: item.fecha, modelo: item.modelo || "grok-4.7"
+        };
+        if (store.campoActivo && String(store.campoActivo.nombre || store.campoActivo.prod || "").trim().toLowerCase() === nombre.toLowerCase()) {
+          store.campoActivo.pastizal = campo.pastizal.slice();
+        }
+        saveStore(store);
+        try { pintarListaCampos(); } catch (e) {}
+        return true;
+      }
+      function pintarLectura(item) {
+        lectura.textContent = item.texto || "";
+        lectura.hidden = !item.texto;
+        if (item.tipo) {
+          tipo = item.tipo;
+          document.querySelectorAll("#pastizal [data-pasto]").forEach((o) => o.classList.toggle("on", o.dataset.pasto === tipo));
+        }
+      }
+      document.querySelectorAll("#pastizal [data-pasto]").forEach((b) => {
+        b.addEventListener("click", () => {
+          tipo = b.dataset.pasto;
+          document.querySelectorAll("#pastizal [data-pasto]").forEach((o) => o.classList.toggle("on", o === b));
+          lista();
+        });
+      });
+      document.getElementById("pastoTomar").addEventListener("click", () => document.getElementById("pastoCamara").click());
+      document.getElementById("pastoCargar").addEventListener("click", () => document.getElementById("pastoArchivo").click());
+      document.getElementById("pastoCamara").addEventListener("change", (ev) => {
+        const file = (ev.target.files || [])[0];
+        ev.target.value = "";
+        leerArchivo(file);
+      });
+      document.getElementById("pastoArchivo").addEventListener("change", (ev) => {
+        const file = (ev.target.files || [])[0];
+        ev.target.value = "";
+        leerArchivo(file);
+      });
+      document.getElementById("pastoClaveUsar").addEventListener("click", () => {
+        const clave = (document.getElementById("pastoClave").value || "").trim();
+        if (!window.GemeloXai) {
+          decir("No está la conexión con api.x.ai.", false);
+          return;
+        }
+        if (!clave && !window.GemeloXai.conectada()) {
+          decir("Pegue la clave de api.x.ai. No queda en el archivo ni con el productor.", false);
+          return;
+        }
+        if (clave) window.GemeloXai.guardarClave(clave);
+        document.getElementById("pastoClave").value = "";
+        decir("Clave lista en esta visita. No se guarda.", true);
+      });
+      analizar.addEventListener("click", () => {
+        const id = identidadCampo();
+        if (!id.n) {
+          decir("Abra su campo. El informe se guarda en ese productor.", false);
+          return;
+        }
+        if (!tipo || !foto) {
+          decir("Elija natural o implantado y saque la foto.", false);
+          return;
+        }
+        if (!window.GemeloXai) {
+          decir("No está la conexión con api.x.ai.", false);
+          return;
+        }
+        analizar.disabled = true;
+        lectura.hidden = true;
+        decir("Leyendo el pastizal…", true);
+        window.GemeloXai.consultar({
+          solapa: "Manejo",
+          sistema: sistemaPasto,
+          pregunta: "Campo: " + id.n + ". Productor: " + (id.p || id.n) + ". Pastizal declarado: " + tipo + ". Hacé el informe de esta foto.",
+          imagenes: [foto],
+          maxTokens: 900
+        }).then((res) => {
+          const item = {
+            fecha: new Date().toISOString(),
+            tipo: tipo,
+            texto: String(res.texto || "").slice(0, 1800),
+            modelo: (res && res.modelo) || "grok-4.7"
+          };
+          pintarLectura(item);
+          guardarPastizalLocal(item);
+          if (!(esMovil() || vistaCelular)) guardarPastizalPc(id, item);
+          decir("Informe guardado en " + id.n + ". Queda en este campo para decidir. No cambia la carga.", true);
+        }).catch((err) => {
+          const msg = err && err.message ? err.message : "No se pudo leer la foto.";
+          if (/clave/i.test(msg)) {
+            document.querySelector("#pastizal .pasto-clave").open = true;
+            decir("Falta la clave. Péguela en Clave de esta visita. Queda solo en este navegador y no se guarda.", false);
+          } else decir(msg, false);
+        }).then(() => { lista(); });
+      });
+      const drop = document.getElementById("dropManejo");
+      if (drop) drop.addEventListener("toggle", () => {
+        if (!drop.open) return;
+        pintarNombre();
+        if ((lectura.textContent || "").trim()) return;
+        const guardado = pastizalGuardado();
+        if (!guardado) return;
+        pintarLectura(guardado);
+        decir("Lectura de este campo. Sirve para decidir y no cambia la carga.", true);
+      });
+      pintarNombre();
+    })();
+    (function solapaAlerta() {
+      const fecha = document.getElementById("alertaParicion");
+      if (!fecha) return;
+      fecha.addEventListener("change", () => {
+        store.alertaParicion = fecha.value || "";
+        saveStore(store);
+        pintarAlerta();
+      });
+    })();
+    (function solapaCarbono() {
+      const diesel = document.getElementById("carbonoDiesel");
+      const pasto = document.getElementById("carbonoPastoreo");
+      if (!diesel || !pasto) return;
+      if (store.carbonoLitros != null && store.carbonoLitros !== "") diesel.value = store.carbonoLitros;
+      if (store.mejoras && store.mejoras.lotes) pasto.value = "1.2";
+      diesel.addEventListener("input", () => {
+        store.carbonoLitros = Math.max(0, Number(diesel.value) || 0);
+        saveStore(store);
+        pintarCarbono();
+      });
+      pasto.addEventListener("change", () => pintarCarbono());
+    })();
     (function bienvenidaSrsl() {
       const el = document.getElementById("bienvenidaSrsl");
       const btn = document.getElementById("btnBienvenida");
